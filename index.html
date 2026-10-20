@@ -150,7 +150,7 @@
 
       <!-- STAGE 2: STAGING (FILE TERPILIH -> TAMPILKAN TOMBOL PROCEED / PROSES DATA) -->
       <div id="uploadStageStaging" class="hidden space-y-4">
-        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-4 bg-sky-100/70 rounded-xl border border-sky-300">
+        <div class="p-4 bg-sky-100/70 rounded-xl border border-sky-300 space-y-3">
           <div class="flex items-center space-x-3">
             <div class="p-2.5 bg-sky-600 text-white rounded-lg shrink-0">
               <i data-lucide="file-check-2" class="w-6 h-6"></i>
@@ -160,19 +160,54 @@
                 <span class="text-xs font-bold text-slate-900" id="stagingFileName">presensi.xlsx</span>
                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-200 text-sky-800" id="stagingRowCount">0 Baris Terbaca</span>
               </div>
-              <p class="text-[11px] text-slate-600 mt-0.5">Berkas berhasil dibaca dan siap diproses. Pilih mode data di sebelah kanan:</p>
+              <p class="text-[11px] text-slate-600 mt-0.5">Berkas terbaca. Tentukan <strong>Program Studi (Prodi)</strong> dan <strong>Mode Data</strong> sebelum diproses:</p>
             </div>
           </div>
-          <!-- Opsi Mode -->
-          <div class="flex items-center space-x-4 text-xs font-medium bg-white px-3 py-2 rounded-lg border border-sky-200 shrink-0">
-            <label class="flex items-center space-x-1.5 cursor-pointer text-slate-800">
-              <input type="radio" name="stagingImportMode" value="merge" checked class="text-sky-600 focus:ring-sky-500">
-              <span>Gabungkan (Merge)</span>
-            </label>
-            <label class="flex items-center space-x-1.5 cursor-pointer text-slate-800">
-              <input type="radio" name="stagingImportMode" value="replace" class="text-sky-600 focus:ring-sky-500">
-              <span>Ganti Total (Replace)</span>
-            </label>
+
+          <!-- OPSI PENGATURAN IMPOR (PRODI & MODE) -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-sky-200/80">
+            <!-- Kolom 1: Penentuan Program Studi (Prodi) -->
+            <div class="bg-white p-3 rounded-xl border border-sky-200 space-y-1.5 shadow-sm">
+              <label class="block text-xs font-bold text-slate-800 flex items-center">
+                <i data-lucide="graduation-cap" class="w-4 h-4 mr-1.5 text-sky-600"></i>
+                Program Studi (Prodi) untuk File Ini:
+              </label>
+              <select id="stagingProdiMode" onchange="updateStagingProdiPreview()" class="w-full py-2 px-2.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 font-semibold text-slate-800">
+                <option value="auto">🤖 Deteksi Otomatis (TL = Tek. Lingkungan, TI/PU = Tek. Informatika)</option>
+                <option value="Teknik Informatika">💻 Tetapkan Seluruh Data ke: Teknik Informatika</option>
+                <option value="Teknik Lingkungan">🌿 Tetapkan Seluruh Data ke: Teknik Lingkungan</option>
+              </select>
+              <div class="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
+                <span>Pratinjau Distribusi:</span>
+                <span id="stagingProdiPreviewBadge" class="font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">-</span>
+              </div>
+            </div>
+
+            <!-- Kolom 2: Mode Penyimpanan Data -->
+            <div class="bg-white p-3 rounded-xl border border-sky-200 space-y-1.5 shadow-sm flex flex-col justify-between">
+              <div>
+                <label class="block text-xs font-bold text-slate-800 flex items-center mb-1.5">
+                  <i data-lucide="database" class="w-4 h-4 mr-1.5 text-sky-600"></i>
+                  Mode Penyimpanan:
+                </label>
+                <div class="grid grid-cols-2 gap-2 text-xs font-medium">
+                  <label class="flex items-center space-x-2 p-2 rounded-lg border border-slate-200 hover:border-sky-300 bg-slate-50 cursor-pointer">
+                    <input type="radio" name="stagingImportMode" value="merge" checked class="text-sky-600 focus:ring-sky-500">
+                    <div>
+                      <strong class="block text-[11px] text-slate-800 leading-tight">Gabungkan (Merge)</strong>
+                      <span class="text-[9.5px] text-slate-500">Data dosen lain tetap aman</span>
+                    </div>
+                  </label>
+                  <label class="flex items-center space-x-2 p-2 rounded-lg border border-slate-200 hover:border-sky-300 bg-slate-50 cursor-pointer">
+                    <input type="radio" name="stagingImportMode" value="replace" class="text-sky-600 focus:ring-sky-500">
+                    <div>
+                      <strong class="block text-[11px] text-slate-800 leading-tight">Ganti Total (Replace)</strong>
+                      <span class="text-[9.5px] text-slate-500">Hanya data file baru ini</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -593,6 +628,13 @@
             <label class="block text-slate-600 font-medium mb-1">Jadwal Sesi</label>
             <input type="text" id="editJadwal" disabled class="w-full bg-slate-100 p-2 rounded-lg border border-slate-200 text-slate-600">
           </div>
+        </div>
+        <div>
+          <label class="block text-slate-700 font-medium mb-1">Program Studi</label>
+          <select id="editProdi" class="w-full p-2 bg-white rounded-lg border border-slate-300 font-semibold text-slate-800">
+            <option value="Teknik Informatika">Teknik Informatika (TI / PU 7201)</option>
+            <option value="Teknik Lingkungan">Teknik Lingkungan (TL)</option>
+          </select>
         </div>
         <div>
           <label class="block text-slate-700 font-medium mb-1">Status Presensi</label>
@@ -1594,6 +1636,7 @@
       document.getElementById('editMatkul').value = item.mata_kuliah + ' (' + item.kode_mk + ')';
       document.getElementById('editTanggal').value = item.tanggal;
       document.getElementById('editJadwal').value = item.jadwal;
+      document.getElementById('editProdi').value = item.prodi || 'Teknik Informatika';
       document.getElementById('editStatusPresensi').value = item.presensi;
       document.getElementById('editJamDatang').value = item.datang || '';
       document.getElementById('editJamKembali').value = item.kembali || '';
@@ -1611,6 +1654,7 @@
       if (activeEditingIndex === null) return;
       const item = attendanceData[activeEditingIndex];
 
+      item.prodi = document.getElementById('editProdi').value;
       item.presensi = document.getElementById('editStatusPresensi').value;
       item.datang = document.getElementById('editJamDatang').value.trim();
       item.kembali = document.getElementById('editJamKembali').value.trim();
@@ -1804,6 +1848,12 @@
             
             document.getElementById('stagingFileName').textContent = file.name;
             document.getElementById('stagingRowCount').textContent = `${pendingImportData.length} Baris Data Terbaca`;
+            
+            // Reset prodi option & update preview
+            const prodiSel = document.getElementById('stagingProdiMode');
+            if (prodiSel) prodiSel.value = 'auto';
+            updateStagingProdiPreview();
+
             lucide.createIcons();
           } else {
             alert('Berkas terbaca, tetapi tabel presensi tidak ditemukan.\n\n' +
@@ -1818,6 +1868,30 @@
       reader.readAsArrayBuffer(file);
     }
 
+    function updateStagingProdiPreview() {
+      if (!pendingImportData || pendingImportData.length === 0) return;
+      const mode = document.getElementById('stagingProdiMode')?.value || 'auto';
+      const badge = document.getElementById('stagingProdiPreviewBadge');
+      if (!badge) return;
+
+      if (mode === 'Teknik Informatika') {
+        badge.textContent = `Semua (${pendingImportData.length} sesi) → 💻 Teknik Informatika`;
+        badge.className = 'font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded border border-sky-200';
+      } else if (mode === 'Teknik Lingkungan') {
+        badge.textContent = `Semua (${pendingImportData.length} sesi) → 🌿 Teknik Lingkungan`;
+        badge.className = 'font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200';
+      } else {
+        let tiCount = 0, tlCount = 0;
+        pendingImportData.forEach(item => {
+          const p = detectProdi(item.kode_mk, item.ruangan);
+          if (p === 'Teknik Lingkungan') tlCount++;
+          else tiCount++;
+        });
+        badge.textContent = `Otomatis: ${tiCount} TI, ${tlCount} TL`;
+        badge.className = 'font-bold text-violet-700 bg-violet-50 px-2 py-0.5 rounded border border-violet-200';
+      }
+    }
+
     function cancelStaging() {
       pendingImportData = null;
       document.getElementById('fileInput').value = '';
@@ -1830,6 +1904,14 @@
       if (!pendingImportData || pendingImportData.length === 0) {
         alert('Tidak ada data yang siap diproses.');
         return;
+      }
+
+      // Terapkan penentuan Program Studi jika pengguna memilih prodi spesifik
+      const prodiMode = document.getElementById('stagingProdiMode')?.value || 'auto';
+      if (prodiMode !== 'auto') {
+        pendingImportData.forEach(item => {
+          item.prodi = prodiMode;
+        });
       }
 
       const mode = document.querySelector('input[name="stagingImportMode"]:checked')?.value || 'merge';
@@ -1873,8 +1955,10 @@
       
       const infoBox = document.getElementById('fileUploadInfo');
       infoBox.classList.remove('hidden');
-      document.getElementById('uploadedFileName').innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4 mr-1.5 text-emerald-600"></i> ${pendingFileName} &bull; Berhasil Diproses (${mode === 'merge' ? 'Digabungkan' : 'Dimuat Penuh'})`;
+      const prodiInfo = prodiMode === 'auto' ? 'Deteksi Otomatis' : prodiMode;
+      document.getElementById('uploadedFileName').innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4 mr-1.5 text-emerald-600"></i> ${pendingFileName} &bull; Berhasil Diproses (${mode === 'merge' ? 'Digabungkan' : 'Dimuat Penuh'}) &bull; <span class="text-sky-700 font-semibold">${prodiInfo}</span>`;
       document.getElementById('uploadedRowCount').textContent = `Total data tersimpan: ${attendanceData.length} baris`;
+      showToast(`Data berkas ${pendingFileName} berhasil diterapkan (${prodiInfo}).`);
 
       // Reset file input
       document.getElementById('fileInput').value = '';
