@@ -1,0 +1,1956 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Monitoring Kehadiran Dosen</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- SheetJS for Excel / CSV parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- html2pdf.js for clean professional PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+              800: '#0c4a6e',
+              900: '#082f49'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* Print & PDF Specific Styling */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printArea, #printArea * {
+        visibility: visible;
+      }
+      #printArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .page-break {
+        page-break-before: always;
+      }
+    }
+
+    .badge-h {
+      background-color: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+    .badge-a {
+      background-color: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+    .badge-late {
+      background-color: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+    .badge-pending {
+      background-color: #f1f5f9;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <!-- TOP NAVBAR -->
+  <header class="no-print bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-sky-100">
+          <i data-lucide="calendar-check" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold text-slate-900 tracking-tight leading-tight">PresensiDosen<span class="text-sky-600">Pro</span></h1>
+          <p class="text-xs text-slate-500 font-medium">Monitoring Kehadiran Dosen &bull; Klasifikasi Program Studi & Jenis Kelas</p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center space-x-2.5">
+        <button id="btnOpenUpload" onclick="document.getElementById('fileInput').click()" class="inline-flex items-center px-3.5 py-2 text-xs font-semibold rounded-lg text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition shadow-sm">
+          <i data-lucide="upload-cloud" class="w-4 h-4 mr-1.5 text-sky-600"></i>
+          Upload Excel / CSV
+        </button>
+        <button id="btnOpenDeleteDosen" onclick="openDeleteDosenModal()" class="inline-flex items-center px-3 py-2 text-xs font-semibold rounded-lg text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 transition shadow-sm" title="Hapus Data Presensi per Dosen">
+          <i data-lucide="user-x" class="w-3.5 h-3.5 mr-1 text-rose-600"></i>
+          Hapus per Dosen
+        </button>
+        <button id="btnResetDefault" class="inline-flex items-center px-3 py-2 text-xs font-semibold rounded-lg text-slate-600 bg-slate-100 hover:bg-slate-200 transition" title="Muat Ulang Data Sampel">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 mr-1"></i>
+          Reset Data
+        </button>
+        <button id="btnDownloadPDF" class="inline-flex items-center px-4 py-2 text-xs font-semibold rounded-lg text-white bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800 shadow-md shadow-sky-200 transition active:scale-95">
+          <i data-lucide="file-text" class="w-4 h-4 mr-1.5"></i>
+          Cetak / Ekspor PDF
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN APP CONTAINER -->
+  <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6 no-print">
+
+    <!-- UPLOAD DROPZONE & STAGING BANNER -->
+    <div id="uploadBanner" class="bg-white rounded-2xl p-5 border-2 border-dashed border-sky-300 hover:border-sky-500 transition bg-sky-50/20 relative shadow-sm">
+      <input type="file" id="fileInput" accept=".csv, .xlsx, .xls, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="hidden">
+
+      <!-- STAGE 1: DEFAULT (SEBELUM FILE DIPILIH) -->
+      <div id="uploadStageDefault" class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-start space-x-4 cursor-pointer" onclick="document.getElementById('fileInput').click()">
+          <div class="p-3 bg-sky-100 text-sky-700 rounded-xl shrink-0">
+            <i data-lucide="file-spreadsheet" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900">Perbarui Data Kehadiran via Spreadsheet</h3>
+            <p class="text-xs text-slate-500 mt-0.5">Mendukung format Microsoft Excel (<strong>.xlsx, .xls</strong>) dan CSV (<strong>.csv</strong>). Drag & drop berkas atau klik tombol di samping.</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-3 w-full sm:w-auto shrink-0">
+          <button type="button" onclick="document.getElementById('fileInput').click()" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 text-xs font-bold rounded-lg text-white bg-sky-600 hover:bg-sky-700 shadow-sm transition active:scale-95">
+            <i data-lucide="file-up" class="w-4 h-4 mr-1.5"></i> Pilih File Excel / CSV
+          </button>
+          <button type="button" id="btnDownloadSample" class="w-full sm:w-auto inline-flex items-center justify-center px-3.5 py-2 text-xs font-semibold rounded-lg text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 shadow-sm transition">
+            <i data-lucide="download" class="w-3.5 h-3.5 mr-1 text-slate-500"></i> Unduh Sampel
+          </button>
+        </div>
+      </div>
+
+      <!-- STAGE 2: STAGING (FILE TERPILIH -> TAMPILKAN TOMBOL PROCEED / PROSES DATA) -->
+      <div id="uploadStageStaging" class="hidden space-y-4">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-4 bg-sky-100/70 rounded-xl border border-sky-300">
+          <div class="flex items-center space-x-3">
+            <div class="p-2.5 bg-sky-600 text-white rounded-lg shrink-0">
+              <i data-lucide="file-check-2" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-xs font-bold text-slate-900" id="stagingFileName">presensi.xlsx</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-200 text-sky-800" id="stagingRowCount">0 Baris Terbaca</span>
+              </div>
+              <p class="text-[11px] text-slate-600 mt-0.5">Berkas berhasil dibaca dan siap diproses. Pilih mode data di sebelah kanan:</p>
+            </div>
+          </div>
+          <!-- Opsi Mode -->
+          <div class="flex items-center space-x-4 text-xs font-medium bg-white px-3 py-2 rounded-lg border border-sky-200 shrink-0">
+            <label class="flex items-center space-x-1.5 cursor-pointer text-slate-800">
+              <input type="radio" name="stagingImportMode" value="merge" checked class="text-sky-600 focus:ring-sky-500">
+              <span>Gabungkan (Merge)</span>
+            </label>
+            <label class="flex items-center space-x-1.5 cursor-pointer text-slate-800">
+              <input type="radio" name="stagingImportMode" value="replace" class="text-sky-600 focus:ring-sky-500">
+              <span>Ganti Total (Replace)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Tombol Proceed & Batal -->
+        <div class="flex items-center justify-end space-x-3 pt-1">
+          <button type="button" onclick="cancelStaging()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
+            Batal
+          </button>
+          <button type="button" id="btnProceedUpload" onclick="executeProceedUpload()" class="inline-flex items-center px-5 py-2.5 text-xs font-bold rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-200 transition active:scale-95">
+            <i data-lucide="check-circle" class="w-4 h-4 mr-2"></i>
+            Proses & Terapkan Data (Proceed)
+          </button>
+        </div>
+      </div>
+
+      <!-- STAGE 3: SUKSES AFFIRMASI BANNER -->
+      <div id="fileUploadInfo" class="hidden mt-3 p-3 bg-emerald-50 text-emerald-900 rounded-xl border border-emerald-200 flex items-center justify-between text-xs">
+        <span id="uploadedFileName" class="font-bold flex items-center">
+          <i data-lucide="check-circle-2" class="w-4 h-4 mr-1.5 text-emerald-600"></i>
+          Data Berhasil Diterapkan ke Sistem!
+        </span>
+        <span id="uploadedRowCount" class="text-emerald-700 font-medium"></span>
+      </div>
+    </div>
+
+    <!-- PROFILE & ACTIVE DOSEN BANNER -->
+    <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-sky-950 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden">
+      <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+        <div class="flex items-start sm:items-center space-x-4">
+          <div class="h-16 w-16 rounded-2xl bg-gradient-to-br from-sky-400 to-indigo-600 flex items-center justify-center text-white font-bold text-2xl shadow-lg shadow-sky-900/40 border border-white/10 shrink-0">
+            <span id="dosenAvatar">MW</span>
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 id="headerDosenName" class="text-xl sm:text-2xl font-black text-white tracking-tight">MEGA WAHYU RHAMADANI, S.T., M.M.S.I</h2>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span> Dosen Aktif
+              </span>
+            </div>
+            <p class="text-xs sm:text-sm text-slate-300 mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+              <span><i data-lucide="award" class="inline w-3.5 h-3.5 mr-1 text-sky-400"></i>NIDN: 9919121988</span>
+              <span><i data-lucide="building-2" class="inline w-3.5 h-3.5 mr-1 text-sky-400"></i>Fakultas Teknik</span>
+              <span><i data-lucide="calendar" class="inline w-3.5 h-3.5 mr-1 text-sky-400"></i>Tahun Ajaran 2026/2027</span>
+            </p>
+            
+            <!-- Tags Prodi & Jenis Kelas -->
+            <div class="mt-3 pt-2.5 border-t border-white/10 flex flex-wrap gap-2 text-xs">
+              <span class="text-slate-400 text-[11px] self-center">Program Studi:</span>
+              <span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30">
+                Teknik Informatika (<span id="countProdiTI">0</span> Sesi)
+              </span>
+              <span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">
+                Teknik Lingkungan (<span id="countProdiTL">0</span> Sesi)
+              </span>
+              
+              <span class="text-slate-400 text-[11px] self-center ml-2 border-l border-white/20 pl-2">Jenis Kelas:</span>
+              <span class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                ☀️ Pagi Reguler: <strong id="countKelasPagi">0</strong>
+              </span>
+              <span class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                🌙 Sore Karyawan: <strong id="countKelasSore">0</strong>
+              </span>
+              <span class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                🏢 Khusus PDAM: <strong id="countKelasPDAM">0</strong>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mini Stats on Header -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white/5 border border-white/10 rounded-xl p-3 backdrop-blur-sm">
+          <div class="text-center px-3 py-1">
+            <span class="text-xs text-slate-400 font-medium block">Total Sesi</span>
+            <span id="statTotalSesi" class="text-lg font-bold text-white">128</span>
+          </div>
+          <div class="text-center px-3 py-1 border-l border-white/10">
+            <span class="text-xs text-slate-400 font-medium block">Sudah Jalan</span>
+            <span id="statTotalRealisasi" class="text-lg font-bold text-sky-300">37</span>
+          </div>
+          <div class="text-center px-3 py-1 border-l border-white/10">
+            <span class="text-xs text-slate-400 font-medium block">Hadir</span>
+            <span id="statTotalHadir" class="text-lg font-bold text-emerald-400">31</span>
+          </div>
+          <div class="text-center px-3 py-1 border-l border-white/10">
+            <span class="text-xs text-slate-400 font-medium block">Presensi</span>
+            <span id="statKehadiranRate" class="text-lg font-bold text-amber-300">83.8%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATS CARDS -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Card 1 -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Hadir Tepat Waktu</p>
+          <div class="flex items-baseline space-x-2 mt-1">
+            <span id="statCardOnTime" class="text-2xl font-extrabold text-slate-900">20</span>
+            <span class="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full" id="statCardOnTimePct">64.5%</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">Kehadiran on-time</p>
+        </div>
+        <div class="h-12 w-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+          <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Terlambat</p>
+          <div class="flex items-baseline space-x-2 mt-1">
+            <span id="statCardLate" class="text-2xl font-extrabold text-amber-600">11</span>
+            <span class="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full" id="statCardLatePct">35.5%</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">Masuk melewati jam jadwal</p>
+        </div>
+        <div class="h-12 w-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+          <i data-lucide="clock-alert" class="w-6 h-6"></i>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tidak Hadir / Ganti</p>
+          <div class="flex items-baseline space-x-2 mt-1">
+            <span id="statCardAlpha" class="text-2xl font-extrabold text-rose-600">6</span>
+            <span class="text-xs font-medium text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">Perlu Make-up</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">Status Alpha (A) / Jadwal ulang</p>
+        </div>
+        <div class="h-12 w-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+          <i data-lucide="x-circle" class="w-6 h-6"></i>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Sesi Mendatang</p>
+          <div class="flex items-baseline space-x-2 mt-1">
+            <span id="statCardFuture" class="text-2xl font-extrabold text-sky-600">91</span>
+            <span class="text-xs font-medium text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full">Jadwal Sisa</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">Sesi pertemuan berikutnya</p>
+        </div>
+        <div class="h-12 w-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
+          <i data-lucide="calendar-days" class="w-6 h-6"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- REKAP PER MATA KULIAH SECTION -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Rekapitulasi Perkuliahan per Mata Kuliah & Program Studi</h3>
+          <p class="text-xs text-slate-500">Kemajuan jumlah pertemuan mengajar (Target Standar: 16 Pertemuan per Rombel Kelas)</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="courseSummaryCards">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+
+    <!-- FILTER & DATA TABLE CONTROLS -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <!-- Table Filter Header -->
+      <div class="p-5 border-b border-slate-200 bg-slate-50/50 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Search Input -->
+          <div class="relative min-w-[180px]">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+            <input type="text" id="searchInput" placeholder="Cari MK, Ruang, Tgl..." class="w-full pl-9 pr-3 py-2 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent">
+          </div>
+
+          <!-- Filter Dosen & Tombol Hapus Cepat -->
+          <div class="flex items-center gap-1.5">
+            <select id="filterDosen" class="py-2 px-3 text-xs bg-white border border-violet-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 text-slate-700 font-semibold max-w-[220px]">
+              <option value="">👤 Semua Dosen</option>
+            </select>
+            <button type="button" onclick="openDeleteDosenModal(document.getElementById('filterDosen').value)" class="p-2 text-xs font-semibold rounded-lg text-rose-600 bg-rose-50 border border-rose-200 hover:bg-rose-100 hover:border-rose-300 transition shrink-0" title="Hapus Data Presensi Dosen Terpilih">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+
+          <!-- Filter Bulan -->
+          <select id="filterBulan" class="py-2 px-3 text-xs bg-white border border-violet-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 text-slate-700 font-semibold">
+            <option value="">📅 Semua Bulan</option>
+          </select>
+
+          <!-- Filter Program Studi -->
+          <select id="filterProdi" class="py-2 px-3 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-700 font-semibold">
+            <option value="">Semua Program Studi</option>
+            <option value="Teknik Informatika">Teknik Informatika (TI / PU 7201)</option>
+            <option value="Teknik Lingkungan">Teknik Lingkungan (Kode TL)</option>
+          </select>
+
+          <!-- Filter Jenis Kelas (Aturan Baru) -->
+          <select id="filterJenisKelas" class="py-2 px-3 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-700 font-semibold">
+            <option value="">Semua Jenis Kelas</option>
+            <option value="Kelas Pagi Reguler">☀️ Kelas Pagi Reguler (Romawi)</option>
+            <option value="Kelas Sore Karyawan">🌙 Kelas Sore Karyawan (Angka)</option>
+            <option value="Mahasiswa Khusus PDAM Depok">🏢 Khusus PDAM Depok</option>
+          </select>
+
+          <!-- Filter Mata Kuliah -->
+          <select id="filterMatkul" class="py-2 px-3 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-700">
+            <option value="">Semua Mata Kuliah</option>
+          </select>
+
+          <!-- Filter Status -->
+          <select id="filterStatus" class="py-2 px-3 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-700">
+            <option value="">Semua Status Presensi</option>
+            <option value="H">Hadir (H)</option>
+            <option value="A">Alpha / Tidak Hadir (A)</option>
+            <option value="LATE">Terlambat</option>
+            <option value="PENDING">Belum Dilaksanakan</option>
+          </select>
+        </div>
+
+        <div class="flex items-center space-x-2 text-xs text-slate-500">
+          <span>Menampilkan <strong id="showingCount" class="text-slate-800">0</strong> dari <strong id="totalCount" class="text-slate-800">0</strong> sesi</span>
+        </div>
+      </div>
+
+      <!-- Log Table -->
+      <div class="overflow-x-auto max-h-[550px] overflow-y-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead class="bg-slate-100 text-slate-700 uppercase font-semibold text-[11px] tracking-wider sticky top-0 z-10 border-b border-slate-200">
+            <tr>
+              <th class="py-3 px-3 w-10 text-center">No</th>
+              <th class="py-3 px-3">Tanggal</th>
+              <th class="py-3 px-3">Program Studi</th>
+              <th class="py-3 px-3">Jenis Kelas</th>
+              <th class="py-3 px-3">Mata Kuliah & Kode</th>
+              <th class="py-3 px-3">SKS</th>
+              <th class="py-3 px-3">Jadwal Sesi</th>
+              <th class="py-3 px-3">Ruangan</th>
+              <th class="py-3 px-3 text-center">Presensi</th>
+              <th class="py-3 px-3 text-center">Jam Hadir</th>
+              <th class="py-3 px-3">Keterangan / Komentar</th>
+              <th class="py-3 px-3 text-center no-print">Tindakan</th>
+            </tr>
+          </thead>
+          <tbody id="attendanceTableBody" class="divide-y divide-slate-200 bg-white">
+            <!-- Table rows populated via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- ========================================== -->
+  <!-- PRINT / EXPORT PDF TEMPLATE CONTAINER       -->
+  <!-- Clean, Academic, Professional Document Layout -->
+  <!-- ========================================== -->
+  <div id="printArea" class="hidden">
+    <div class="p-8 max-w-[960px] mx-auto bg-white text-slate-900 leading-normal" id="pdfDocument">
+      
+      <!-- KOP SURAT / DOKUMEN RESMI -->
+      <div class="border-b-2 border-slate-900 pb-4 mb-6">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <div class="w-14 h-14 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-xl">
+              FT
+            </div>
+            <div>
+              <h2 class="text-xs uppercase font-semibold tracking-widest text-slate-500">Fakultas Teknik</h2>
+              <h1 class="text-xl font-bold tracking-tight text-slate-900 uppercase">Laporan Monitoring Presensi & Kinerja Dosen</h1>
+              <p class="text-xs text-slate-600">Teknik Informatika &bull; Teknik Lingkungan &bull; Penjaminan Mutu Akademik</p>
+            </div>
+          </div>
+          <div class="text-right text-xs">
+            <div class="inline-block px-3 py-1 bg-slate-100 rounded text-slate-700 font-mono text-[11px] mb-1 font-semibold">DOKUMEN RESMI</div>
+            <p class="text-slate-500">Tanggal Cetak: <span id="pdfPrintDate" class="font-medium text-slate-800"></span></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROFIL DOSEN METADATA GRID -->
+      <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6">
+        <div class="grid grid-cols-2 gap-y-2 text-xs">
+          <div class="flex">
+            <span class="w-36 text-slate-500 font-medium">Nama Dosen</span>
+            <span class="text-slate-900 font-bold" id="pdfDosenName">MEGA WAHYU RHAMADANI, S.T., M.M.S.I</span>
+          </div>
+          <div class="flex">
+            <span class="w-36 text-slate-500 font-medium">Tahun Akademik</span>
+            <span class="text-slate-900 font-semibold">2026/2027 - Semester Ganjil</span>
+          </div>
+          <div class="flex">
+            <span class="w-36 text-slate-500 font-medium">NIDN / ID Pengajar</span>
+            <span class="text-slate-900 font-mono">9919121988</span>
+          </div>
+          <div class="flex">
+            <span class="w-36 text-slate-500 font-medium">Filter Laporan</span>
+            <span class="text-sky-800 font-bold" id="pdfFilterInfoLabel">Semua Program Studi & Jenis Kelas</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- EXECUTIVE SUMMARY CARDS FOR PDF -->
+      <div class="grid grid-cols-4 gap-3 mb-6">
+        <div class="border border-slate-200 p-3 rounded-lg text-center bg-white">
+          <span class="text-[10px] uppercase font-semibold text-slate-500 block">Total Sesi Terjadwal</span>
+          <span class="text-xl font-bold text-slate-900" id="pdfTotalSesi">128</span>
+        </div>
+        <div class="border border-slate-200 p-3 rounded-lg text-center bg-white">
+          <span class="text-[10px] uppercase font-semibold text-slate-500 block">Sesi Terlaksana</span>
+          <span class="text-xl font-bold text-sky-700" id="pdfTotalRealisasi">37</span>
+        </div>
+        <div class="border border-slate-200 p-3 rounded-lg text-center bg-white">
+          <span class="text-[10px] uppercase font-semibold text-slate-500 block">Tingkat Kehadiran</span>
+          <span class="text-xl font-bold text-emerald-700" id="pdfKehadiranRate">83.8%</span>
+        </div>
+        <div class="border border-slate-200 p-3 rounded-lg text-center bg-white">
+          <span class="text-[10px] uppercase font-semibold text-slate-500 block">Keterlambatan</span>
+          <span class="text-xl font-bold text-amber-600" id="pdfTotalTerlambat">11 Kali</span>
+        </div>
+      </div>
+
+      <!-- TABEL REKAPITULASI MATA KULIAH -->
+      <div class="mb-6">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800 mb-2 flex items-center">
+          <span class="w-2 h-2 bg-sky-600 rounded-full mr-2"></span>
+          A. Ringkasan Pelaksanaan Kuliah per Rombel & Jenis Kelas
+        </h3>
+        <table class="w-full text-left border-collapse text-xs border border-slate-200">
+          <thead>
+            <tr class="bg-slate-100 text-slate-700 font-semibold text-[10px] border-b border-slate-200">
+              <th class="p-2 border-r border-slate-200 w-7 text-center">No</th>
+              <th class="p-2 border-r border-slate-200 w-24">Program Studi</th>
+              <th class="p-2 border-r border-slate-200 w-32">Jenis Kelas</th>
+              <th class="p-2 border-r border-slate-200">Mata Kuliah & Kelas</th>
+              <th class="p-2 border-r border-slate-200 text-center w-10">SKS</th>
+              <th class="p-2 border-r border-slate-200 text-center w-14">Jadwal</th>
+              <th class="p-2 border-r border-slate-200 text-center w-14">Realisasi</th>
+              <th class="p-2 border-r border-slate-200 text-center w-12">Hadir</th>
+              <th class="p-2 border-r border-slate-200 text-center w-12">Alpha</th>
+              <th class="p-2 text-center w-14">% Hadir</th>
+            </tr>
+          </thead>
+          <tbody id="pdfCourseTableBody" class="divide-y divide-slate-200">
+            <!-- Rendered by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- TABEL LOG PRESENSI TERAKHIR & DETAIL PELAKSANAAN -->
+      <div class="mb-8">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800 mb-2 flex items-center">
+          <span class="w-2 h-2 bg-sky-600 rounded-full mr-2"></span>
+          B. Rincian Log Presensi & Realisasi Jadwal
+        </h3>
+        <table class="w-full text-left border-collapse text-[10px] border border-slate-200">
+          <thead>
+            <tr class="bg-slate-100 text-slate-700 font-semibold text-[10px] border-b border-slate-200">
+              <th class="p-1.5 border-r border-slate-200 w-7 text-center">No</th>
+              <th class="p-1.5 border-r border-slate-200 w-16">Tanggal</th>
+              <th class="p-1.5 border-r border-slate-200 w-20">Prodi</th>
+              <th class="p-1.5 border-r border-slate-200 w-24">Jenis Kelas</th>
+              <th class="p-1.5 border-r border-slate-200">Mata Kuliah & Rombel</th>
+              <th class="p-1.5 border-r border-slate-200 w-16">Jadwal</th>
+              <th class="p-1.5 border-r border-slate-200 w-14 text-center">Presensi</th>
+              <th class="p-1.5 border-r border-slate-200 w-14 text-center">Jam Hadir</th>
+              <th class="p-1.5 border-r border-slate-200 w-20">Keterlambatan</th>
+              <th class="p-1.5">Ket / Pengganti</th>
+            </tr>
+          </thead>
+          <tbody id="pdfLogTableBody" class="divide-y divide-slate-200">
+            <!-- Rendered by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- LEMBAR PENGESAHAN / TANDA TANGAN -->
+      <div class="pt-4 border-t border-slate-200 grid grid-cols-2 text-xs">
+        <div class="text-left">
+          <p class="text-slate-500 mb-1">Catatan Auditor Mutu Fakultas:</p>
+          <div class="border border-dashed border-slate-300 rounded p-3 h-20 text-[11px] text-slate-500">
+            Realisasi kehadiran dosen telah memenuhi standar regulasi penjaminan mutu perkuliahan semester ganjil.
+          </div>
+        </div>
+        <div class="text-right flex flex-col justify-end items-end">
+          <p class="text-slate-600 mb-12">Depok, <span id="pdfSignDate"></span><br><span id="pdfSignTitle">Ketua Program Studi / Dekan Fakultas Teknik,</span></p>
+          <p class="font-bold underline text-slate-900" id="pdfSignName">Dr. Ir. Hendra Saputra, M.Kom.</p>
+          <p class="text-slate-500 text-[10px]">NIP. 197804152005011002</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT PRESENSI MODAL -->
+  <div id="editModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="font-bold text-slate-900">Update Data Kehadiran Sesi</h3>
+        <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-600 font-medium mb-1">Mata Kuliah</label>
+          <input type="text" id="editMatkul" disabled class="w-full bg-slate-100 p-2 rounded-lg border border-slate-200 text-slate-600 font-semibold">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-600 font-medium mb-1">Tanggal</label>
+            <input type="text" id="editTanggal" disabled class="w-full bg-slate-100 p-2 rounded-lg border border-slate-200 text-slate-600">
+          </div>
+          <div>
+            <label class="block text-slate-600 font-medium mb-1">Jadwal Sesi</label>
+            <input type="text" id="editJadwal" disabled class="w-full bg-slate-100 p-2 rounded-lg border border-slate-200 text-slate-600">
+          </div>
+        </div>
+        <div>
+          <label class="block text-slate-700 font-medium mb-1">Status Presensi</label>
+          <select id="editStatusPresensi" class="w-full p-2 bg-white rounded-lg border border-slate-300 font-semibold">
+            <option value="H">Hadir (H)</option>
+            <option value="A">Alpha / Tidak Hadir (A)</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-700 font-medium mb-1">Jam Datang</label>
+            <input type="text" id="editJamDatang" placeholder="hh:mm (cth: 09:00)" class="w-full p-2 rounded-lg border border-slate-300">
+          </div>
+          <div>
+            <label class="block text-slate-700 font-medium mb-1">Jam Kembali / Pulang</label>
+            <input type="text" id="editJamKembali" placeholder="hh:mm (cth: 11:30)" class="w-full p-2 rounded-lg border border-slate-300">
+          </div>
+        </div>
+        <div>
+          <label class="block text-slate-700 font-medium mb-1">Keterangan / Terlambat</label>
+          <input type="text" id="editKomentar" placeholder="Cth: Masalah terlambat / Tepat waktu" class="w-full p-2 rounded-lg border border-slate-300">
+        </div>
+      </div>
+      <div class="pt-3 border-t border-slate-100 flex justify-end space-x-2">
+        <button onclick="closeEditModal()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">Batal</button>
+        <button onclick="saveEditPresensi()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-sky-600 text-white hover:bg-sky-700 shadow-sm">Simpan Perubahan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMPORT CONFIRMATION MODAL -->
+  <div id="importModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center space-x-3 text-sky-700">
+        <div class="p-2.5 bg-sky-100 rounded-xl">
+          <i data-lucide="file-spreadsheet" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-slate-900 text-sm">Opsi Impor Berkas Baru</h3>
+          <p id="importModalFileDesc" class="text-xs text-slate-500"></p>
+        </div>
+      </div>
+      <p class="text-xs text-slate-600 leading-relaxed">
+        Apakah Anda ingin <strong>mengganti total</strong> data yang ada atau <strong>menggabungkan (merge)</strong> data baru ini dengan data lama?
+      </p>
+      <div class="space-y-2 pt-1">
+        <button onclick="confirmImport('merge')" class="w-full p-3 rounded-xl border-2 border-emerald-200 hover:border-emerald-500 bg-emerald-50/40 hover:bg-emerald-50 text-left transition flex items-start space-x-3">
+          <div class="mt-0.5 text-emerald-600"><i data-lucide="plus-circle" class="w-4 h-4"></i></div>
+          <div>
+            <strong class="text-xs text-slate-800 block">Gabungkan Data (Merge & Append) — Direkomendasikan</strong>
+            <span class="text-[11px] text-slate-500">Data lama tidak hilang. Baris baru ditambahkan otomatis tanpa duplikasi.</span>
+          </div>
+        </button>
+        <button onclick="confirmImport('replace')" class="w-full p-3 rounded-xl border border-slate-200 hover:border-sky-500 hover:bg-sky-50/50 text-left transition flex items-start space-x-3">
+          <div class="mt-0.5 text-sky-600"><i data-lucide="refresh-cw" class="w-4 h-4"></i></div>
+          <div>
+            <strong class="text-xs text-slate-800 block">Ganti Semua Data (Replace)</strong>
+            <span class="text-[11px] text-slate-500">Hapus tampilan data lama dan tampilkan data file baru saja.</span>
+          </div>
+        </button>
+      </div>
+      <div class="pt-2 border-t border-slate-100 flex justify-end">
+        <button onclick="cancelImport()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DELETE DOSEN CONFIRMATION MODAL -->
+  <div id="deleteDosenModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center space-x-3 text-rose-700">
+        <div class="p-2.5 bg-rose-100 rounded-xl">
+          <i data-lucide="user-x" class="w-6 h-6 text-rose-600"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-slate-900 text-sm">Hapus Data Presensi per Dosen</h3>
+          <p class="text-xs text-slate-500">Hapus seluruh riwayat sesi kehadiran untuk dosen tertentu</p>
+        </div>
+      </div>
+
+      <div class="space-y-3 pt-1">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Dosen:</label>
+          <select id="selectDosenToDelete" onchange="updateDeleteDosenPreview()" class="w-full py-2.5 px-3 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 font-semibold text-slate-800">
+            <!-- Populated via JS -->
+          </select>
+        </div>
+
+        <!-- Preview Box -->
+        <div id="deleteDosenPreviewBox" class="p-3.5 bg-rose-50/70 rounded-xl border border-rose-200 text-xs text-slate-700 space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-slate-500 font-medium">Nama Dosen:</span>
+            <strong id="previewDosenName" class="text-rose-900 font-bold max-w-[230px] truncate text-right">-</strong>
+          </div>
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-slate-500 font-medium">Total Sesi Dihapus:</span>
+            <span id="previewDosenCount" class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800">0 Sesi</span>
+          </div>
+          <div class="flex justify-between items-start text-xs">
+            <span class="text-slate-500 font-medium shrink-0">Mata Kuliah:</span>
+            <span id="previewDosenCourses" class="text-right text-slate-700 font-medium text-[11px] max-w-[220px] truncate">-</span>
+          </div>
+        </div>
+
+        <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 flex items-start space-x-2.5 text-xs text-amber-900">
+          <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
+          <p class="text-[11px] leading-relaxed">
+            <strong>Peringatan:</strong> Seluruh <strong id="previewWarningCount">0</strong> sesi perkuliahan atas nama dosen ini akan dihapus dari dashboard & laporan. Data dosen lainnya tetap aman.
+          </p>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2">
+        <button type="button" onclick="closeDeleteDosenModal()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
+          Batal
+        </button>
+        <button type="button" id="btnConfirmDeleteDosen" onclick="executeDeleteDosen()" class="inline-flex items-center px-4 py-2 text-xs font-bold rounded-lg text-white bg-rose-600 hover:bg-rose-700 shadow-md shadow-rose-200 transition active:scale-95">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5 mr-1.5"></i>
+          Ya, Hapus Data Dosen Ini
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING TOAST NOTIFICATION -->
+  <div id="toastNotification" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+    <div id="toastInner" class="flex items-center space-x-2.5 px-4 py-3 rounded-xl shadow-xl border text-xs font-medium bg-slate-900 text-white border-slate-700">
+      <i id="toastIcon" data-lucide="check-circle" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+      <span id="toastMessage">Notifikasi</span>
+    </div>
+  </div>
+
+  <!-- SCRIPT LOGIC -->
+  <script>
+    // Embedded initial data from the uploaded user CSV
+    const RAW_INITIAL_CSV = `No,Grup,Kode MK dan Kelas,Tanggal,Nama Mata Kuliah,SKS,Jadwal,Ruangan,Pengajar,Pengajar Piket,Presensi,Datang,Kembali ,Terlambat,Durasi,Komentar,Ganti Jadwal
+1 ,1/01,2024 - TL 3321 / PDAM Depok,15-09-2026 ,Analisis Numerik,3,  18:00 - 21:00 ,TL 1 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,17:57,21:00,,,  ,-
+2 ,1/01,2024 - TL 3321 / III,15-09-2026 ,Analisis Numerik,3,  09:00 - 11:30 ,Ruang 8 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:17,11:30,Masalah terlambat,Masalah,  ,-
+3 ,3/01,2024 - TL 3321 / PDAM Depok,16-09-2026 ,Analisis Numerik,3,  20:00 - 21:00 ,TL 1 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,20:00,21:00,,Masalah,  ,-
+4 ,2/01,2024 - TL 3321 / PDAM Depok,16-09-2026 ,Analisis Numerik,3,  18:00 - 19:59 ,TL 2 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:00,19:59,,Masalah,  ,-
+5 ,1/01,2024 - TL 3321 / 03,18-09-2026 ,Analisis Numerik,3,  18:30 - 20:00 ,Ruang 2 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:54,20:00,Masalah terlambat,Masalah,  ,-
+6 ,2/01,2024 - TL 3321 / III,22-09-2026 ,Analisis Numerik,3,  09:00 - 11:30 ,Ruang 8 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:31,11:30,Masalah terlambat,Masalah,  ,-
+7 ,1/01,2024 - TI 3307 / 03,22-09-2026 ,Matematika Diskrit,3,  19:00 - 21:30 ,TI4 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,17:36,,,,  ,-
+8 ,4/01,2024 - TL 3321 / PDAM Depok,23-09-2026 ,Analisis Numerik,3,  18:00 - 21:00 ,TL 1 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:00,21:15,,,  ,-
+9 ,1/01,2024 - TI 3307 / III,23-09-2026 ,Matematika Diskrit,3,  09:00 - 11:30 ,Teknik Informatika D ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,10:23,,Masalah terlambat,,  ,-
+10 ,2/01,2024 - TL 3321 / 03,25-09-2026 ,Analisis Numerik,3,  18:30 - 20:00 ,Ruang 2 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:38,,,,  ,-
+11 ,1/01,2024 - TI 5306 / V,25-09-2026 ,Visualisasi Data,3,  09:00 - 11:30 ,Teknik Informatika A ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:34,,Masalah terlambat,,  ,-
+12 ,3/01,2024 - TL 3321 / III,29-09-2026 ,Analisis Numerik,3,  09:00 - 11:30 ,Ruang 8 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:57,11:30,Masalah terlambat,Masalah,  ,-
+13 ,2/01,2024 - TI 3307 / 03,29-09-2026 ,Matematika Diskrit,3,  19:00 - 21:30 ,TI4 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:46,,,,  ,-
+14 ,6/01,2024 - TL 3321 / PDAM Depok,30-09-2026 ,Analisis Numerik,3,  20:00 - 21:00 ,TL 1 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,00:00,21:00,,,  ,-
+15 ,5/01,2024 - TL 3321 / PDAM Depok,30-09-2026 ,Analisis Numerik,3,  18:00 - 19:59 ,TL 1 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:00,19:59,,Masalah,  ,-
+16 ,2/01,2024 - TI 3307 / III,30-09-2026 ,Matematika Diskrit,3,  09:00 - 11:30 ,Teknik Informatika D ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:53,,Masalah terlambat,,  ,-
+17 ,2/01,2024 - TI 5306 / V,01-10-2026 ,Visualisasi Data,3,  09:00 - 11:30 ,Teknik Informatika A ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,10:12,,Masalah terlambat,,  ,-
+18 ,3/01,2024 - TL 3321 / 03,02-10-2026 ,Analisis Numerik,3,  18:30 - 20:00 ,Ruang 2 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:30,20:00,,Masalah,  ,-
+19 ,1/01,2024 - PU 7201 / 07,03-10-2026 ,Ekonomi Teknik dan Analisa Finansial,2,  15:30 - 17:59 , ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,A,15:31,,,,  ,Ganti Jadwal 
+20 ,2/01,2024 - PU 7201 / 07,03-10-2026 ,Ekonomi Teknik dan Analisa Finansial,2,  18:00 - 18:59 , ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,A,15:34,,,,  ,Ganti Jadwal 
+21 ,4/01,2024 - TL 3321 / III,06-10-2026 ,Analisis Numerik,3,  13:00 - 15:30 ,"Lab. Komputer, Lantai 3 ","  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,12:49,,,,  ,-
+22 ,3/01,2024 - TI 3307 / 03,06-10-2026 ,Matematika Diskrit,3,  19:00 - 21:30 ,TI4 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:06,,,,  ,-
+23 ,7/01,2024 - TL 3321 / PDAM Depok,07-10-2026 ,Analisis Numerik,3,  18:00 - 21:00 ,TL 1 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:00,21:00,,,  ,-
+24 ,3/01,2024 - TI 3307 / III,07-10-2026 ,Matematika Diskrit,3,  09:00 - 11:30 ,Teknik Informatika D ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,10:29,,Masalah terlambat,,  ,-
+25 ,3/01,2024 - TI 5306 / V,08-10-2026 ,Visualisasi Data,3,  09:00 - 11:30 ,Teknik Informatika A ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,10:59,,Masalah terlambat,,  ,-
+26 ,1/01,2024 - TI 5306 / 05,08-10-2026 ,Visualisasi Data,3,  17:00 - 19:30 ,Ruang JS ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,17:10,,,,  ,-
+27 ,4/01,2024 - TL 3321 / 03,09-10-2026 ,Analisis Numerik,3,  18:30 - 20:00 ,Ruang 2 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:33,,,,  ,-
+28 ,3/01,2024 - PU 7201 / 07,10-10-2026 ,Ekonomi Teknik dan Analisa Finansial,2,  19:00 - 20:40 ,TI3 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,A,19:00,,,,  ,Ganti Jadwal 
+29 ,5/01,2024 - TL 3321 / III,13-10-2026 ,Analisis Numerik,3,  09:00 - 10:40 ,"Lab. Komputer, Lantai 3 ","  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,10:02,,Masalah terlambat,,  ,-
+30 ,4/01,2024 - TI 3307 / 03,13-10-2026 ,Matematika Diskrit,3,  19:00 - 21:30 ,TI4 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:18,,Masalah terlambat,,  ,-
+31 ,8/01,2024 - TL 3321 / PDAM Depok,14-10-2026 ,Analisis Numerik,3,  18:00 - 21:00 ,TL 1 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,17:52,,,,  ,-
+32 ,4/01,2024 - TI 3307 / III,14-10-2026 ,Matematika Diskrit,3,  09:00 - 11:30 ,Teknik Informatika D ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,A,09:00,,,,  ,Ganti Jadwal 
+33 ,4/01,2024 - TI 5306 / V,15-10-2026 ,Visualisasi Data,3,  09:00 - 11:30 ,Teknik Informatika A ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,08:06,,,,  ,-
+34 ,2/01,2024 - TI 5306 / 05,15-10-2026 ,Visualisasi Data,3,  17:00 - 19:30 ,Ruang JS ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,A,17:00,,,,  ,Ganti Jadwal 
+35 ,5/01,2024 - TL 3321 / 03,16-10-2026 ,Analisis Numerik,3,  18:30 - 20:00 ,Ruang 2 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:52,,Masalah terlambat,,  ,-
+36 ,4/01,2024 - PU 7201 / 07,17-10-2026 ,Ekonomi Teknik dan Analisa Finansial,2,  19:00 - 20:40 ,TI3 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,A,19:00,,,,  ,Ganti Jadwal 
+37 ,6/01,2024 - TL 3321 / III,20-10-2026 ,Analisis Numerik,3,  13:00 - 15:30 ,"Lab. Komputer, Lantai 3 ","  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,12:20,,,,  ,-
+38 ,5/01,2024 - TI 3307 / 03,20-10-2026 ,Matematika Diskrit,3,  19:00 - 21:30 ,TI4 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+39 ,9/01,2024 - TL 3321 / PDAM Depok,21-10-2026 ,Analisis Numerik,3,  18:00 - 21:00 ,TL 1 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:00,,,,  ,Presensi belum ada
+40 ,5/01,2024 - TI 3307 / III,21-10-2026 ,Matematika Diskrit,3,  09:00 - 11:30 ,Teknik Informatika D ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+41 ,3/01,2024 - TI 5306 / 05,22-10-2026 ,Visualisasi Data,3,  17:00 - 19:30 ,Ruang JS ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,17:00,,,,  ,Presensi belum ada
+42 ,5/01,2024 - TI 5306 / V,22-10-2026 ,Visualisasi Data,3,  09:00 - 11:30 ,Teknik Informatika A ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+43 ,6/01,2024 - TL 3321 / 03,23-10-2026 ,Analisis Numerik,3,  18:30 - 20:00 ,Ruang 2 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:30,,,,  ,Presensi belum ada
+44 ,5/01,2024 - PU 7201 / 07,24-10-2026 ,Ekonomi Teknik dan Analisa Finansial,2,  19:00 - 20:40 ,TI3 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+45 ,7/01,2024 - TL 3321 / III,27-10-2026 ,Analisis Numerik,3,  09:00 - 10:40 ,"Lab. Komputer, Lantai 3 ","  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+46 ,6/01,2024 - TI 3307 / 03,27-10-2026 ,Matematika Diskrit,3,  19:00 - 21:30 ,TI4 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+47 ,10/01,2024 - TL 3321 / PDAM Depok,28-10-2026 ,Analisis Numerik,3,  18:00 - 18:59 ,TL 2 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:00,,,,  ,Presensi belum ada
+48 ,11/01,2024 - TL 3321 / PDAM Depok,28-10-2026 ,Analisis Numerik,3,  19:00 - 21:00 ,TL 2 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+49 ,6/01,2024 - TI 3307 / III,28-10-2026 ,Matematika Diskrit,3,  09:00 - 11:30 ,Teknik Informatika D ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+50 ,6/01,2024 - TI 5306 / V,29-10-2026 ,Visualisasi Data,3,  09:00 - 11:30 ,Teknik Informatika A ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+51 ,4/01,2024 - TI 5306 / 05,29-10-2026 ,Visualisasi Data,3,  17:00 - 19:30 ,Ruang JS ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,17:00,,,,  ,Presensi belum ada
+52 ,7/01,2024 - TL 3321 / 03,30-10-2026 ,Analisis Numerik,3,  18:30 - 20:00 ,Ruang 2 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:30,,,,  ,Presensi belum ada
+53 ,6/01,2024 - PU 7201 / 07,31-10-2026 ,Ekonomi Teknik dan Analisa Finansial,2,  19:00 - 20:40 ,TI3 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+54 ,8/01,2024 - TL 3321 / III,03-11-2026 ,Analisis Numerik,3,  09:00 - 10:40 ,"Lab. Komputer, Lantai 3 ","  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+55 ,7/01,2024 - TI 3307 / 03,03-11-2026 ,Matematika Diskrit,3,  19:00 - 21:30 ,TI4 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+56 ,12/01,2024 - TL 3321 / PDAM Depok,04-11-2026 ,Analisis Numerik,3,  18:00 - 21:00 ,TL 1 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:00,,,,  ,Presensi belum ada
+57 ,7/01,2024 - TI 3307 / III,04-11-2026 ,Matematika Diskrit,3,  09:00 - 11:30 ,Teknik Informatika D ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+58 ,7/01,2024 - TI 5306 / V,05-11-2026 ,Visualisasi Data,3,  09:00 - 11:30 ,Teknik Informatika A ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+59 ,5/01,2024 - TI 5306 / 05,05-11-2026 ,Visualisasi Data,3,  17:00 - 19:30 ,Ruang JS ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,17:00,,,,  ,Presensi belum ada
+60 ,8/01,2024 - TL 3321 / 03,06-11-2026 ,Analisis Numerik,3,  18:30 - 20:00 ,Ruang 2 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:30,,,,  ,Presensi belum ada
+61 ,7/01,2024 - PU 7201 / 07,07-11-2026 ,Ekonomi Teknik dan Analisa Finansial,2,  19:00 - 20:40 ,TI3 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+62 ,9/01,2024 - TL 3321 / III,10-11-2026 ,Analisis Numerik,3,  09:00 - 10:40 ,"Lab. Komputer, Lantai 3 ","  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+63 ,8/01,2024 - TI 3307 / 03,10-11-2026 ,Matematika Diskrit,3,  19:00 - 21:30 ,TI4 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+64 ,13/01,2024 - TL 3321 / PDAM Depok,11-11-2026 ,Analisis Numerik,3,  18:00 - 18:59 ,TL 2 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:00,,,,  ,Presensi belum ada
+65 ,14/01,2024 - TL 3321 / PDAM Depok,11-11-2026 ,Analisis Numerik,3,  19:00 - 21:00 ,TL 1 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+66 ,8/01,2024 - TI 3307 / III,11-11-2026 ,Matematika Diskrit,3,  09:00 - 11:30 ,Teknik Informatika D ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+67 ,8/01,2024 - TI 5306 / V,12-11-2026 ,Visualisasi Data,3,  09:00 - 11:30 ,Teknik Informatika A ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+68 ,6/01,2024 - TI 5306 / 05,12-11-2026 ,Visualisasi Data,3,  17:00 - 19:30 ,Ruang JS ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,17:00,,,,  ,Presensi belum ada
+69 ,9/01,2024 - TL 3321 / 03,13-11-2026 ,Analisis Numerik,3,  18:30 - 20:00 ,Ruang 2 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:30,,,,  ,Presensi belum ada
+70 ,8/01,2024 - PU 7201 / 07,14-11-2026 ,Ekonomi Teknik dan Analisa Finansial,2,  19:00 - 20:40 ,TI3 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+71 ,10/01,2024 - TL 3321 / III,17-11-2026 ,Analisis Numerik,3,  09:00 - 10:40 ,"Lab. Komputer, Lantai 3 ","  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+72 ,9/01,2024 - TI 3307 / 03,17-11-2026 ,Matematika Diskrit,3,  19:00 - 21:30 ,TI4 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+73 ,15/01,2024 - TL 3321 / PDAM Depok,18-11-2026 ,Analisis Numerik,3,  18:00 - 21:00 ,TL 1 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:00,,,,  ,Presensi belum ada
+74 ,9/01,2024 - TI 3307 / III,18-11-2026 ,Matematika Diskrit,3,  09:00 - 11:30 ,Teknik Informatika D ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+75 ,9/01,2024 - TI 5306 / V,19-11-2026 ,Visualisasi Data,3,  09:00 - 11:30 ,Teknik Informatika A ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+76 ,7/01,2024 - TI 5306 / 05,19-11-2026 ,Visualisasi Data,3,  17:00 - 19:30 ,Ruang JS ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,17:00,,,,  ,Presensi belum ada
+77 ,10/01,2024 - TL 3321 / 03,20-11-2026 ,Analisis Numerik,3,  18:30 - 20:00 ,Ruang 2 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:30,,,,  ,Presensi belum ada
+78 ,9/01,2024 - PU 7201 / 07,21-11-2026 ,Ekonomi Teknik dan Analisa Finansial,2,  19:00 - 20:40 ,TI3 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+79 ,11/01,2024 - TL 3321 / III,24-11-2026 ,Analisis Numerik,3,  09:00 - 10:40 ,"Lab. Komputer, Lantai 3 ","  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+80 ,10/01,2024 - TI 3307 / 03,24-11-2026 ,Matematika Diskrit,3,  19:00 - 21:30 ,TI4 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+81 ,16/01,2024 - TL 3321 / PDAM Depok,25-11-2026 ,Analisis Numerik,3,  18:00 - 21:00 ,TL 1 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:00,,,,  ,Presensi belum ada
+82 ,10/01,2024 - TI 3307 / III,25-11-2026 ,Matematika Diskrit,3,  09:00 - 11:30 ,Teknik Informatika D ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+83 ,10/01,2024 - TI 5306 / V,26-11-2026 ,Visualisasi Data,3,  09:00 - 11:30 ,Teknik Informatika A ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+84 ,8/01,2024 - TI 5306 / 05,26-11-2026 ,Visualisasi Data,3,  17:00 - 19:30 ,Ruang JS ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,17:00,,,,  ,Presensi belum ada
+85 ,11/01,2024 - TL 3321 / 03,27-11-2026 ,Analisis Numerik,3,  18:30 - 20:00 ,Ruang 2 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:30,,,,  ,Presensi belum ada
+86 ,10/01,2024 - PU 7201 / 07,28-11-2026 ,Ekonomi Teknik dan Analisa Finansial,2,  19:00 - 20:40 ,TI3 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+87 ,12/01,2024 - TL 3321 / III,01-12-2026 ,Analisis Numerik,3,  09:00 - 10:40 ,"Lab. Komputer, Lantai 3 ","  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+88 ,11/01,2024 - TI 3307 / 03,01-12-2026 ,Matematika Diskrit,3,  19:00 - 21:30 ,TI4 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+89 ,11/01,2024 - TI 3307 / III,02-12-2026 ,Matematika Diskrit,3,  09:00 - 11:30 ,Teknik Informatika D ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+90 ,11/01,2024 - TI 5306 / V,03-12-2026 ,Visualisasi Data,3,  09:00 - 11:30 ,Teknik Informatika A ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+91 ,9/01,2024 - TI 5306 / 05,03-12-2026 ,Visualisasi Data,3,  17:00 - 19:30 ,Ruang JS ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,17:00,,,,  ,Presensi belum ada
+92 ,12/01,2024 - TL 3321 / 03,04-12-2026 ,Analisis Numerik,3,  18:30 - 20:00 ,Ruang 2 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:30,,,,  ,Presensi belum ada
+93 ,11/01,2024 - PU 7201 / 07,05-12-2026 ,Ekonomi Teknik dan Analisa Finansial,2,  19:00 - 20:40 ,TI3 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+94 ,13/01,2024 - TL 3321 / III,08-12-2026 ,Analisis Numerik,3,  09:00 - 10:40 ,"Lab. Komputer, Lantai 3 ","  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+95 ,12/01,2024 - TI 3307 / 03,08-12-2026 ,Matematika Diskrit,3,  19:00 - 21:30 ,TI4 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+96 ,12/01,2024 - TI 3307 / III,09-12-2026 ,Matematika Diskrit,3,  09:00 - 11:30 ,Teknik Informatika D ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+97 ,12/01,2024 - TI 5306 / V,10-12-2026 ,Visualisasi Data,3,  09:00 - 11:30 ,Teknik Informatika A ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+98 ,10/01,2024 - TI 5306 / 05,10-12-2026 ,Visualisasi Data,3,  17:00 - 19:30 ,Ruang JS ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,17:00,,,,  ,Presensi belum ada
+99 ,13/01,2024 - TL 3321 / 03,11-12-2026 ,Analisis Numerik,3,  18:30 - 20:00 ,Ruang 2 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:30,,,,  ,Presensi belum ada
+100 ,12/01,2024 - PU 7201 / 07,12-12-2026 ,Ekonomi Teknik dan Analisa Finansial,2,  19:00 - 20:40 ,TI3 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+101 ,14/01,2024 - TL 3321 / III,15-12-2026 ,Analisis Numerik,3,  09:00 - 10:40 ,"Lab. Komputer, Lantai 3 ","  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+102 ,13/01,2024 - TI 3307 / 03,15-12-2026 ,Matematika Diskrit,3,  19:00 - 21:30 ,TI4 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+103 ,13/01,2024 - TI 3307 / III,16-12-2026 ,Matematika Diskrit,3,  09:00 - 11:30 ,Teknik Informatika D ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+104 ,13/01,2024 - TI 5306 / V,17-12-2026 ,Visualisasi Data,3,  09:00 - 11:30 ,Teknik Informatika A ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+105 ,11/01,2024 - TI 5306 / 05,17-12-2026 ,Visualisasi Data,3,  17:00 - 19:30 ,Ruang JS ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,17:00,,,,  ,Presensi belum ada
+106 ,14/01,2024 - TL 3321 / 03,18-12-2026 ,Analisis Numerik,3,  18:30 - 20:00 ,Ruang 2 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:30,,,,  ,Presensi belum ada
+107 ,13/01,2024 - PU 7201 / 07,19-12-2026 ,Ekonomi Teknik dan Analisa Finansial,2,  19:00 - 20:40 ,TI3 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+108 ,15/01,2024 - TL 3321 / III,22-12-2026 ,Analisis Numerik,3,  09:00 - 10:40 ,"Lab. Komputer, Lantai 3 ","  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+109 ,14/01,2024 - TI 3307 / 03,22-12-2026 ,Matematika Diskrit,3,  19:00 - 21:30 ,TI4 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+110 ,14/01,2024 - TI 3307 / III,23-12-2026 ,Matematika Diskrit,3,  09:00 - 11:30 ,Teknik Informatika D ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+111 ,12/01,2024 - TI 5306 / 05,24-12-2026 ,Visualisasi Data,3,  17:00 - 19:30 ,Ruang JS ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,17:00,,,,  ,Presensi belum ada
+112 ,14/01,2024 - TI 5306 / V,24-12-2026 ,Visualisasi Data,3,  09:00 - 11:30 ,Teknik Informatika A ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+113 ,14/01,2024 - PU 7201 / 07,26-12-2026 ,Ekonomi Teknik dan Analisa Finansial,2,  19:00 - 20:40 ,TI3 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+114 ,16/01,2024 - TL 3321 / III,29-12-2026 ,Analisis Numerik,3,  09:00 - 10:40 ,"Lab. Komputer, Lantai 3 ","  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+115 ,15/01,2024 - TI 3307 / 03,29-12-2026 ,Matematika Diskrit,3,  19:00 - 21:30 ,TI4 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+116 ,15/01,2024 - TI 3307 / III,30-12-2026 ,Matematika Diskrit,3,  09:00 - 11:30 ,Teknik Informatika D ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+117 ,15/01,2024 - TI 5306 / V,31-12-2026 ,Visualisasi Data,3,  09:00 - 11:30 ,Teknik Informatika A ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+118 ,13/01,2024 - TI 5306 / 05,31-12-2026 ,Visualisasi Data,3,  17:00 - 19:30 ,Ruang JS ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,17:00,,,,  ,Presensi belum ada
+119 ,15/01,2024 - PU 7201 / 07,02-01-2027 ,Ekonomi Teknik dan Analisa Finansial,2,  19:00 - 20:40 ,TI3 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+120 ,16/01,2024 - TI 3307 / 03,05-01-2027 ,Matematika Diskrit,3,  19:00 - 21:30 ,TI4 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+121 ,16/01,2024 - TI 3307 / III,06-01-2027 ,Matematika Diskrit,3,  09:00 - 11:30 ,Teknik Informatika D ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+122 ,16/01,2024 - TI 5306 / V,07-01-2027 ,Visualisasi Data,3,  09:00 - 11:30 ,Teknik Informatika A ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,09:00,,,,  ,Presensi belum ada
+123 ,14/01,2024 - TI 5306 / 05,07-01-2027 ,Visualisasi Data,3,  17:00 - 19:30 ,Ruang JS ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,17:00,,,,  ,Presensi belum ada
+124 ,15/01,2024 - TL 3321 / 03,08-01-2027 ,Analisis Numerik,3,  18:30 - 20:00 ,Ruang 2 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:30,,,,  ,Presensi belum ada
+125 ,16/01,2024 - PU 7201 / 07,09-01-2027 ,Ekonomi Teknik dan Analisa Finansial,2,  19:00 - 20:40 ,TI3 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,19:00,,,,  ,Presensi belum ada
+126 ,15/01,2024 - TI 5306 / 05,14-01-2027 ,Visualisasi Data,3,  17:00 - 19:30 ,Ruang JS ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,17:00,,,,  ,Presensi belum ada
+127 ,16/01,2024 - TL 3321 / 03,15-01-2027 ,Analisis Numerik,3,  18:30 - 20:00 ,Ruang 2 ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,18:30,,,,  ,Presensi belum ada
+128 ,16/01,2024 - TI 5306 / 05,21-01-2027 ,Visualisasi Data,3,  17:00 - 19:30 ,Ruang JS ,"  MEGA WAHYU RHAMADANI, S.T., M.M.S.I",,H,17:00,,,,  ,Presensi belum ada`;
+
+    let attendanceData = [];
+    let activeEditingIndex = null;
+
+    // Deteksi Program Studi
+    function detectProdi(kodeMk, ruangan) {
+      const kmk = (kodeMk || '').toUpperCase();
+      const rgn = (ruangan || '').toUpperCase();
+
+      // Aturan Khusus User: PU 7201 itu prodi TI
+      if (kmk.includes('PU 7201') || kmk.includes('PU7201') || kmk.includes('PU')) {
+        return 'Teknik Informatika';
+      }
+
+      // Aturan: Jika kode depannya TL -> Teknik Lingkungan
+      if (kmk.includes('TL') || kmk.startsWith('TL') || /\bTL\b/i.test(kmk)) {
+        return 'Teknik Lingkungan';
+      }
+
+      // Aturan: Jika ruangan ada kata Teknik Informatika atau kode TI -> Teknik Informatika
+      if (rgn.includes('TEKNIK INFORMATIKA') || kmk.includes('TI') || kmk.startsWith('TI') || rgn.includes('TI')) {
+        return 'Teknik Informatika';
+      }
+
+      return 'Teknik Informatika';
+    }
+
+    // Deteksi Jenis Kelas:
+    // - Angka romawi = Kelas Pagi Reguler
+    // - Angka biasa = Kelas Sore Karyawan
+    // - PDAM Depok = Mahasiswa Khusus PDAM Depok
+    function detectJenisKelas(kodeMkDanKelas) {
+      const str = (kodeMkDanKelas || '').trim();
+      const parts = str.split('/');
+      const suffix = (parts.length > 1 ? parts[1].trim() : str).toUpperCase();
+
+      if (suffix.includes('PDAM') || suffix.includes('DEPOK')) {
+        return 'Mahasiswa Khusus PDAM Depok';
+      }
+
+      // Angka Romawi: I, II, III, IV, V, VI, VII, VIII, IX, X
+      if (/^(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII)$/i.test(suffix)) {
+        return 'Kelas Pagi Reguler';
+      }
+
+      // Angka Biasa: 01, 02, 03, 05, 07, dst.
+      if (/^\d+$/.test(suffix)) {
+        return 'Kelas Sore Karyawan';
+      }
+
+      return 'Kelas Pagi Reguler';
+    }
+
+    // Helper to parse CSV properly handling quoted commas
+    function parseCSV(text) {
+      const lines = text.trim().split(/\r\n|\n/);
+      if (lines.length < 2) return [];
+
+      const parseLine = (line) => {
+        const result = [];
+        let cur = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          if (char === '"' || char === "'") {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            result.push(cur.trim().replace(/^["']|["']$/g, '').trim());
+            cur = '';
+          } else {
+            cur += char;
+          }
+        }
+        result.push(cur.trim().replace(/^["']|["']$/g, '').trim());
+        return result;
+      };
+
+      const headers = parseLine(lines[0]);
+      const data = [];
+
+      for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        const row = parseLine(lines[i]);
+        const item = {};
+        headers.forEach((h, idx) => {
+          item[h] = row[idx] !== undefined ? row[idx] : '';
+        });
+        data.push(item);
+      }
+      return data;
+    }
+
+    // Clean & standardize record with flexible normalized matching
+    function cleanRecord(rawItem, index) {
+      const normalized = {};
+      for (const k in rawItem) {
+        if (Object.prototype.hasOwnProperty.call(rawItem, k)) {
+          const cleanKey = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+          normalized[cleanKey] = rawItem[k] !== undefined && rawItem[k] !== null ? String(rawItem[k]).trim() : '';
+        }
+      }
+
+      const getVal = (...keys) => {
+        for (const k of keys) {
+          const cleanKey = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+          if (normalized[cleanKey] !== undefined && normalized[cleanKey] !== '') {
+            return normalized[cleanKey];
+          }
+        }
+        for (const k of keys) {
+          const cleanKey = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+          for (const keyInNorm in normalized) {
+            if (keyInNorm.includes(cleanKey) && normalized[keyInNorm] !== '') {
+              return normalized[keyInNorm];
+            }
+          }
+        }
+        return '';
+      };
+
+      let gantiJadwal = getVal('Ganti Jadwal', 'ganti_jadwal', 'Ganti', 'status_ganti');
+      gantiJadwal = gantiJadwal.replace(/<[^>]*>?/gm, '').trim();
+
+      const kodeMk = getVal('Kode MK dan Kelas', 'kode_mk', 'Kode MK', 'makul', 'matakuliah', 'rombel', 'kelas');
+      const ruangan = getVal('Ruangan', 'ruang', 'room') || '-';
+      const prodi = detectProdi(kodeMk, ruangan);
+      const jenisKelas = detectJenisKelas(kodeMk);
+      const pengajar = getVal('Pengajar', 'dosen', 'nama dosen', 'lecturer') || 'MEGA WAHYU RHAMADANI, S.T., M.M.SI';
+
+      return {
+        id: index + 1,
+        no: getVal('No', 'nomor', 'id') || (index + 1),
+        grup: getVal('Grup', 'group'),
+        kode_mk: kodeMk,
+        prodi: prodi,
+        jenis_kelas: jenisKelas,
+        tanggal: getVal('Tanggal', 'tgl', 'date', 'hari/tanggal'),
+        mata_kuliah: getVal('Nama Mata Kuliah', 'mata kuliah', 'matakuliah', 'makul', 'subject') || 'Mata Kuliah',
+        sks: getVal('SKS', 'sks', 'kredit') || '3',
+        jadwal: getVal('Jadwal', 'jam', 'waktu', 'time'),
+        ruangan: ruangan,
+        pengajar: pengajar,
+        presensi: (getVal('Presensi', 'status', 'kehadiran', 'absensi') || 'H').toUpperCase(),
+        datang: getVal('Datang', 'jam datang', 'masuk', 'checkin'),
+        kembali: getVal('Kembali', 'jam pulang', 'pulang', 'checkout'),
+        terlambat: getVal('Terlambat', 'keterlambatan', 'late'),
+        komentar: getVal('Komentar', 'catatan', 'keterangan', 'notes'),
+        ganti_jadwal: gantiJadwal
+      };
+    }
+
+    // Robust spreadsheet parser: scans ALL sheets, finds header row anywhere in first 30 rows,
+    // supports xlsx / xls / csv (comma, semicolon, tab) / HTML-xls / UTF-16 exports.
+    let lastParseDiagnostic = '';
+    function parseExcelData(workbook) {
+      const keywords = ['tanggal', 'tgl', 'mata kuliah', 'matakuliah', 'jadwal', 'presensi', 'ruangan', 'sks', 'pengajar', 'dosen', 'kelas', 'kode', 'datang'];
+      let best = { records: [], score: -1, sheet: '' };
+      const diag = [];
+
+      workbook.SheetNames.forEach(sheetName => {
+        const ws = workbook.Sheets[sheetName];
+        let rows2D = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
+        if (!rows2D) rows2D = [];
+
+        // Jika CSV ber-delimiter ';' terbaca sebagai 1 kolom, pecah manual
+        if (rows2D.length > 0 && rows2D.slice(0, 5).every(r => r.filter(c => String(c).trim()).length <= 1)) {
+          const joined = rows2D.map(r => String(r[0] || ''));
+          const delim = joined.some(l => l.includes(';')) ? ';' : (joined.some(l => l.includes('\t')) ? '\t' : null);
+          if (delim) rows2D = joined.map(l => l.split(delim).map(c => c.replace(/^"|"$/g, '').trim()));
+        }
+
+        diag.push(`Sheet "${sheetName}": ${rows2D.length} baris`);
+        if (rows2D.length === 0) return;
+
+        let headerIdx = -1, headerScore = 0;
+        for (let i = 0; i < Math.min(30, rows2D.length); i++) {
+          const rowStr = (rows2D[i] || []).map(c => String(c).toLowerCase().trim());
+          let matches = 0;
+          keywords.forEach(k => { if (rowStr.some(c => c.includes(k))) matches++; });
+          if (matches > headerScore) { headerScore = matches; headerIdx = i; }
+        }
+        if (headerIdx < 0 || headerScore < 2) {
+          diag.push(`  → header kolom (Tanggal/Mata Kuliah/Jadwal/Presensi) tidak ditemukan. Baris 1: ${JSON.stringify((rows2D[0] || []).slice(0, 6))}`);
+          return;
+        }
+
+        const headers = rows2D[headerIdx].map(h => String(h || '').trim());
+        const records = [];
+        for (let i = headerIdx + 1; i < rows2D.length; i++) {
+          const row = rows2D[i];
+          if (!row || row.every(c => !String(c || '').trim())) continue;
+          const item = {};
+          headers.forEach((h, colIdx) => {
+            if (h) item[h] = row[colIdx] !== undefined ? String(row[colIdx]).trim() : '';
+          });
+          records.push(item);
+        }
+        diag.push(`  → header di baris ${headerIdx + 1}, ${records.length} baris data`);
+        if (records.length > 0 && headerScore * 1000 + records.length > best.score) {
+          best = { records, score: headerScore * 1000 + records.length, sheet: sheetName };
+        }
+      });
+
+      lastParseDiagnostic = diag.join('\n');
+      return best.records;
+    }
+
+    // Save to LocalStorage
+    function saveData() {
+      try {
+        localStorage.setItem('presensi_dosen_data', JSON.stringify(attendanceData));
+      } catch (e) {
+        console.warn('LocalStorage save failed:', e);
+      }
+    }
+
+    // Update Dosen Profile name if present
+    function updateDosenProfileName() {
+      updateDosenHeader();
+    }
+
+    // Initialize dataset with LocalStorage persistence
+    function loadInitialData() {
+      const cached = localStorage.getItem('presensi_dosen_data');
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            attendanceData = parsed;
+            updateDosenProfileName();
+            populateMatkulFilter();
+            renderDashboard();
+            return;
+          }
+        } catch (e) {
+          console.warn('Cache parsing failed, reloading default:', e);
+        }
+      }
+
+      const parsed = parseCSV(RAW_INITIAL_CSV);
+      attendanceData = parsed.map((item, idx) => cleanRecord(item, idx));
+      saveData();
+      populateMatkulFilter();
+      renderDashboard();
+    }
+
+    // Determine status of an item
+    function getItemStatus(item) {
+      const isFutureOrUnattended = item.ganti_jadwal.toLowerCase().includes('presensi belum ada') || 
+                                   (item.datang === '' && item.kembali === '' && !item.terlambat && !item.ganti_jadwal);
+      if (item.presensi === 'A' || item.ganti_jadwal.toLowerCase().includes('ganti jadwal')) {
+        return 'ALPHA';
+      }
+      if (isFutureOrUnattended) {
+        return 'PENDING';
+      }
+      if (item.terlambat.toLowerCase().includes('terlambat') || item.komentar.toLowerCase().includes('terlambat')) {
+        return 'LATE';
+      }
+      return 'HADIR_ONTIME';
+    }
+
+    // ===== Helper Bulan & Dosen =====
+    const NAMA_BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+    // Mengubah tanggal (dd-mm-yyyy, dd/mm/yyyy, yyyy-mm-dd, atau serial Excel) menjadi kunci "yyyy-mm"
+    function getMonthKey(tanggal) {
+      const s = String(tanggal || '').trim();
+      if (!s) return '';
+      let m = s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/);
+      if (m) return `${m[1]}-${m[2].padStart(2, '0')}`;
+      m = s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/);
+      if (m) {
+        const y = m[3].length === 2 ? '20' + m[3] : m[3];
+        return `${y}-${m[2].padStart(2, '0')}`;
+      }
+      if (/^\d{5}(\.\d+)?$/.test(s)) {
+        const d = new Date(Math.round((parseFloat(s) - 25569) * 86400000));
+        return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+      }
+      return '';
+    }
+
+    function monthLabel(key) {
+      if (!key) return 'Tanpa Tanggal';
+      const [y, mo] = key.split('-');
+      return `${NAMA_BULAN[parseInt(mo, 10) - 1] || mo} ${y}`;
+    }
+
+    function normDosen(name) {
+      return String(name || '').replace(/\s+/g, ' ').trim();
+    }
+
+    function fillSelect(id, items, allLabel) {
+      const sel = document.getElementById(id);
+      const current = sel.value;
+      sel.innerHTML = `<option value="">${allLabel}</option>`;
+      items.forEach(({ value, label }) => {
+        const opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = label;
+        sel.appendChild(opt);
+      });
+      if (items.some(i => i.value === current)) sel.value = current;
+    }
+
+    // Satu sumber kebenaran untuk semua filter (dipakai dashboard & PDF)
+    function getFilteredData({ includeSearch = true } = {}) {
+      const searchVal = includeSearch ? document.getElementById('searchInput').value.toLowerCase() : '';
+      const dosenVal = document.getElementById('filterDosen').value;
+      const bulanVal = document.getElementById('filterBulan').value;
+      const prodiVal = document.getElementById('filterProdi').value;
+      const jenisKelasVal = document.getElementById('filterJenisKelas').value;
+      const matkulVal = document.getElementById('filterMatkul').value;
+      const statusVal = document.getElementById('filterStatus').value;
+
+      return attendanceData.filter(item => {
+        const status = getItemStatus(item);
+        const matchSearch = !searchVal ||
+          [item.mata_kuliah, item.kode_mk, item.ruangan, item.prodi, item.jenis_kelas, item.tanggal, item.komentar, item.pengajar]
+            .some(v => String(v || '').toLowerCase().includes(searchVal));
+        const matchDosen = !dosenVal || normDosen(item.pengajar) === dosenVal;
+        const matchBulan = !bulanVal || getMonthKey(item.tanggal) === bulanVal;
+        const matchProdi = !prodiVal || item.prodi === prodiVal;
+        const matchJenisKelas = !jenisKelasVal || item.jenis_kelas === jenisKelasVal;
+        const matchMatkul = !matkulVal || item.mata_kuliah === matkulVal;
+        let matchStatus = true;
+        if (statusVal === 'H') matchStatus = (status === 'HADIR_ONTIME' || status === 'LATE');
+        else if (statusVal === 'A') matchStatus = (status === 'ALPHA');
+        else if (statusVal === 'LATE') matchStatus = (status === 'LATE');
+        else if (statusVal === 'PENDING') matchStatus = (status === 'PENDING');
+        return matchSearch && matchDosen && matchBulan && matchProdi && matchJenisKelas && matchMatkul && matchStatus;
+      });
+    }
+
+    // Header profil menyesuaikan dosen terpilih
+    function updateDosenHeader() {
+      const dosenVal = document.getElementById('filterDosen').value;
+      const allDosen = [...new Set(attendanceData.map(d => normDosen(d.pengajar)).filter(Boolean))];
+      let name;
+      if (dosenVal) name = dosenVal;
+      else if (allDosen.length === 1) name = allDosen[0];
+      else if (allDosen.length === 0) name = 'Belum Ada Data Dosen';
+      else name = `Semua Dosen (${allDosen.length} Dosen)`;
+      document.getElementById('headerDosenName').textContent = name;
+      document.getElementById('pdfDosenName').textContent = name;
+      const initials = (dosenVal || allDosen.length === 1)
+        ? name.split(/[\s,]+/).filter(w => w && !w.includes('.')).map(w => w[0]).slice(0, 2).join('')
+        : (allDosen.length === 0 ? '👤' : '👥');
+      document.getElementById('dosenAvatar').textContent = initials || 'DS';
+    }
+
+    // Populate Mata Kuliah, Dosen & Bulan Filter Dropdowns
+    function populateMatkulFilter() {
+      const uniqueMatkul = [...new Set(attendanceData.map(d => d.mata_kuliah).filter(Boolean))].sort();
+      fillSelect('filterMatkul', uniqueMatkul.map(m => ({ value: m, label: m })), `Semua Mata Kuliah (${uniqueMatkul.length})`);
+
+      const dosenCount = {};
+      attendanceData.forEach(d => { const n = normDosen(d.pengajar); if (n) dosenCount[n] = (dosenCount[n] || 0) + 1; });
+      const dosenList = Object.keys(dosenCount).sort();
+      fillSelect('filterDosen', dosenList.map(n => ({ value: n, label: `${n} (${dosenCount[n]})` })), `👤 Semua Dosen (${dosenList.length})`);
+
+      const bulanCount = {};
+      attendanceData.forEach(d => { const k = getMonthKey(d.tanggal); if (k) bulanCount[k] = (bulanCount[k] || 0) + 1; });
+      const bulanList = Object.keys(bulanCount).sort();
+      fillSelect('filterBulan', bulanList.map(k => ({ value: k, label: `${monthLabel(k)} (${bulanCount[k]} sesi)` })), `📅 Semua Bulan (${bulanList.length})`);
+    }
+
+    // Render summary cards per Course
+    function renderCourseSummaries(sourceData = attendanceData) {
+      const container = document.getElementById('courseSummaryCards');
+      container.innerHTML = '';
+      if (sourceData.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400 col-span-full text-center py-6">Tidak ada mata kuliah pada filter yang dipilih.</p>';
+        return;
+      }
+
+      const grouped = {};
+      sourceData.forEach(item => {
+        const mkKey = item.mata_kuliah + ' - ' + item.kode_mk;
+        if (!grouped[mkKey]) {
+          grouped[mkKey] = {
+            name: item.mata_kuliah,
+            kode_mk: item.kode_mk,
+            sks: item.sks,
+            prodi: item.prodi,
+            jenis_kelas: item.jenis_kelas,
+            total: 0,
+            executed: 0,
+            hadir: 0,
+            late: 0,
+            alpha: 0
+          };
+        }
+        grouped[mkKey].total++;
+
+        const status = getItemStatus(item);
+        if (status !== 'PENDING') {
+          grouped[mkKey].executed++;
+          if (status === 'HADIR_ONTIME') grouped[mkKey].hadir++;
+          else if (status === 'LATE') {
+            grouped[mkKey].hadir++;
+            grouped[mkKey].late++;
+          } else if (status === 'ALPHA') {
+            grouped[mkKey].alpha++;
+          }
+        }
+      });
+
+      Object.values(grouped).forEach(course => {
+        const pct = course.executed > 0 ? Math.round((course.hadir / course.executed) * 100) : 100;
+        
+        let prodiBadge = course.prodi === 'Teknik Lingkungan'
+          ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-teal-100 text-teal-800 border border-teal-200">Teknik Lingkungan</span>`
+          : `<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-sky-100 text-sky-800 border border-sky-200">Teknik Informatika</span>`;
+
+        let jenisBadge = '';
+        if (course.jenis_kelas === 'Mahasiswa Khusus PDAM Depok') {
+          jenisBadge = `<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-cyan-100 text-cyan-800 border border-cyan-200">🏢 Khusus PDAM</span>`;
+        } else if (course.jenis_kelas === 'Kelas Sore Karyawan') {
+          jenisBadge = `<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 border border-indigo-200">🌙 Sore Karyawan</span>`;
+        } else {
+          jenisBadge = `<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">☀️ Pagi Reguler</span>`;
+        }
+
+        const card = document.createElement('div');
+        card.className = "p-4 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white hover:shadow-md transition";
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-1 mb-1">
+            ${prodiBadge}
+            ${jenisBadge}
+          </div>
+          <h4 class="font-bold text-slate-800 text-sm mt-2 line-clamp-1">${course.name}</h4>
+          <p class="text-[11px] text-slate-500 mb-2 font-mono">${course.kode_mk} &bull; ${course.sks} SKS</p>
+          
+          <div class="flex items-center justify-between text-xs mb-1">
+            <span class="text-slate-500">Progress (${course.executed}/${course.total} Sesi)</span>
+            <span class="font-bold ${pct >= 80 ? 'text-emerald-700' : 'text-amber-700'}">${pct}% Hadir</span>
+          </div>
+          <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+            <div class="bg-sky-600 h-full rounded-full" style="width: ${Math.min(100, Math.round((course.executed / course.total) * 100))}%"></div>
+          </div>
+          
+          <div class="mt-3 pt-2.5 border-t border-slate-200 flex justify-between text-[11px]">
+            <span class="text-emerald-700 font-medium">Hadir: <strong>${course.hadir}</strong></span>
+            <span class="text-amber-600">Terlambat: <strong>${course.late}</strong></span>
+            <span class="text-rose-600">Alpha: <strong>${course.alpha}</strong></span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Filter and Render Table
+    function renderDashboard() {
+      // Filtered records (Dosen, Bulan, Prodi, Jenis Kelas, Mata Kuliah, Status, Pencarian)
+      const filtered = getFilteredData();
+      updateDosenHeader();
+
+      // Update Counts
+      document.getElementById('showingCount').textContent = filtered.length;
+      document.getElementById('totalCount').textContent = attendanceData.length;
+
+      // Update Prodi & Jenis Kelas Counts in Profile Banner (mengikuti filter aktif)
+      const tiCount = filtered.filter(d => d.prodi === 'Teknik Informatika').length;
+      const tlCount = filtered.filter(d => d.prodi === 'Teknik Lingkungan').length;
+      document.getElementById('countProdiTI').textContent = tiCount;
+      document.getElementById('countProdiTL').textContent = tlCount;
+
+      const pagiCount = filtered.filter(d => d.jenis_kelas === 'Kelas Pagi Reguler').length;
+      const soreCount = filtered.filter(d => d.jenis_kelas === 'Kelas Sore Karyawan').length;
+      const pdamCount = filtered.filter(d => d.jenis_kelas === 'Mahasiswa Khusus PDAM Depok').length;
+      document.getElementById('countKelasPagi').textContent = pagiCount;
+      document.getElementById('countKelasSore').textContent = soreCount;
+      document.getElementById('countKelasPDAM').textContent = pdamCount;
+
+      // Calculate stats based on current view or total
+      let totalExecuted = 0;
+      let totalHadir = 0;
+      let totalLate = 0;
+      let totalAlpha = 0;
+      let totalPending = 0;
+
+      filtered.forEach(item => {
+        const st = getItemStatus(item);
+        if (st === 'PENDING') totalPending++;
+        else {
+          totalExecuted++;
+          if (st === 'HADIR_ONTIME') totalHadir++;
+          else if (st === 'LATE') {
+            totalHadir++;
+            totalLate++;
+          } else if (st === 'ALPHA') {
+            totalAlpha++;
+          }
+        }
+      });
+
+      const onTimeCount = totalHadir - totalLate;
+      const hadirRate = totalExecuted > 0 ? ((totalHadir / totalExecuted) * 100).toFixed(1) : 0;
+      const onTimePct = totalHadir > 0 ? ((onTimeCount / totalHadir) * 100).toFixed(1) : 0;
+      const latePct = totalHadir > 0 ? ((totalLate / totalHadir) * 100).toFixed(1) : 0;
+
+      // Update Header & Card stats
+      document.getElementById('statTotalSesi').textContent = filtered.length;
+      document.getElementById('statTotalRealisasi').textContent = totalExecuted;
+      document.getElementById('statTotalHadir').textContent = totalHadir;
+      document.getElementById('statKehadiranRate').textContent = hadirRate + '%';
+
+      document.getElementById('statCardOnTime').textContent = onTimeCount;
+      document.getElementById('statCardOnTimePct').textContent = onTimePct + '%';
+      document.getElementById('statCardLate').textContent = totalLate;
+      document.getElementById('statCardLatePct').textContent = latePct + '%';
+      document.getElementById('statCardAlpha').textContent = totalAlpha;
+      document.getElementById('statCardFuture').textContent = totalPending;
+
+      // Render Table Rows
+      const tbody = document.getElementById('attendanceTableBody');
+      tbody.innerHTML = '';
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="12" class="text-center py-8 text-slate-400">Tidak ada data yang sesuai filter</td></tr>`;
+      } else {
+        filtered.forEach((item, index) => {
+          const status = getItemStatus(item);
+          let badgeHtml = '';
+          if (status === 'ALPHA') {
+            badgeHtml = `<span class="px-2 py-0.5 rounded text-[10px] font-bold badge-a">ALPHA (A)</span>`;
+          } else if (status === 'LATE') {
+            badgeHtml = `<span class="px-2 py-0.5 rounded text-[10px] font-bold badge-late">TERLAMBAT</span>`;
+          } else if (status === 'PENDING') {
+            badgeHtml = `<span class="px-2 py-0.5 rounded text-[10px] font-semibold badge-pending">MENDATANG</span>`;
+          } else {
+            badgeHtml = `<span class="px-2 py-0.5 rounded text-[10px] font-bold badge-h">HADIR (H)</span>`;
+          }
+
+          // Prodi Badge
+          let prodiBadgeTable = item.prodi === 'Teknik Lingkungan'
+            ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200 whitespace-nowrap">Teknik Lingkungan</span>`
+            : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200 whitespace-nowrap">Teknik Informatika</span>`;
+
+          // Jenis Kelas Badge
+          let jenisBadgeTable = '';
+          if (item.jenis_kelas === 'Mahasiswa Khusus PDAM Depok') {
+            jenisBadgeTable = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200 whitespace-nowrap">🏢 PDAM Depok</span>`;
+          } else if (item.jenis_kelas === 'Kelas Sore Karyawan') {
+            jenisBadgeTable = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 whitespace-nowrap">🌙 Sore Karyawan</span>`;
+          } else {
+            jenisBadgeTable = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">☀️ Pagi Reguler</span>`;
+          }
+
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+          tr.innerHTML = `
+            <td class="py-2.5 px-3 text-center text-slate-400 font-mono">${item.no}</td>
+            <td class="py-2.5 px-3 font-medium text-slate-700 whitespace-nowrap">${item.tanggal}</td>
+            <td class="py-2.5 px-3">${prodiBadgeTable}</td>
+            <td class="py-2.5 px-3">${jenisBadgeTable}</td>
+            <td class="py-2.5 px-3">
+              <span class="font-bold text-slate-800 block">${item.mata_kuliah}</span>
+              <span class="text-[11px] text-slate-500 font-mono">${item.kode_mk}</span>
+            </td>
+            <td class="py-2.5 px-3 text-slate-600 font-medium">${item.sks} SKS</td>
+            <td class="py-2.5 px-3 font-mono text-slate-600 whitespace-nowrap">${item.jadwal}</td>
+            <td class="py-2.5 px-3 text-slate-600">${item.ruangan}</td>
+            <td class="py-2.5 px-3 text-center">${badgeHtml}</td>
+            <td class="py-2.5 px-3 text-center font-mono">
+              ${item.datang ? `<span class="text-slate-800 font-semibold">${item.datang}</span>` : '<span class="text-slate-300">-</span>'}
+              ${item.kembali ? `<span class="text-slate-400 block text-[10px]">s.d ${item.kembali}</span>` : ''}
+            </td>
+            <td class="py-2.5 px-3 text-slate-600">
+              ${item.terlambat ? `<span class="text-amber-600 font-medium flex items-center"><i data-lucide="alert-circle" class="w-3 h-3 mr-1 inline"></i>${item.terlambat}</span>` : ''}
+              ${item.ganti_jadwal ? `<span class="text-xs text-rose-600 font-medium">${item.ganti_jadwal}</span>` : ''}
+              ${!item.terlambat && !item.ganti_jadwal ? '<span class="text-slate-300">-</span>' : ''}
+            </td>
+            <td class="py-2.5 px-3 text-center no-print whitespace-nowrap">
+              <button onclick="openEditModalById(${item.id})" class="p-1 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded mr-0.5" title="Edit Presensi">
+                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+              </button>
+              <button onclick="deleteSingleRowById(${item.id})" class="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded" title="Hapus Baris Presensi Ini">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      renderCourseSummaries(filtered);
+      lucide.createIcons();
+    }
+
+    // Prepare PDF Area data
+    function preparePDFContent() {
+      const today = new Date().toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+      document.getElementById('pdfPrintDate').textContent = today;
+      document.getElementById('pdfSignDate').textContent = today;
+
+      const prodiFilterVal = document.getElementById('filterProdi').value;
+      const jenisFilterVal = document.getElementById('filterJenisKelas').value;
+      const dosenFilterVal = document.getElementById('filterDosen').value;
+      const bulanFilterVal = document.getElementById('filterBulan').value;
+
+      updateDosenHeader();
+
+      let filterLabel = [];
+      filterLabel.push(bulanFilterVal ? 'Periode ' + monthLabel(bulanFilterVal) : 'Semua Bulan');
+      if (prodiFilterVal) filterLabel.push(prodiFilterVal);
+      if (jenisFilterVal) filterLabel.push(jenisFilterVal);
+      document.getElementById('pdfFilterInfoLabel').textContent = filterLabel.join(' • ');
+
+      if (prodiFilterVal) {
+        document.getElementById('pdfSignTitle').textContent = 'Ketua Program Studi ' + prodiFilterVal + ',';
+      } else {
+        document.getElementById('pdfSignTitle').textContent = 'Ketua Program Studi / Dekan Fakultas Teknik,';
+      }
+
+      // Filter attendance records according to active filter (tanpa kotak pencarian)
+      const filtered = getFilteredData({ includeSearch: false });
+
+      // PDF Stats
+      let totalExecuted = 0;
+      let totalHadir = 0;
+      let totalLate = 0;
+      let totalAlpha = 0;
+
+      const grouped = {};
+
+      filtered.forEach(item => {
+        const key = item.mata_kuliah + ' (' + item.kode_mk + ')';
+        if (!grouped[key]) {
+          grouped[key] = {
+            name: item.mata_kuliah,
+            kode_mk: item.kode_mk,
+            sks: item.sks,
+            prodi: item.prodi,
+            jenis_kelas: item.jenis_kelas,
+            total: 0,
+            executed: 0,
+            hadir: 0,
+            late: 0,
+            alpha: 0
+          };
+        }
+        grouped[key].total++;
+
+        const st = getItemStatus(item);
+        if (st !== 'PENDING') {
+          totalExecuted++;
+          grouped[key].executed++;
+          if (st === 'HADIR_ONTIME') {
+            totalHadir++;
+            grouped[key].hadir++;
+          } else if (st === 'LATE') {
+            totalHadir++;
+            totalLate++;
+            grouped[key].hadir++;
+            grouped[key].late++;
+          } else if (st === 'ALPHA') {
+            totalAlpha++;
+            grouped[key].alpha++;
+          }
+        }
+      });
+
+      document.getElementById('pdfTotalSesi').textContent = filtered.length;
+      document.getElementById('pdfTotalRealisasi').textContent = totalExecuted;
+      document.getElementById('pdfKehadiranRate').textContent = totalExecuted > 0 ? ((totalHadir / totalExecuted) * 100).toFixed(1) + '%' : '100%';
+      document.getElementById('pdfTotalTerlambat').textContent = totalLate + ' Kali';
+
+      // Course Table
+      const courseTbody = document.getElementById('pdfCourseTableBody');
+      courseTbody.innerHTML = '';
+      let cIdx = 1;
+      Object.values(grouped).forEach(c => {
+        const rate = c.executed > 0 ? ((c.hadir / c.executed) * 100).toFixed(1) : '100';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="p-2 border-r border-slate-200 text-center">${cIdx++}</td>
+          <td class="p-2 border-r border-slate-200 font-medium text-slate-700">${c.prodi}</td>
+          <td class="p-2 border-r border-slate-200 font-medium text-slate-700">${c.jenis_kelas}</td>
+          <td class="p-2 border-r border-slate-200">
+            <strong>${c.name}</strong><br>
+            <span style="color:#64748b;">${c.kode_mk}</span>
+          </td>
+          <td class="p-2 border-r border-slate-200 text-center">${c.sks}</td>
+          <td class="p-2 border-r border-slate-200 text-center">${c.total}</td>
+          <td class="p-2 border-r border-slate-200 text-center">${c.executed}</td>
+          <td class="p-2 border-r border-slate-200 text-center font-bold text-emerald-800">${c.hadir}</td>
+          <td class="p-2 border-r border-slate-200 text-center text-rose-700">${c.alpha}</td>
+          <td class="p-2 text-center font-bold">${rate}%</td>
+        `;
+        courseTbody.appendChild(tr);
+      });
+
+      // Log Table (sample first 50 executed logs for clean print/page breaks)
+      const logTbody = document.getElementById('pdfLogTableBody');
+      logTbody.innerHTML = '';
+      
+      const executedLogs = filtered.filter(d => getItemStatus(d) !== 'PENDING').slice(0, 50);
+      executedLogs.forEach((item, idx) => {
+        const st = getItemStatus(item);
+        let statusBadge = item.presensi === 'A' ? '<strong style="color:#b91c1c;">ALPHA</strong>' : (st === 'LATE' ? '<strong style="color:#d97706;">TERLAMBAT</strong>' : '<strong style="color:#15803d;">HADIR</strong>');
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="p-1.5 border-r border-slate-200 text-center">${idx + 1}</td>
+          <td class="p-1.5 border-r border-slate-200 whitespace-nowrap">${item.tanggal}</td>
+          <td class="p-1.5 border-r border-slate-200 whitespace-nowrap font-medium text-slate-600">${item.prodi}</td>
+          <td class="p-1.5 border-r border-slate-200 whitespace-nowrap text-slate-600">${item.jenis_kelas}</td>
+          <td class="p-1.5 border-r border-slate-200">
+            <strong>${item.mata_kuliah}</strong><br>
+            <span style="color:#64748b;">${item.kode_mk} - ${item.ruangan}</span>
+          </td>
+          <td class="p-1.5 border-r border-slate-200 font-mono">${item.jadwal}</td>
+          <td class="p-1.5 border-r border-slate-200 text-center">${statusBadge}</td>
+          <td class="p-1.5 border-r border-slate-200 text-center font-mono">${item.datang || '-'}</td>
+          <td class="p-1.5 border-r border-slate-200">${item.terlambat || '-'}</td>
+          <td class="p-1.5">${item.ganti_jadwal || '-'}</td>
+        `;
+        logTbody.appendChild(tr);
+      });
+    }
+
+    // Modal Edit Functions
+    function openEditModal(index) {
+      activeEditingIndex = index;
+      const item = attendanceData[index];
+      if (!item) return;
+
+      document.getElementById('editMatkul').value = item.mata_kuliah + ' (' + item.kode_mk + ')';
+      document.getElementById('editTanggal').value = item.tanggal;
+      document.getElementById('editJadwal').value = item.jadwal;
+      document.getElementById('editStatusPresensi').value = item.presensi;
+      document.getElementById('editJamDatang').value = item.datang || '';
+      document.getElementById('editJamKembali').value = item.kembali || '';
+      document.getElementById('editKomentar').value = item.terlambat || item.komentar || '';
+
+      document.getElementById('editModal').classList.remove('hidden');
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').classList.add('hidden');
+      activeEditingIndex = null;
+    }
+
+    function saveEditPresensi() {
+      if (activeEditingIndex === null) return;
+      const item = attendanceData[activeEditingIndex];
+
+      item.presensi = document.getElementById('editStatusPresensi').value;
+      item.datang = document.getElementById('editJamDatang').value.trim();
+      item.kembali = document.getElementById('editJamKembali').value.trim();
+      item.terlambat = document.getElementById('editKomentar').value.trim();
+      if (item.presensi === 'H' && item.ganti_jadwal.toLowerCase().includes('presensi belum ada')) {
+        item.ganti_jadwal = '-';
+      }
+
+      saveData();
+      closeEditModal();
+      renderDashboard();
+    }
+
+    // Edit & Delete row by ID
+    function openEditModalById(id) {
+      const idx = attendanceData.findIndex(d => d.id === id);
+      if (idx !== -1) openEditModal(idx);
+    }
+
+    function deleteSingleRowById(id) {
+      const idx = attendanceData.findIndex(d => d.id === id);
+      if (idx === -1) return;
+      const item = attendanceData[idx];
+      if (confirm(`Hapus baris presensi tanggal ${item.tanggal} (${item.mata_kuliah} - ${item.kode_mk})?`)) {
+        attendanceData.splice(idx, 1);
+        attendanceData.forEach((r, i) => {
+          r.id = i + 1;
+          r.no = i + 1;
+        });
+        saveData();
+        populateMatkulFilter();
+        renderDashboard();
+        showToast('1 baris presensi berhasil dihapus.', 'delete');
+      }
+    }
+
+    // Modal Hapus Data Presensi per Dosen
+    function openDeleteDosenModal(preselectDosen = '') {
+      const dosenMap = {};
+      attendanceData.forEach(d => {
+        const n = normDosen(d.pengajar);
+        if (!n) return;
+        if (!dosenMap[n]) dosenMap[n] = { count: 0, courses: new Set() };
+        dosenMap[n].count++;
+        if (d.mata_kuliah) dosenMap[n].courses.add(d.mata_kuliah);
+      });
+
+      const dosenList = Object.keys(dosenMap).sort();
+      const sel = document.getElementById('selectDosenToDelete');
+      sel.innerHTML = '';
+
+      if (dosenList.length === 0) {
+        sel.innerHTML = '<option value="">(Tidak ada data dosen yang tersedia)</option>';
+        document.getElementById('btnConfirmDeleteDosen').disabled = true;
+        document.getElementById('btnConfirmDeleteDosen').classList.add('opacity-50', 'cursor-not-allowed');
+        document.getElementById('previewDosenName').textContent = '-';
+        document.getElementById('previewDosenCount').textContent = '0 Sesi';
+        document.getElementById('previewDosenCourses').textContent = '-';
+        document.getElementById('previewWarningCount').textContent = '0';
+      } else {
+        document.getElementById('btnConfirmDeleteDosen').disabled = false;
+        document.getElementById('btnConfirmDeleteDosen').classList.remove('opacity-50', 'cursor-not-allowed');
+        dosenList.forEach(n => {
+          const opt = document.createElement('option');
+          opt.value = n;
+          opt.textContent = `${n} (${dosenMap[n].count} sesi)`;
+          sel.appendChild(opt);
+        });
+
+        if (preselectDosen && dosenList.includes(preselectDosen)) {
+          sel.value = preselectDosen;
+        }
+        updateDeleteDosenPreview();
+      }
+
+      document.getElementById('deleteDosenModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function updateDeleteDosenPreview() {
+      const sel = document.getElementById('selectDosenToDelete');
+      const target = sel.value;
+      if (!target) return;
+
+      const targetRecords = attendanceData.filter(d => normDosen(d.pengajar) === target);
+      const courses = [...new Set(targetRecords.map(d => d.mata_kuliah).filter(Boolean))];
+
+      document.getElementById('previewDosenName').textContent = target;
+      document.getElementById('previewDosenCount').textContent = `${targetRecords.length} Sesi Perkuliahan`;
+      document.getElementById('previewDosenCourses').textContent = courses.join(', ') || '-';
+      document.getElementById('previewWarningCount').textContent = targetRecords.length;
+    }
+
+    function closeDeleteDosenModal() {
+      document.getElementById('deleteDosenModal').classList.add('hidden');
+    }
+
+    function executeDeleteDosen() {
+      const sel = document.getElementById('selectDosenToDelete');
+      const target = sel.value;
+      if (!target) {
+        alert('Pilih dosen yang ingin dihapus terlebih dahulu.');
+        return;
+      }
+
+      const targetCount = attendanceData.filter(d => normDosen(d.pengajar) === target).length;
+      if (targetCount === 0) {
+        alert('Tidak ada sesi perkuliahan ditemukan untuk dosen ini.');
+        closeDeleteDosenModal();
+        return;
+      }
+
+      // Hapus data untuk dosen terpilih
+      attendanceData = attendanceData.filter(d => normDosen(d.pengajar) !== target);
+
+      // Re-index sisa data
+      attendanceData.forEach((item, idx) => {
+        item.id = idx + 1;
+        item.no = idx + 1;
+      });
+
+      saveData();
+
+      // Reset filter jika sedang memilih dosen yang dihapus
+      const filterDosenEl = document.getElementById('filterDosen');
+      if (filterDosenEl.value === target) {
+        filterDosenEl.value = '';
+      }
+
+      closeDeleteDosenModal();
+      populateMatkulFilter();
+      renderDashboard();
+
+      showToast(`Data presensi untuk dosen "${target}" (${targetCount} sesi) berhasil dihapus.`, 'delete');
+    }
+
+    // Toast notification function
+    let toastTimeout = null;
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toastNotification');
+      const msgEl = document.getElementById('toastMessage');
+      const inner = document.getElementById('toastInner');
+      const icon = document.getElementById('toastIcon');
+      if (!toast) return;
+
+      msgEl.textContent = message;
+      if (type === 'danger' || type === 'delete') {
+        inner.className = 'flex items-center space-x-2.5 px-4 py-3 rounded-xl shadow-xl border text-xs font-semibold bg-rose-950 text-rose-100 border-rose-700';
+        icon.className = 'w-4 h-4 text-rose-400 shrink-0';
+        icon.setAttribute('data-lucide', 'trash-2');
+      } else {
+        inner.className = 'flex items-center space-x-2.5 px-4 py-3 rounded-xl shadow-xl border text-xs font-semibold bg-slate-900 text-white border-slate-700';
+        icon.className = 'w-4 h-4 text-emerald-400 shrink-0';
+        icon.setAttribute('data-lucide', 'check-circle');
+      }
+      lucide.createIcons();
+
+      toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+      }, 3500);
+    }
+
+    let pendingImportData = null;
+    let pendingFileName = '';
+
+    function handleSelectedFile(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      const fileName = file.name.toLowerCase();
+      pendingFileName = file.name;
+
+      reader.onload = function(event) {
+        try {
+          // SheetJS membaca semua format (xlsx/xls/csv/tsv/html/utf-16) dan mendeteksi delimiter otomatis
+          const data = new Uint8Array(event.target.result);
+          const workbook = XLSX.read(data, { type: 'array', raw: false, cellDates: false });
+          let rows = parseExcelData(workbook);
+          if ((!rows || rows.length === 0) && fileName.endsWith('.csv')) {
+            rows = parseCSV(new TextDecoder('utf-8').decode(data));
+          }
+
+          if (rows && rows.length > 0) {
+            pendingImportData = rows.map((r, i) => cleanRecord(r, i));
+            
+            // Tampilkan Staging Area dengan tombol PROCEED
+            document.getElementById('uploadStageDefault').classList.add('hidden');
+            document.getElementById('uploadStageStaging').classList.remove('hidden');
+            document.getElementById('fileUploadInfo').classList.add('hidden');
+            
+            document.getElementById('stagingFileName').textContent = file.name;
+            document.getElementById('stagingRowCount').textContent = `${pendingImportData.length} Baris Data Terbaca`;
+            lucide.createIcons();
+          } else {
+            alert('Berkas terbaca, tetapi tabel presensi tidak ditemukan.\n\n' +
+                  'Pastikan berkas memiliki baris judul kolom seperti: Tanggal, Nama Mata Kuliah, Jadwal, Presensi, Kode MK dan Kelas.\n\n' +
+                  'Detail pemeriksaan:\n' + (lastParseDiagnostic || '-'));
+          }
+        } catch (err) {
+          alert('Terjadi kesalahan saat memproses file: ' + err.message);
+        }
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+
+    function cancelStaging() {
+      pendingImportData = null;
+      document.getElementById('fileInput').value = '';
+      document.getElementById('uploadStageStaging').classList.add('hidden');
+      document.getElementById('uploadStageDefault').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function executeProceedUpload() {
+      if (!pendingImportData || pendingImportData.length === 0) {
+        alert('Tidak ada data yang siap diproses.');
+        return;
+      }
+
+      const mode = document.querySelector('input[name="stagingImportMode"]:checked')?.value || 'merge';
+
+      if (mode === 'replace') {
+        attendanceData = pendingImportData.map((d, idx) => ({ ...d, id: idx + 1, no: idx + 1 }));
+      } else {
+        // Merge & Append
+        let added = 0;
+        let updated = 0;
+        pendingImportData.forEach(newItem => {
+          const key = `${newItem.tanggal.trim()}_${newItem.kode_mk.trim()}_${newItem.jadwal.trim()}`;
+          const existingIdx = attendanceData.findIndex(d => `${d.tanggal.trim()}_${d.kode_mk.trim()}_${d.jadwal.trim()}` === key);
+          if (existingIdx >= 0) {
+            attendanceData[existingIdx] = {
+              ...attendanceData[existingIdx],
+              ...newItem,
+              id: attendanceData[existingIdx].id,
+              no: attendanceData[existingIdx].no
+            };
+            updated++;
+          } else {
+            newItem.id = attendanceData.length + 1;
+            newItem.no = attendanceData.length + 1;
+            attendanceData.push(newItem);
+            added++;
+          }
+        });
+      }
+
+      saveData();
+      updateDosenProfileName();
+      populateMatkulFilter();
+      renderDashboard();
+
+      // Transisi kembali dan tampilkan afirmasi sukses
+      document.getElementById('uploadStageStaging').classList.add('hidden');
+      document.getElementById('uploadStageDefault').classList.remove('hidden');
+      
+      const infoBox = document.getElementById('fileUploadInfo');
+      infoBox.classList.remove('hidden');
+      document.getElementById('uploadedFileName').innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4 mr-1.5 text-emerald-600"></i> ${pendingFileName} &bull; Berhasil Diproses (${mode === 'merge' ? 'Digabungkan' : 'Dimuat Penuh'})`;
+      document.getElementById('uploadedRowCount').textContent = `Total data tersimpan: ${attendanceData.length} baris`;
+
+      // Reset file input
+      document.getElementById('fileInput').value = '';
+      pendingImportData = null;
+      lucide.createIcons();
+    }
+
+    // Drag and Drop on Upload Banner
+    const dropBanner = document.getElementById('uploadBanner');
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropBanner.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropBanner.classList.add('border-sky-500', 'bg-sky-100/40');
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropBanner.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropBanner.classList.remove('border-sky-500', 'bg-sky-100/40');
+      }, false);
+    });
+
+    dropBanner.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      if (files.length > 0) {
+        handleSelectedFile(files[0]);
+      }
+    }, false);
+
+    // Excel & CSV File Input Listener
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+      if (e.target.files && e.target.files.length > 0) {
+        handleSelectedFile(e.target.files[0]);
+      }
+    });
+
+    // Reset button
+    document.getElementById('btnResetDefault').addEventListener('click', () => {
+      if (confirm('Apakah Anda yakin ingin mereset seluruh data kembali ke data sampel awal?')) {
+        localStorage.removeItem('presensi_dosen_data');
+        loadInitialData();
+        document.getElementById('fileUploadInfo').classList.add('hidden');
+        document.getElementById('searchInput').value = '';
+        document.getElementById('filterDosen').value = '';
+        document.getElementById('filterBulan').value = '';
+        document.getElementById('filterProdi').value = '';
+        document.getElementById('filterJenisKelas').value = '';
+        document.getElementById('filterMatkul').value = '';
+        document.getElementById('filterStatus').value = '';
+      }
+    });
+
+    // Download Sample CSV
+    document.getElementById('btnDownloadSample').addEventListener('click', () => {
+      const blob = new Blob([RAW_INITIAL_CSV], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute('download', 'template_presensi_dosen.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
+    // Search and filter listeners
+    document.getElementById('searchInput').addEventListener('input', renderDashboard);
+    document.getElementById('filterDosen').addEventListener('change', renderDashboard);
+    document.getElementById('filterBulan').addEventListener('change', renderDashboard);
+    document.getElementById('filterProdi').addEventListener('change', renderDashboard);
+    document.getElementById('filterJenisKelas').addEventListener('change', renderDashboard);
+    document.getElementById('filterMatkul').addEventListener('change', renderDashboard);
+    document.getElementById('filterStatus').addEventListener('change', renderDashboard);
+
+    // Initial run
+    loadInitialData();
+  </script>
+</body>
+</html>
