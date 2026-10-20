@@ -984,7 +984,7 @@
       const ruangan = getVal('Ruangan', 'ruang', 'room') || '-';
       const prodi = detectProdi(kodeMk, ruangan);
       const jenisKelas = detectJenisKelas(kodeMk);
-      const pengajar = getVal('Pengajar', 'dosen', 'nama dosen', 'lecturer') || 'MEGA WAHYU RHAMADANI, S.T., M.M.SI';
+      const pengajar = getVal('Pengajar', 'dosen', 'nama dosen', 'dosen pengampu', 'dosen pengajar', 'nama pengajar', 'nama', 'lecturer', 'pengampu', 'instruktur') || 'MEGA WAHYU RHAMADANI, S.T., M.M.SI';
 
       return {
         id: index + 1,
@@ -1837,12 +1837,14 @@
       if (mode === 'replace') {
         attendanceData = pendingImportData.map((d, idx) => ({ ...d, id: idx + 1, no: idx + 1 }));
       } else {
-        // Merge & Append
+        // Merge & Append: Gunakan key berbasis nama dosen + tanggal + kode mk + jadwal
+        // agar sesi antar dosen yang berbeda tidak saling menimpa / menghapus
         let added = 0;
         let updated = 0;
         pendingImportData.forEach(newItem => {
-          const key = `${newItem.tanggal.trim()}_${newItem.kode_mk.trim()}_${newItem.jadwal.trim()}`;
-          const existingIdx = attendanceData.findIndex(d => `${d.tanggal.trim()}_${d.kode_mk.trim()}_${d.jadwal.trim()}` === key);
+          const dosenKey = normDosen(newItem.pengajar);
+          const key = `${dosenKey}_${newItem.tanggal.trim()}_${newItem.kode_mk.trim()}_${newItem.jadwal.trim()}`;
+          const existingIdx = attendanceData.findIndex(d => `${normDosen(d.pengajar)}_${d.tanggal.trim()}_${d.kode_mk.trim()}_${d.jadwal.trim()}` === key);
           if (existingIdx >= 0) {
             attendanceData[existingIdx] = {
               ...attendanceData[existingIdx],
@@ -1913,9 +1915,42 @@
       }
     });
 
+    // Restore / Gabungkan Data Bu Mega
+    function restoreBuMegaData(mode = 'merge') {
+      const parsed = parseCSV(RAW_INITIAL_CSV);
+      const megaRecords = parsed.map((item, idx) => cleanRecord(item, idx));
+      if (mode === 'replace') {
+        attendanceData = megaRecords;
+      } else {
+        let added = 0;
+        megaRecords.forEach(newItem => {
+          const dosenKey = normDosen(newItem.pengajar);
+          const key = `${dosenKey}_${newItem.tanggal.trim()}_${newItem.kode_mk.trim()}_${newItem.jadwal.trim()}`;
+          const existingIdx = attendanceData.findIndex(d => `${normDosen(d.pengajar)}_${d.tanggal.trim()}_${d.kode_mk.trim()}_${d.jadwal.trim()}` === key);
+          if (existingIdx === -1) {
+            newItem.id = attendanceData.length + 1;
+            newItem.no = attendanceData.length + 1;
+            attendanceData.push(newItem);
+            added++;
+          }
+        });
+      }
+      saveData();
+      populateMatkulFilter();
+      renderDashboard();
+      showToast('Data Bu Mega (128 sesi) berhasil digabungkan kembali.');
+    }
+
     // Reset button
     document.getElementById('btnResetDefault').addEventListener('click', () => {
-      if (confirm('Apakah Anda yakin ingin mereset seluruh data kembali ke data sampel awal?')) {
+      const hasOtherDosen = attendanceData.some(d => !normDosen(d.pengajar).includes('MEGA WAHYU'));
+      if (hasOtherDosen) {
+        if (confirm('Gabungkan kembali data Bu Mega ke dalam daftar tanpa menghapus data dosen lain?\n\n- Klik [OK] untuk GABUNGKAN data Bu Mega + data saat ini\n- Klik [Cancel] jika ingin pilihan reset total ke data awal')) {
+          restoreBuMegaData('merge');
+          return;
+        }
+      }
+      if (confirm('Apakah Anda yakin ingin mereset seluruh data kembali ke data sampel awal Bu Mega saja?')) {
         localStorage.removeItem('presensi_dosen_data');
         loadInitialData();
         document.getElementById('fileUploadInfo').classList.add('hidden');
