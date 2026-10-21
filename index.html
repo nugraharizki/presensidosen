@@ -48,19 +48,22 @@
         size: A4 portrait;
         margin: 6mm;
       }
-      body * {
-        visibility: hidden;
+      body {
+        background: #ffffff !important;
       }
-      #printArea, #printArea *, #printAreaKelebihanSKS, #printAreaKelebihanSKS * {
-        visibility: visible;
+      body > *:not(#printArea):not(#printAreaKelebihanSKS) {
+        display: none !important;
       }
       #printArea, #printAreaKelebihanSKS {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        margin: 0;
-        padding: 0;
+        display: block !important;
+        position: static !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+      }
+      #printArea *, #printAreaKelebihanSKS * {
+        visibility: visible !important;
       }
       .no-print {
         display: none !important;
@@ -2717,7 +2720,7 @@
       lucide.createIcons();
     }
 
-    function exportKelebihanSKSPDF() {
+    async function exportKelebihanSKSPDF() {
       const selectedDosen = document.getElementById('sksFilterDosen')?.value || 'all';
       const selectedPeriode = document.getElementById('sksFilterPeriode')?.value || 'all';
       const selectedProdi = document.getElementById('sksFilterProdi')?.value || 'all';
@@ -2763,10 +2766,23 @@
       const elMakerName = document.getElementById('pdfMondosSignMakerName');
       if (elMakerName) elMakerName.textContent = customMakerName;
 
-      // Buka Print Area Kelebihan SKS
+      // Tampilkan print container tepat di viewport atas agar html2canvas membidik secara sempurna (bebas blank)
       const element = document.getElementById('pdfKelebihanSKSDocument');
       const printContainer = document.getElementById('printAreaKelebihanSKS');
+
+      printContainer.style.position = 'fixed';
+      printContainer.style.top = '0';
+      printContainer.style.left = '0';
+      printContainer.style.right = '0';
+      printContainer.style.bottom = '0';
+      printContainer.style.zIndex = '999999';
+      printContainer.style.backgroundColor = '#ffffff';
+      printContainer.style.overflowY = 'auto';
+      printContainer.style.display = 'block';
       printContainer.classList.remove('hidden');
+
+      // Beri jeda 150ms agar browser selesai me-render layout & font sebelum snapshot
+      await new Promise(resolve => setTimeout(resolve, 150));
 
       const cleanProdi = (mondos.activeProdi || 'Prodi').replace(/[^a-zA-Z0-9]/g, '_');
       const cleanDosen = selectedDosen !== 'all' ? `_${selectedDosen.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 20)}` : '';
@@ -2778,19 +2794,26 @@
           scale: 2,
           useCORS: true,
           logging: false,
-          windowWidth: 780
+          scrollY: 0,
+          scrollX: 0
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 
-      html2pdf().set(opt).from(element).save().then(() => {
-        printContainer.classList.add('hidden');
+      try {
+        await html2pdf().set(opt).from(element).save();
         showToast('Laporan Mondos DT (A4 Portrait) berhasil diunduh.');
-      }).catch(err => {
+      } catch (err) {
         console.error('html2pdf fallback to print:', err);
         window.print();
+      } finally {
+        printContainer.style.display = 'none';
         printContainer.classList.add('hidden');
-      });
+        printContainer.style.position = '';
+        printContainer.style.zIndex = '';
+        printContainer.style.backgroundColor = '';
+        printContainer.style.overflowY = '';
+      }
     }
 
     // Toast notification function
@@ -3059,6 +3082,49 @@
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    });
+
+    // Ekspor PDF Dashboard Utama
+    document.getElementById('btnDownloadPDF')?.addEventListener('click', async () => {
+      preparePDFContent();
+      const element = document.getElementById('pdfDocument');
+      const printContainer = document.getElementById('printArea');
+
+      printContainer.style.position = 'fixed';
+      printContainer.style.top = '0';
+      printContainer.style.left = '0';
+      printContainer.style.right = '0';
+      printContainer.style.bottom = '0';
+      printContainer.style.zIndex = '999999';
+      printContainer.style.backgroundColor = '#ffffff';
+      printContainer.style.overflowY = 'auto';
+      printContainer.style.display = 'block';
+      printContainer.classList.remove('hidden');
+
+      await new Promise(resolve => setTimeout(resolve, 150));
+
+      const opt = {
+        margin: [8, 8, 8, 8],
+        filename: `Laporan_Monitoring_Presensi_${new Date().toISOString().slice(0, 10)}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0, scrollX: 0 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      try {
+        await html2pdf().set(opt).from(element).save();
+        showToast('Laporan Presensi berhasil diunduh ke PDF.');
+      } catch (err) {
+        console.error('html2pdf fallback to print:', err);
+        window.print();
+      } finally {
+        printContainer.style.display = 'none';
+        printContainer.classList.add('hidden');
+        printContainer.style.position = '';
+        printContainer.style.zIndex = '';
+        printContainer.style.backgroundColor = '';
+        printContainer.style.overflowY = '';
+      }
     });
 
     // Search and filter listeners
