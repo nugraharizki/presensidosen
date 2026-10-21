@@ -621,174 +621,70 @@
   </div>
 
   <!-- ======================================================== -->
-  <!-- PRINT / EXPORT TEMPLATE: LAPORAN KELEBIHAN SKS KEUANGAN   -->
+  <!-- PRINT / EXPORT TEMPLATE: LAPORAN MONDOS DT (KELEBIHAN SKS) -->
   <!-- ======================================================== -->
   <div id="printAreaKelebihanSKS" class="hidden">
-    <div class="p-8 max-w-[960px] mx-auto bg-white text-slate-900 leading-normal" id="pdfKelebihanSKSDocument">
+    <div class="p-8 max-w-[1100px] mx-auto bg-white text-slate-900 leading-normal font-sans" id="pdfKelebihanSKSDocument">
       
-      <!-- KOP RESMI LAPORAN KEUANGAN -->
-      <div class="border-b-2 border-slate-900 pb-4 mb-5">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-4">
-            <div class="w-14 h-14 rounded-xl bg-emerald-800 text-white flex items-center justify-center font-black text-xl tracking-tighter">
-              ST
-            </div>
-            <div>
-              <h2 class="text-base font-black tracking-tight text-slate-900 uppercase">PROGRAM STUDI TEKNIK INFORMATIKA</h2>
-              <p class="text-xs text-slate-600 font-semibold tracking-wide">Program Studi Teknik Informatika &bull; Teknik Lingkungan</p>
-              <p class="text-[10px] text-slate-500">Sistem Informasi Akademik &bull; Pengajuan Honorarium Kelebihan Jam Mengajar (SKS)</p>
-            </div>
-          </div>
-          <div class="text-right">
-            <span class="inline-block px-3 py-1 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded font-black text-[11px] tracking-wider uppercase mb-1">
-              DOKUMEN PENGAJUAN BAUK
-            </span>
-            <p class="text-[10px] text-slate-500">Nomor: <strong class="text-slate-700" id="pdfSksDocNumber">SP-KSKS/BAUK/2026/X</strong></p>
-            <p class="text-[10px] text-slate-500">Tanggal Pengajuan: <span id="pdfSksPrintDate" class="text-slate-700 font-medium"></span></p>
-          </div>
-        </div>
+      <!-- HEADER JUDUL RESMI MONDOS DT (CENTERED) -->
+      <div class="text-center mb-6">
+        <h1 class="text-sm font-black text-slate-900 uppercase tracking-wider">
+          MONITORING KEHADIRAN DOSEN TETAP SEMESTER GANJIL TA 2026/2027
+        </h1>
+        <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wide mt-1">
+          <span id="pdfMondosProdiTitle">PROGRAM STUDI S1 - TEKNIK LINGKUNGAN</span> 
+          <span id="pdfMondosPeriodeTitle">(Periode 14 September - 20 Oktober 2026)</span>
+        </h2>
       </div>
 
-      <!-- TITLE -->
-      <div class="text-center my-4">
-        <h1 class="text-base font-black text-slate-900 uppercase tracking-tight">SURAT PENGAJUAN & REKAPITULASI KELEBIHAN BEBAN MENGAJAR (SKS)</h1>
-        <p class="text-xs text-slate-600 mt-0.5">Ditujukan Kepada: <strong>Yth. Kepala Bagian Umum & Keuangan (BAUK)</strong></p>
-      </div>
+      <!-- TABEL RESMI MONDOS DT -->
+      <table class="w-full text-xs border border-slate-900 border-collapse mb-8">
+        <thead>
+          <tr class="bg-white text-slate-900 font-bold text-[10px] uppercase border-b border-slate-900">
+            <th rowspan="2" class="p-1.5 border-r border-slate-900 text-center w-8">No.</th>
+            <th rowspan="2" class="p-1.5 border-r border-slate-900 text-center w-48">NAMA DOSEN</th>
+            <th rowspan="2" class="p-1.5 border-r border-slate-900 text-center">MATA KULIAH</th>
+            <th rowspan="2" class="p-1.5 border-r border-slate-900 text-center w-20">KELAS</th>
+            <th rowspan="2" class="p-1.5 border-r border-slate-900 text-center w-12">SEMT</th>
+            <th rowspan="2" class="p-1.5 border-r border-slate-900 text-center w-10">SKS</th>
+            <th id="pdfMondosPertColspan" colspan="6" class="p-1.5 border-r border-slate-900 text-center">PERTEMUAN KE</th>
+            <th rowspan="2" class="p-1.5 border-r border-slate-900 text-center w-14">JMLH PERT</th>
+            <th rowspan="2" class="p-1.5 text-center w-14">TOTAL SKS</th>
+          </tr>
+          <tr id="pdfMondosSubHeader" class="bg-white text-slate-900 font-bold text-[9.5px] border-b border-slate-900">
+            <!-- Rendered via JS -->
+          </tr>
+        </thead>
+        <tbody id="pdfMondosTableBody" class="text-[10px]">
+          <!-- Section row & data rows rendered dynamically via JS -->
+        </tbody>
+        <tfoot>
+          <tr class="font-bold border-t-2 border-slate-900 text-[11px] bg-white">
+            <td id="pdfMondosFooterColspan" colspan="12" class="p-2 text-left font-black border-r border-slate-900 uppercase">Jumlah</td>
+            <td id="pdfMondosFooterTotalSks" class="p-2 text-center font-black">0</td>
+          </tr>
+        </tfoot>
+      </table>
 
-      <!-- METADATA DOSEN & PERIODE -->
-      <div class="bg-slate-50 border border-slate-200 rounded-lg p-3.5 mb-5 text-xs grid grid-cols-2 gap-3">
-        <div class="space-y-1">
-          <p><span class="text-slate-500 inline-block w-28">Nama Dosen</span>: <strong id="pdfSksDosenName" class="text-slate-900 uppercase">-</strong></p>
-          <p><span class="text-slate-500 inline-block w-28">NIDN / NIK</span>: <span class="text-slate-800 font-medium" id="pdfSksNIDN">9919121988</span></p>
-          <p><span class="text-slate-500 inline-block w-28">Program Studi</span>: <span class="text-slate-800">Teknik Informatika</span></p>
-        </div>
-        <div class="space-y-1">
-          <p><span class="text-slate-500 inline-block w-28">Tahun Akademik</span>: <span class="text-slate-800 font-semibold">Semester Ganjil 2026/2027</span></p>
-          <p><span class="text-slate-500 inline-block w-28">Periode Hitung</span>: <strong id="pdfSksPeriodeLabel" class="text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Bulan September 2026</strong></p>
-          <p><span class="text-slate-500 inline-block w-28">Rentang Waktu</span>: <strong id="pdfSksRentangWaktu" class="text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-300 font-mono">1 - 30 September 2026</strong></p>
-          <p><span class="text-slate-500 inline-block w-28">Dasar Regulasi</span>: <span class="text-slate-700">SK Ketua Sekolah Tinggi (Beban Pokok Wajib 9 SKS)</span></p>
-          <p><span class="text-slate-500 inline-block w-28">Sumber Data</span>: <strong class="text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-mono">Portal LMS</strong></p>
-        </div>
-      </div>
-
-      <!-- KOTAK SUMMARY BEBAN KEUANGAN -->
-      <div class="grid grid-cols-4 gap-3 mb-5">
-        <div class="border border-slate-200 rounded-lg p-2.5 text-center bg-slate-50">
-          <span class="text-[10px] text-slate-500 font-medium uppercase tracking-wider block">Total Beban SKS</span>
-          <span id="pdfSksTotalDiampu" class="text-xl font-black text-slate-900">0 SKS</span>
-          <span class="text-[9.5px] text-slate-400 block mt-0.5"><span id="pdfSksRombelCount">0</span> Rombongan Belajar</span>
-        </div>
-        <div class="border border-blue-200 rounded-lg p-2.5 text-center bg-blue-50">
-          <span class="text-[10px] text-blue-700 font-medium uppercase tracking-wider block">Beban Standar Wajib</span>
-          <span class="text-xl font-black text-blue-900">9 SKS</span>
-          <span class="text-[9.5px] text-blue-600 block mt-0.5">Batas Beban Standar</span>
-        </div>
-        <div class="border-2 border-emerald-500 rounded-lg p-2.5 text-center bg-emerald-50">
-          <span class="text-[10px] text-emerald-800 font-black uppercase tracking-wider block">Kelebihan SKS Diajukan</span>
-          <span id="pdfSksKelebihan" class="text-xl font-black text-emerald-700">0 SKS</span>
-          <span class="text-[9.5px] text-emerald-700 font-bold block mt-0.5">Hak Insentif (> 9 SKS)</span>
-        </div>
-        <div class="border border-amber-200 rounded-lg p-2.5 text-center bg-amber-50">
-          <span class="text-[10px] text-amber-700 font-medium uppercase tracking-wider block">Realisasi Kehadiran</span>
-          <span id="pdfSksAvgHadir" class="text-xl font-black text-amber-900">0%</span>
-          <span class="text-[9.5px] text-amber-600 block mt-0.5"><span id="pdfSksTotalSesi">0</span> Pertemuan Terlaksana</span>
-        </div>
-      </div>
-
-      <!-- TABEL RINCIAN KELAS & SKS -->
-      <div class="mb-5">
-        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider mb-1.5 flex items-center justify-between">
-          <span>Rincian Mata Kuliah & Rombongan Belajar yang Diampu</span>
-          <span class="text-[10px] text-slate-500 font-normal">Urutan akumulasi alokasi 9 SKS Wajib & Kelebihan SKS</span>
-        </h3>
-        <table class="w-full text-left text-xs border border-slate-300 border-collapse">
-          <thead>
-            <tr class="bg-slate-100 text-slate-800 text-[10px] font-bold uppercase border-b border-slate-300">
-              <th class="p-2 border-r border-slate-300 text-center w-8">No</th>
-              <th class="p-2 border-r border-slate-300">Mata Kuliah & Kode Rombel</th>
-              <th class="p-2 border-r border-slate-300 w-28">Program Studi</th>
-              <th class="p-2 border-r border-slate-300 w-28">Jenis Kelas</th>
-              <th class="p-2 border-r border-slate-300 text-center w-14">Bobot</th>
-              <th class="p-2 border-r border-slate-300 text-center w-20">Realisasi</th>
-              <th class="p-2 border-r border-slate-300 text-center w-16">% Hadir</th>
-              <th class="p-2 text-center w-36">Alokasi Beban</th>
-            </tr>
-          </thead>
-          <tbody id="pdfSksTableBody" class="divide-y divide-slate-200 text-[11px]">
-            <!-- Rendered dynamically via JS -->
-          </tbody>
-          <tfoot>
-            <tr class="bg-slate-100 font-bold border-t-2 border-slate-300 text-xs">
-              <td colspan="4" class="p-2 text-right border-r border-slate-300 uppercase">Total Beban Mengajar Riil:</td>
-              <td id="pdfSksFooterTotal" class="p-2 text-center border-r border-slate-300 font-black">0 SKS</td>
-              <td id="pdfSksFooterSesi" class="p-2 text-center border-r border-slate-300 font-medium">0 Sesi</td>
-              <td id="pdfSksFooterHadir" class="p-2 text-center border-r border-slate-300 font-medium">0%</td>
-              <td id="pdfSksFooterKelebihan" class="p-2 text-center text-emerald-800 font-black bg-emerald-50">Kelebihan: +0 SKS</td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-
-      <!-- KOLOM VERIFIKASI BAGIAN UMUM & KEUANGAN (BAUK) -->
-      <div class="border border-slate-300 rounded-lg p-3 bg-slate-50/70 mb-6 text-xs space-y-2">
-        <div class="flex items-center justify-between border-b border-slate-200 pb-1.5">
-          <strong class="text-slate-800 uppercase text-[11px]">Catatan & Verifikasi Bagian Umum & Keuangan (BAUK):</strong>
-          <span class="text-[10px] text-slate-500 italic">*Diisi / divalidasi oleh Bagian Umum & Keuangan (BAUK)</span>
-        </div>
-        <p class="text-[10px] text-slate-600 leading-relaxed">
-          Telah dilakukan rekonsiliasi data antara realisasi log presensi mengajar dosen (Sumber Data: Portal LMS, Rentang Waktu: <strong id="pdfSksNoteRentang" class="text-slate-900 font-semibold">1 - 30 September 2026</strong>) dengan batas standar beban pokok mengajar (9 SKS). Kelebihan SKS yang tercantum di atas memenuhi kualifikasi untuk diproses honorariumnya sesuai ketentuan Sekolah Tinggi.
-        </p>
-        <div class="grid grid-cols-3 gap-3 pt-1 text-[11px]">
+      <!-- LEMBAR PENGESAHAN TANDA TANGAN (KAPRODI & SEKRETARIS PRODI) -->
+      <div class="grid grid-cols-2 text-xs pt-4">
+        <div class="text-center flex flex-col justify-between h-36">
           <div>
-            <span class="text-slate-500 block">Kelebihan SKS Valid:</span>
-            <span class="font-bold text-slate-800 underline decoration-dotted" id="pdfSksValKelebihan">0 SKS</span>
+            <p class="font-medium text-slate-800">Disetujui Oleh,</p>
+            <p class="font-semibold text-slate-900" id="pdfMondosSignKaprodiTitle">Ketua Program Studi Teknik Lingkungan</p>
           </div>
           <div>
-            <span class="text-slate-500 block">Tarif per Kelebihan SKS:</span>
-            <span class="font-mono text-slate-400">Rp ........................................</span>
-          </div>
-          <div>
-            <span class="text-slate-500 block">Total Honorarium yang Disetujui:</span>
-            <span class="font-mono text-slate-400">Rp ........................................</span>
+            <p class="font-bold underline text-slate-900" id="pdfMondosSignKaprodiName">Endah Yunari N,ST.MT</p>
           </div>
         </div>
-      </div>
-
-      <!-- LEMBAR PENGESAHAN TANDA TANGAN (3 PIHAK) -->
-      <div class="grid grid-cols-3 gap-4 text-center text-xs mt-6 pt-4 border-t border-slate-200">
-        <!-- Kolom 1: Dosen Pengampu -->
-        <div class="flex flex-col justify-between h-36">
+        <div class="text-center flex flex-col justify-between h-36">
           <div>
-            <p class="text-slate-500 text-[11px]">Dosen Pengampu,</p>
-            <p class="text-slate-400 text-[10px]">Yang Mengajukan,</p>
+            <p class="text-slate-800 mb-0.5"><span id="pdfMondosSignCity">Jakarta</span>, <span id="pdfMondosSignDate">21 Oktober 2026</span></p>
+            <p class="font-medium text-slate-800">Dibuat Oleh,</p>
+            <p class="font-semibold text-slate-900" id="pdfMondosSignMakerTitle">Sekretaris Program Studi Teknik Lingkungan</p>
           </div>
           <div>
-            <p class="font-bold underline text-slate-900 uppercase" id="pdfSksSignDosenName">MEGA WAHYU RHAMADANI, S.T., M.M.S.I</p>
-            <p class="text-slate-500 text-[10px]">NIDN. <span id="pdfSksSignNIDN">9919121988</span></p>
-          </div>
-        </div>
-
-        <!-- Kolom 2: Kaprodi Teknik Informatika -->
-        <div class="flex flex-col justify-between h-36 border-x border-slate-200 px-2">
-          <div>
-            <p class="text-slate-500 text-[11px]">Mengetahui & Menyetujui,</p>
-            <p class="text-slate-700 font-semibold text-[10px]" id="pdfSksSignTitleKaprodi">Ketua Program Studi Teknik Informatika</p>
-          </div>
-          <div>
-            <p class="font-bold underline text-slate-900" id="pdfSksSignNameKaprodi">Sugiyatno, S.Kom, M.Kom</p>
-            <p class="text-slate-500 text-[10px]">Kaprodi Teknik Informatika</p>
-          </div>
-        </div>
-
-        <!-- Kolom 3: Bagian Umum & Keuangan (BAUK) -->
-        <div class="flex flex-col justify-between h-36">
-          <div>
-            <p class="text-slate-500 text-[11px]">Diverifikasi oleh,</p>
-            <p class="text-slate-700 font-semibold text-[10px]">Bagian Umum & Keuangan (BAUK)</p>
-          </div>
-          <div>
-            <p class="font-bold underline text-slate-900 text-[11px]">( .................................................... )</p>
-            <p class="text-slate-500 text-[10px]">Staf / Kepala BAUK</p>
+            <p class="font-bold underline text-slate-900" id="pdfMondosSignMakerName">Eda Loisa</p>
           </div>
         </div>
       </div>
@@ -954,17 +850,17 @@
   <!-- MODAL KELEBIHAN SKS & REKAPITULASI UNTUK BAGIAN KEUANGAN -->
   <!-- ======================================================== -->
   <div id="kelebihanSKSModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-    <div class="bg-white rounded-2xl max-w-4xl w-full p-5 sm:p-6 shadow-2xl space-y-4 my-6 max-h-[92vh] flex flex-col">
+    <div class="bg-white rounded-2xl max-w-5xl xl:max-w-6xl w-full p-5 sm:p-6 shadow-2xl space-y-4 my-6 max-h-[92vh] flex flex-col">
       
       <!-- Modal Header -->
       <div class="flex items-center justify-between pb-3 border-b border-slate-200 shrink-0">
         <div class="flex items-center space-x-3">
           <div class="p-2.5 bg-emerald-100 text-emerald-700 rounded-xl">
-            <i data-lucide="calculator" class="w-6 h-6"></i>
+            <i data-lucide="calendar-check" class="w-6 h-6"></i>
           </div>
           <div>
-            <h3 class="font-extrabold text-slate-900 text-sm sm:text-base">Perhitungan & Pengajuan Kelebihan SKS Dosen</h3>
-            <p class="text-xs text-slate-500">Batas Standar Wajib: <strong>9 SKS</strong> &bull; Dihitung Kelebihan SKS jika <strong>&gt; 9 SKS</strong> untuk <strong>Bagian Umum & Keuangan (BAUK)</strong> &bull; Sumber Data: <strong>Portal LMS</strong></p>
+            <h3 class="font-extrabold text-slate-900 text-sm sm:text-base">Monitoring Kehadiran Dosen (Mondos DT) & Kelebihan SKS</h3>
+            <p class="text-xs text-slate-500">Rincian Tanggal Mengajar per Pertemuan &bull; Format Resmi S1 &bull; Sumber Data: <strong>Portal LMS</strong></p>
           </div>
         </div>
         <button type="button" onclick="closeKelebihanSKSModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition">
@@ -972,8 +868,8 @@
         </button>
       </div>
 
-      <!-- Controls: Filter Dosen & Periode -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200 shrink-0">
+      <!-- Controls: Filter Dosen, Prodi & Periode -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200 shrink-0">
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center">
             <i data-lucide="user" class="w-3.5 h-3.5 mr-1 text-emerald-600"></i>
@@ -985,6 +881,17 @@
         </div>
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center">
+            <i data-lucide="book-open" class="w-3.5 h-3.5 mr-1 text-emerald-600"></i>
+            Program Studi:
+          </label>
+          <select id="sksFilterProdi" onchange="renderKelebihanSKS()" class="w-full py-2 px-3 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold text-slate-800">
+            <option value="all">🎓 Semua Program Studi</option>
+            <option value="Teknik Informatika">Teknik Informatika</option>
+            <option value="Teknik Lingkungan">Teknik Lingkungan</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center">
             <i data-lucide="calendar" class="w-3.5 h-3.5 mr-1 text-emerald-600"></i>
             Periode Perhitungan:
           </label>
@@ -992,9 +899,9 @@
             <option value="all">📅 Satu Semester Penuh (Akumulatif Seluruh Rombel)</option>
             <!-- Months populated via JS -->
           </select>
-          <div id="sksPeriodeHintBox" class="mt-1.5 flex items-center justify-between text-[11px] text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
-            <span class="font-medium flex items-center"><i data-lucide="clock" class="w-3.5 h-3.5 mr-1 text-emerald-600 inline"></i>Keterangan Rentang Waktu:</span>
-            <strong id="sksPeriodeHintText" class="font-bold text-emerald-900 font-mono">1 - 30 September 2026</strong>
+          <div id="sksPeriodeHintBox" class="mt-1.5 flex items-center justify-between text-[10.5px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+            <span class="font-medium flex items-center"><i data-lucide="clock" class="w-3 h-3 mr-1 text-emerald-600 inline"></i>Rentang:</span>
+            <strong id="sksPeriodeHintText" class="font-bold text-emerald-900 font-mono text-[10.5px]">1 - 30 September 2026</strong>
           </div>
         </div>
       </div>
@@ -1017,51 +924,50 @@
           <span class="text-[10px] font-bold text-emerald-700">Dihitung jika &gt; 9 SKS</span>
         </div>
         <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-center">
-          <span class="text-[10.5px] font-medium text-amber-700 block uppercase tracking-wide">Rata-rata Presensi</span>
-          <span id="sksModalAvgHadir" class="text-xl sm:text-2xl font-black text-amber-900 mt-0.5 block">0%</span>
+          <span class="text-[10.5px] font-medium text-amber-700 block uppercase tracking-wide">Total SKS Kehadiran</span>
+          <span id="sksModalTotalJamSks" class="text-xl sm:text-2xl font-black text-amber-900 mt-0.5 block">0</span>
           <span class="text-[10px] text-amber-600"><span id="sksModalTotalSesi">0</span> Pertemuan Terlaksana</span>
         </div>
       </div>
 
-      <!-- Table Rincian Mata Kuliah & Rombel (Scrollable) -->
-      <div class="flex-1 overflow-y-auto border border-slate-200 rounded-xl min-h-[160px] max-h-[260px]">
+      <!-- Table Rincian Mondos DT (Scrollable) -->
+      <div class="flex-1 overflow-x-auto overflow-y-auto border border-slate-300 rounded-xl min-h-[180px] max-h-[300px]">
         <table class="w-full text-left text-xs border-collapse">
-          <thead class="bg-slate-100 text-slate-700 font-semibold text-[11px] uppercase tracking-wider sticky top-0 border-b border-slate-200">
-            <tr>
-              <th class="py-2.5 px-3 text-center w-8">No</th>
-              <th class="py-2.5 px-3">Mata Kuliah & Kode Rombel</th>
-              <th class="py-2.5 px-3">Program Studi</th>
-              <th class="py-2.5 px-3">Jenis Kelas</th>
-              <th class="py-2.5 px-3 text-center w-16">Bobot</th>
-              <th class="py-2.5 px-3 text-center w-20">Realisasi</th>
-              <th class="py-2.5 px-3 text-center w-16">% Hadir</th>
-              <th class="py-2.5 px-3 text-center w-36">Alokasi Beban</th>
-            </tr>
+          <thead id="sksModalThead" class="bg-slate-100 text-slate-800 font-bold text-[10.5px] uppercase tracking-wider sticky top-0 border-b border-slate-300 z-10">
+            <!-- Populated via JS -->
           </thead>
-          <tbody id="sksTableBody" class="divide-y divide-slate-100 bg-white text-xs">
-            <!-- Rendered via JS -->
+          <tbody id="sksTableBody" class="divide-y divide-slate-200 bg-white text-xs">
+            <!-- Populated via JS -->
           </tbody>
+          <tfoot id="sksModalTfoot" class="sticky bottom-0 bg-slate-100 font-bold border-t-2 border-slate-300 text-xs z-10">
+            <!-- Populated via JS -->
+          </tfoot>
         </table>
       </div>
 
-      <!-- Catatan Khusus untuk Keuangan -->
-      <div class="p-3 bg-emerald-50/60 border border-emerald-200 rounded-xl text-xs text-slate-700 flex items-start space-x-2.5 shrink-0">
-        <i data-lucide="info" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
-        <p class="text-[11px] leading-relaxed">
-          <strong>Catatan Pengajuan BAUK:</strong> Nominal rupiah dikosongkan untuk diverifikasi dan ditentukan langsung oleh Bagian Umum & Keuangan (BAUK) sesuai ketentuan tarif Sekolah Tinggi. Data perkuliahan bersumber dari <strong>Portal LMS</strong>. Laporan resmi dapat langsung dicetak atau diunduh ke PDF sebagai berkas pengajuan honorarium.
-        </p>
+      <!-- Keterangan Format Mondos DT -->
+      <div class="p-2.5 bg-sky-50/70 border border-sky-200 rounded-xl text-xs text-slate-700 flex items-center justify-between shrink-0">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="file-check" class="w-4 h-4 text-sky-700 shrink-0"></i>
+          <span class="text-[11px] text-slate-700 leading-tight">
+            Format resmi <strong>Monitoring Kehadiran Dosen Tetap (Mondos DT)</strong> &bull; Rincian tanggal mengajar per pertemuan &bull; Sumber Data: <strong>Portal LMS</strong>
+          </span>
+        </div>
+        <span class="text-[10px] text-sky-800 font-bold bg-sky-100 px-2 py-0.5 rounded border border-sky-300">Format Resmi Standar S1</span>
       </div>
 
       <!-- Action Buttons Footer -->
-      <div class="flex items-center justify-between pt-3 border-t border-slate-200 shrink-0">
+      <div class="flex items-center justify-between pt-2.5 border-t border-slate-200 shrink-0">
         <button type="button" onclick="closeKelebihanSKSModal()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
           Tutup
         </button>
         <button type="button" onclick="exportKelebihanSKSPDF()" class="inline-flex items-center px-5 py-2.5 text-xs font-bold rounded-xl text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 shadow-md shadow-emerald-200 transition active:scale-95">
           <i data-lucide="printer" class="w-4 h-4 mr-2"></i>
-          Cetak / Unduh Laporan Resmi BAUK (PDF)
+          Cetak / Unduh Mondos DT (PDF Landscape)
         </button>
       </div>
+    </div>
+  </div>
     </div>
   </div>
 
@@ -1504,6 +1410,75 @@
       const lastDay = new Date(y, mo, 0).getDate();
       const namaBulan = NAMA_BULAN[mo - 1] || mo;
       return `1 - ${lastDay} ${namaBulan} ${y}`;
+    }
+
+    const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+    function formatShortDate(s) {
+      if (!s) return '-';
+      s = String(s).trim();
+      let day, month;
+      let m = s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/);
+      if (m) {
+        day = parseInt(m[3], 10);
+        month = parseInt(m[2], 10);
+      } else {
+        m = s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/);
+        if (m) {
+          day = parseInt(m[1], 10);
+          month = parseInt(m[2], 10);
+        } else if (/^\d{5}(\.\d+)?$/.test(s)) {
+          const d = new Date(Math.round((parseFloat(s) - 25569) * 86400000));
+          day = d.getUTCDate();
+          month = d.getUTCMonth() + 1;
+        }
+      }
+      if (!day || !month) return s;
+      return `${day}-${SHORT_MONTHS[month - 1] || month}`;
+    }
+
+    function parseDateObject(s) {
+      if (!s) return null;
+      s = String(s).trim();
+      let m = s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/);
+      if (m) return new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10));
+      m = s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/);
+      if (m) {
+        const y = m[3].length === 2 ? 2000 + parseInt(m[3], 10) : parseInt(m[3], 10);
+        return new Date(y, parseInt(m[2], 10) - 1, parseInt(m[1], 10));
+      }
+      if (/^\d{5}(\.\d+)?$/.test(s)) {
+        return new Date(Math.round((parseFloat(s) - 25569) * 86400000));
+      }
+      return null;
+    }
+
+    function extractSemester(kodeMk) {
+      const s = String(kodeMk || '');
+      const m = s.match(/(?:TI|TL|PU|SI|IF)\s*([1-8])\d{3}/i) || s.match(/(?:-|\/)\s*([1-8])\d{3}/i);
+      if (m) {
+        const semNum = parseInt(m[1], 10);
+        const romans = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
+        return romans[semNum] || String(semNum);
+      }
+      const romMatch = s.match(/\b(I|II|III|IV|V|VI|VII|VIII)\b/i);
+      if (romMatch) return romMatch[1].toUpperCase();
+      return '-';
+    }
+
+    function formatKelasShort(jenisKelas, kodeMk) {
+      const jk = String(jenisKelas || '').toLowerCase();
+      const kmk = String(kodeMk || '').toLowerCase();
+      if (jk.includes('pdam') || jk.includes('moya') || kmk.includes('pdam') || kmk.includes('moya')) {
+        return 'Moya/Sore';
+      }
+      if (jk.includes('sore') || jk.includes('karyawan')) {
+        return 'Sore';
+      }
+      if (jk.includes('pagi') || jk.includes('reguler') || /\b(I|II|III|IV|V|VI|VII|VIII)\b/i.test(kmk.split('/')[1] || '')) {
+        return 'Pagi';
+      }
+      return 'Sore';
     }
 
     function normDosen(name) {
@@ -2264,6 +2239,13 @@
         selPeriode.value = activeBulan;
       }
 
+      // Sinkronkan filter prodi modal dengan filter prodi aktif pada dashboard
+      const activeProdi = document.getElementById('filterProdi')?.value;
+      const selProdi = document.getElementById('sksFilterProdi');
+      if (selProdi && activeProdi && ['Teknik Informatika', 'Teknik Lingkungan'].includes(activeProdi)) {
+        selProdi.value = activeProdi;
+      }
+
       document.getElementById('kelebihanSKSModal').classList.remove('hidden');
       renderKelebihanSKS();
       lucide.createIcons();
@@ -2281,9 +2263,254 @@
       document.getElementById('kelebihanSKSModal').classList.add('hidden');
     }
 
+    // Builder data Mondos DT (Monitoring Kehadiran Dosen Tetap & Kelebihan SKS)
+    function getMondosData(targetDosen = 'all', targetPeriode = 'all', targetProdi = 'all') {
+      let filtered = attendanceData;
+
+      if (targetDosen && targetDosen !== 'all') {
+        filtered = filtered.filter(item => normDosen(item.pengajar) === targetDosen);
+      }
+
+      if (targetPeriode && targetPeriode !== 'all') {
+        filtered = filtered.filter(item => getMonthKey(item.tanggal) === targetPeriode);
+      }
+
+      if (targetProdi && targetProdi !== 'all') {
+        filtered = filtered.filter(item => item.prodi === targetProdi);
+      }
+
+      const dosenMap = {};
+      let allDates = [];
+      let totalSesiAll = 0;
+
+      filtered.forEach(item => {
+        const dName = normDosen(item.pengajar);
+        if (!dName) return;
+
+        const status = getItemStatus(item);
+        const isHadir = (status === 'HADIR_ONTIME' || status === 'LATE');
+        if (!isHadir) return;
+
+        totalSesiAll++;
+        const dObj = parseDateObject(item.tanggal);
+        if (dObj) allDates.push(dObj);
+
+        if (!dosenMap[dName]) {
+          dosenMap[dName] = {
+            dosen: dName,
+            prodi: item.prodi,
+            rombels: {}
+          };
+        }
+
+        const rombelKey = `${item.mata_kuliah}___${item.kode_mk}`;
+        if (!dosenMap[dName].rombels[rombelKey]) {
+          dosenMap[dName].rombels[rombelKey] = {
+            mk: item.mata_kuliah,
+            kmk: item.kode_mk,
+            prodi: item.prodi,
+            sks: parseInt(item.sks, 10) || 3,
+            semt: extractSemester(item.kode_mk),
+            kelas: formatKelasShort(item.jenis_kelas, item.kode_mk),
+            sessions: []
+          };
+        }
+
+        if (dObj) {
+          dosenMap[dName].rombels[rombelKey].sessions.push({
+            tanggal: item.tanggal,
+            dObj: dObj
+          });
+        }
+      });
+
+      const dosenList = Object.keys(dosenMap).sort();
+      let maxCols = 6;
+      let grandTotalSks = 0;
+      let grandDiampuSks = 0;
+      let grandKelebihanSks = 0;
+      let totalRombels = 0;
+
+      const resultDosens = dosenList.map(dName => {
+        const dObj = dosenMap[dName];
+        const rombelKeys = Object.keys(dObj.rombels);
+        let lecturerSksDiampu = 0;
+
+        const rombelList = rombelKeys.map(rk => {
+          const r = dObj.rombels[rk];
+          r.sessions.sort((a, b) => a.dObj - b.dObj);
+          if (r.sessions.length > maxCols) {
+            maxCols = r.sessions.length;
+          }
+          r.jmlhPert = r.sessions.length;
+          r.totalSks = r.sks * r.jmlhPert;
+          grandTotalSks += r.totalSks;
+          lecturerSksDiampu += r.sks;
+          totalRombels++;
+          return r;
+        });
+
+        rombelList.sort((a, b) => a.mk.localeCompare(b.mk) || a.kelas.localeCompare(b.kelas));
+        const lecturerKelebihan = Math.max(0, lecturerSksDiampu - 9);
+        grandDiampuSks += lecturerSksDiampu;
+        grandKelebihanSks += lecturerKelebihan;
+
+        return {
+          dosen: dName,
+          prodi: dObj.prodi,
+          sksDiampu: lecturerSksDiampu,
+          kelebihanSks: lecturerKelebihan,
+          rombels: rombelList
+        };
+      });
+
+      // Format keterangan Periode tanggal otomatis
+      let periodeText = '';
+      if (allDates.length > 0) {
+        allDates.sort((a, b) => a - b);
+        const minD = allDates[0];
+        const maxD = allDates[allDates.length - 1];
+        const minStr = `${minD.getDate()} ${NAMA_BULAN[minD.getMonth()]}`;
+        const maxStr = `${maxD.getDate()} ${NAMA_BULAN[maxD.getMonth()]} ${maxD.getFullYear()}`;
+        periodeText = `(Periode ${minStr} - ${maxStr})`;
+      } else if (targetPeriode && targetPeriode !== 'all') {
+        periodeText = `(Periode ${getMonthDateRange(targetPeriode)})`;
+      } else {
+        periodeText = '(Semester Ganjil TA 2026/2027)';
+      }
+
+      // Tentukan Program Studi aktif untuk kop surat dan pengesahan tanda tangan
+      let activeProdi = targetProdi;
+      if (!activeProdi || activeProdi === 'all') {
+        const uniqueProdis = [...new Set(resultDosens.map(d => d.prodi).filter(Boolean))];
+        if (uniqueProdis.length === 1) activeProdi = uniqueProdis[0];
+      }
+
+      let prodiTitle = 'PROGRAM STUDI S1';
+      if (activeProdi && activeProdi !== 'all') {
+        prodiTitle = `PROGRAM STUDI S1 - ${activeProdi.toUpperCase()}`;
+      } else {
+        prodiTitle = `PROGRAM STUDI S1 - TEKNIK INFORMATIKA & TEKNIK LINGKUNGAN`;
+      }
+
+      let kaprodiName = 'Sugiyatno, S.Kom, M.Kom';
+      let kaprodiTitle = 'Ketua Program Studi Teknik Informatika';
+      let sekretarisName = 'Sekretaris Program Studi';
+      let sekretarisTitle = 'Sekretaris Program Studi Teknik Informatika';
+
+      if (activeProdi === 'Teknik Lingkungan') {
+        kaprodiName = 'Endah Yunari N,ST.MT';
+        kaprodiTitle = 'Ketua Program Studi Teknik Lingkungan';
+        sekretarisName = 'Eda Loisa';
+        sekretarisTitle = 'Sekretaris Program Studi Teknik Lingkungan';
+      }
+
+      return {
+        dosens: resultDosens,
+        maxCols,
+        grandTotalSks,
+        grandDiampuSks,
+        grandKelebihanSks,
+        totalRombels,
+        totalSesiAll,
+        periodeText,
+        prodiTitle,
+        activeProdi,
+        kaprodiName,
+        kaprodiTitle,
+        sekretarisName,
+        sekretarisTitle
+      };
+    }
+
+    // Render tabel Mondos DT (digunakan bersama untuk tampilan Modal dan Template PDF Cetak)
+    function renderMondosTableHTML(mondosData, isPDF = false) {
+      const { dosens, maxCols, grandTotalSks } = mondosData;
+      const colCount = 6 + maxCols + 2;
+
+      let theadHTML = `
+        <tr class="${isPDF ? 'bg-white text-slate-900 border-b border-slate-900' : 'bg-slate-100 text-slate-800 border-b border-slate-300'} font-bold text-[10px] uppercase">
+          <th rowspan="2" class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center w-8">No.</th>
+          <th rowspan="2" class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center w-48">NAMA DOSEN</th>
+          <th rowspan="2" class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center">MATA KULIAH</th>
+          <th rowspan="2" class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center w-20">KELAS</th>
+          <th rowspan="2" class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center w-12">SEMT</th>
+          <th rowspan="2" class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center w-10">SKS</th>
+          <th colspan="${maxCols}" class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center">PERTEMUAN KE</th>
+          <th rowspan="2" class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center w-14">JMLH PERT</th>
+          <th rowspan="2" class="p-1.5 text-center w-14">TOTAL SKS</th>
+        </tr>
+        <tr class="${isPDF ? 'bg-white text-slate-900 border-b border-slate-900' : 'bg-slate-100 text-slate-800 border-b border-slate-300'} font-bold text-[9.5px]">
+      `;
+
+      for (let c = 1; c <= maxCols; c++) {
+        theadHTML += `<th class="p-1 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center w-14">${c}</th>`;
+      }
+      theadHTML += `</tr>`;
+
+      let tbodyHTML = `
+        <tr class="${isPDF ? 'bg-white font-bold border-b border-slate-900' : 'bg-emerald-50/70 font-bold border-b border-emerald-200'}">
+          <td colspan="${colCount}" class="p-1.5 font-bold ${isPDF ? 'text-slate-900' : 'text-emerald-900'} text-[10.5px]">Kelebihan SKS*)</td>
+        </tr>
+      `;
+
+      if (dosens.length === 0) {
+        tbodyHTML += `<tr><td colspan="${colCount}" class="p-6 text-center text-slate-400">Tidak ada data pertemuan mengajar pada filter yang dipilih.</td></tr>`;
+      } else {
+        let dosenIdx = 0;
+        dosens.forEach(d => {
+          dosenIdx++;
+          const rombelCount = d.rombels.length;
+          d.rombels.forEach((r, rIdx) => {
+            tbodyHTML += `<tr class="${isPDF ? 'border-b border-slate-400' : 'border-b border-slate-100 hover:bg-slate-50 transition'} text-[10px]">`;
+
+            if (rIdx === 0) {
+              tbodyHTML += `
+                <td rowspan="${rombelCount}" class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center font-mono align-top">${dosenIdx}</td>
+                <td rowspan="${rombelCount}" class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} font-bold text-slate-900 align-top">
+                  <div>${d.dosen}</div>
+                  ${!isPDF && d.kelebihanSks > 0 ? `<span class="inline-block mt-1 px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">+${d.kelebihanSks} SKS Lebih</span>` : ''}
+                </td>
+              `;
+            }
+
+            tbodyHTML += `
+              <td class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-slate-900">${r.mk}</td>
+              <td class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center text-slate-700">${r.kelas}</td>
+              <td class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center text-slate-700">${r.semt}</td>
+              <td class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center font-bold text-slate-900">${r.sks}</td>
+            `;
+
+            for (let c = 0; c < maxCols; c++) {
+              const sess = r.sessions[c];
+              const dateStr = sess ? formatShortDate(sess.tanggal) : '-';
+              const isDate = dateStr !== '-';
+              tbodyHTML += `<td class="p-1 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center font-medium ${isDate ? 'text-slate-900' : 'text-slate-400'}">${dateStr}</td>`;
+            }
+
+            tbodyHTML += `
+              <td class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center font-semibold text-slate-800">${r.jmlhPert}x</td>
+              <td class="p-1.5 text-center font-bold text-slate-900">${r.totalSks}</td>
+            </tr>`;
+          });
+        });
+      }
+
+      const footerColspan = 6 + maxCols;
+      const tfootHTML = `
+        <tr class="font-bold border-t-2 ${isPDF ? 'border-slate-900 bg-white' : 'border-slate-300 bg-slate-100'} text-[11px]">
+          <td colspan="${footerColspan}" class="p-2 text-left font-black border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} uppercase">Jumlah</td>
+          <td class="p-2 text-center font-black text-slate-900">${grandTotalSks}</td>
+        </tr>
+      `;
+
+      return { theadHTML, tbodyHTML, tfootHTML };
+    }
+
     function renderKelebihanSKS() {
-      const selectedDosen = document.getElementById('sksFilterDosen')?.value || '';
+      const selectedDosen = document.getElementById('sksFilterDosen')?.value || 'all';
       const selectedPeriode = document.getElementById('sksFilterPeriode')?.value || 'all';
+      const selectedProdi = document.getElementById('sksFilterProdi')?.value || 'all';
 
       const hintText = selectedPeriode === 'all'
         ? 'Satu Semester Penuh (Akumulatif Semester Ganjil 2026/2027)'
@@ -2291,151 +2518,35 @@
       const hintEl = document.getElementById('sksPeriodeHintText');
       if (hintEl) hintEl.textContent = hintText;
 
-      const dosenMap = {};
-      attendanceData.forEach(d => {
-        const n = normDosen(d.pengajar);
-        if (n) dosenMap[n] = true;
-      });
-      const allDosenList = Object.keys(dosenMap).sort();
+      const mondosData = getMondosData(selectedDosen, selectedPeriode, selectedProdi);
 
-      const thead = document.querySelector('#kelebihanSKSModal table thead');
-      const tbody = document.getElementById('sksTableBody');
-      tbody.innerHTML = '';
+      // Update KPI Cards
+      const elTotalDiampu = document.getElementById('sksModalTotalDiampu');
+      if (elTotalDiampu) elTotalDiampu.textContent = `${mondosData.grandDiampuSks} SKS`;
 
-      if (selectedDosen === 'all') {
-        // MODE: REKAPITULASI SEMUA DOSEN (KOMPARASI PER DOSEN)
-        const results = allDosenList.map(n => ({
-          dosen: n,
-          ...calculateLecturerSKS(n, selectedPeriode)
-        }));
+      const elTotalRombel = document.getElementById('sksModalTotalRombel');
+      if (elTotalRombel) elTotalRombel.textContent = `${mondosData.totalRombels} Rombel (${mondosData.dosens.length} Dosen)`;
 
-        let grandTotalSks = 0;
-        let grandKelebihanSks = 0;
-        let grandRombel = 0;
-        let grandSesi = 0;
-        let grandHadir = 0;
-
-        results.forEach(r => {
-          grandTotalSks += r.totalSks;
-          grandKelebihanSks += r.kelebihanSks;
-          grandRombel += r.totalRombel;
-          grandSesi += r.totalSesi;
-          grandHadir += r.totalHadir;
-        });
-
-        const grandAvgHadir = grandSesi > 0 ? (grandHadir / grandSesi * 100).toFixed(1) : '0';
-
-        document.getElementById('sksModalTotalDiampu').textContent = `${grandTotalSks} SKS`;
-        document.getElementById('sksModalTotalRombel').textContent = `${grandRombel} Rombel (${results.length} Dosen)`;
-        document.getElementById('sksModalKelebihan').textContent = (grandKelebihanSks > 0 ? `+${grandKelebihanSks}` : '0') + ' SKS';
-        document.getElementById('sksModalAvgHadir').textContent = `${grandAvgHadir}%`;
-        document.getElementById('sksModalTotalSesi').textContent = grandSesi;
-
-        thead.innerHTML = `
-          <tr>
-            <th class="py-2.5 px-3 text-center w-10">No</th>
-            <th class="py-2.5 px-3">Nama Dosen Pengampu</th>
-            <th class="py-2.5 px-3 text-center w-24">Total Rombel</th>
-            <th class="py-2.5 px-3 text-center w-28">Total SKS Diampu</th>
-            <th class="py-2.5 px-3 text-center w-28">Beban Wajib</th>
-            <th class="py-2.5 px-3 text-center w-32">Kelebihan SKS</th>
-            <th class="py-2.5 px-3 text-center w-24">% Presensi</th>
-            <th class="py-2.5 px-3 text-center w-28">Rincian MK</th>
-          </tr>
-        `;
-
-        results.forEach((r, idx) => {
-          const tr = document.createElement('tr');
-          tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
-
-          const kelebihanBadge = r.kelebihanSks > 0
-            ? `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">+${r.kelebihanSks} SKS</span>`
-            : `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-500">0 SKS</span>`;
-
-          tr.innerHTML = `
-            <td class="py-3 px-3 text-center text-slate-400 font-mono">${idx + 1}</td>
-            <td class="py-3 px-3">
-              <strong class="text-slate-900 block text-xs">${r.dosen}</strong>
-              <span class="text-[10px] text-slate-500">Teknik Informatika</span>
-            </td>
-            <td class="py-3 px-3 text-center font-semibold text-slate-700">${r.totalRombel} Rombel</td>
-            <td class="py-3 px-3 text-center font-black text-slate-900 text-xs">${r.totalSks} SKS</td>
-            <td class="py-3 px-3 text-center text-slate-600">9 SKS</td>
-            <td class="py-3 px-3 text-center">${kelebihanBadge}</td>
-            <td class="py-3 px-3 text-center font-medium text-slate-700">${r.avgHadir}%</td>
-            <td class="py-3 px-3 text-center">
-              <button type="button" onclick="selectSpecificDosen('${r.dosen}')" class="px-2.5 py-1 text-[11px] font-bold rounded-lg text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition">
-                Rincian &rarr;
-              </button>
-            </td>
-          `;
-          tbody.appendChild(tr);
-        });
-
-      } else {
-        // MODE: RINCIAN INDIVIDUAL PER DOSEN SPESIFIK
-        const res = calculateLecturerSKS(selectedDosen, selectedPeriode);
-
-        document.getElementById('sksModalTotalDiampu').textContent = `${res.totalSks} SKS`;
-        document.getElementById('sksModalTotalRombel').textContent = `${res.totalRombel} Rombel`;
-        document.getElementById('sksModalKelebihan').textContent = (res.kelebihanSks > 0 ? `+${res.kelebihanSks}` : '0') + ' SKS';
-        document.getElementById('sksModalAvgHadir').textContent = `${res.avgHadir}%`;
-        document.getElementById('sksModalTotalSesi').textContent = res.totalSesi;
-
-        thead.innerHTML = `
-          <tr>
-            <th class="py-2.5 px-3 text-center w-8">No</th>
-            <th class="py-2.5 px-3">Mata Kuliah & Kode Rombel</th>
-            <th class="py-2.5 px-3">Program Studi</th>
-            <th class="py-2.5 px-3">Jenis Kelas</th>
-            <th class="py-2.5 px-3 text-center w-16">Bobot</th>
-            <th class="py-2.5 px-3 text-center w-20">Realisasi</th>
-            <th class="py-2.5 px-3 text-center w-16">% Hadir</th>
-            <th class="py-2.5 px-3 text-center w-36">Alokasi Beban</th>
-          </tr>
-        `;
-
-        if (res.rombelList.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-400">Tidak ada rombel kelas yang ditemukan untuk dosen ini.</td></tr>`;
-        } else {
-          res.rombelList.forEach((r, idx) => {
-            const tr = document.createElement('tr');
-            tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
-
-            const prodiBadge = r.prodi === 'Teknik Lingkungan'
-              ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200">Tek. Lingkungan</span>`
-              : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">Tek. Informatika</span>`;
-
-            let jenisBadge = '';
-            if (r.jenis_kelas === 'Mahasiswa Khusus PDAM Depok') {
-              jenisBadge = `<span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-cyan-50 text-cyan-700 border border-cyan-200">PDAM Depok</span>`;
-            } else if (r.jenis_kelas === 'Kelas Sore Karyawan') {
-              jenisBadge = `<span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">Sore Karyawan</span>`;
-            } else {
-              jenisBadge = `<span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200">Pagi Reguler</span>`;
-            }
-
-            const alokasiBadge = r.isKelebihan
-              ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center justify-center"><i data-lucide="check-circle-2" class="w-3 h-3 mr-1 inline"></i>${r.alokasi}</span>`
-              : `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">${r.alokasi}</span>`;
-
-            tr.innerHTML = `
-              <td class="py-2.5 px-3 text-center text-slate-400 font-mono">${idx + 1}</td>
-              <td class="py-2.5 px-3">
-                <strong class="text-slate-900 block leading-tight">${r.mk}</strong>
-                <span class="text-[10px] text-slate-500 font-mono">${r.kmk}</span>
-              </td>
-              <td class="py-2.5 px-3">${prodiBadge}</td>
-              <td class="py-2.5 px-3">${jenisBadge}</td>
-              <td class="py-2.5 px-3 text-center font-bold text-slate-800">${r.sks} SKS</td>
-              <td class="py-2.5 px-3 text-center text-slate-600">${r.total} Sesi</td>
-              <td class="py-2.5 px-3 text-center font-semibold text-slate-700">${r.pctHadir}%</td>
-              <td class="py-2.5 px-3 text-center">${alokasiBadge}</td>
-            `;
-            tbody.appendChild(tr);
-          });
-        }
+      const elKelebihan = document.getElementById('sksModalKelebihan');
+      if (elKelebihan) {
+        elKelebihan.textContent = (mondosData.grandKelebihanSks > 0 ? `+${mondosData.grandKelebihanSks}` : '0') + ' SKS';
       }
+
+      const elTotalJamSks = document.getElementById('sksModalTotalJamSks');
+      if (elTotalJamSks) elTotalJamSks.textContent = mondosData.grandTotalSks;
+
+      const elTotalSesi = document.getElementById('sksModalTotalSesi');
+      if (elTotalSesi) elTotalSesi.textContent = mondosData.totalSesiAll;
+
+      // Render Modal Table
+      const thead = document.getElementById('sksModalThead');
+      const tbody = document.getElementById('sksTableBody');
+      const tfoot = document.getElementById('sksModalTfoot');
+
+      const tableHTML = renderMondosTableHTML(mondosData, false);
+      if (thead) thead.innerHTML = tableHTML.theadHTML;
+      if (tbody) tbody.innerHTML = tableHTML.tbodyHTML;
+      if (tfoot) tfoot.innerHTML = tableHTML.tfootHTML;
 
       lucide.createIcons();
     }
@@ -2443,6 +2554,10 @@
     function exportKelebihanSKSPDF() {
       const selectedDosen = document.getElementById('sksFilterDosen')?.value || 'all';
       const selectedPeriode = document.getElementById('sksFilterPeriode')?.value || 'all';
+      const selectedProdi = document.getElementById('sksFilterProdi')?.value || 'all';
+
+      const mondos = getMondosData(selectedDosen, selectedPeriode, selectedProdi);
+      const tableHTML = renderMondosTableHTML(mondos, true);
 
       const today = new Date().toLocaleDateString('id-ID', {
         day: 'numeric',
@@ -2450,167 +2565,70 @@
         year: 'numeric'
       });
 
-      const periodeLabel = selectedPeriode === 'all'
-        ? 'Satu Semester Penuh (Semester Ganjil 2026/2027)'
-        : 'Periode ' + monthLabel(selectedPeriode);
+      // Update Kop Header
+      const elProdiTitle = document.getElementById('pdfMondosProdiTitle');
+      if (elProdiTitle) elProdiTitle.textContent = mondos.prodiTitle;
 
-      const rentangWaktuText = selectedPeriode === 'all'
-        ? 'Akumulatif Semester Ganjil 2026/2027'
-        : getMonthDateRange(selectedPeriode);
+      const elPeriodeTitle = document.getElementById('pdfMondosPeriodeTitle');
+      if (elPeriodeTitle) elPeriodeTitle.textContent = mondos.periodeText;
 
-      document.getElementById('pdfSksPrintDate').textContent = today;
-      document.getElementById('pdfSksPeriodeLabel').textContent = periodeLabel;
-      const rentangEl = document.getElementById('pdfSksRentangWaktu');
-      if (rentangEl) rentangEl.textContent = rentangWaktuText;
-      const noteRentangEl = document.getElementById('pdfSksNoteRentang');
-      if (noteRentangEl) noteRentangEl.textContent = rentangWaktuText;
+      // Update Header Sub-kolom Pertemuan (1..N)
+      const elColspan = document.getElementById('pdfMondosPertColspan');
+      if (elColspan) elColspan.setAttribute('colspan', mondos.maxCols);
 
-      const docNumMonth = (new Date().getMonth() + 1).toString().padStart(2, '0');
-      document.getElementById('pdfSksDocNumber').textContent = `SP-KSKS/BAUK/${new Date().getFullYear()}/${docNumMonth}`;
-
-      const pdfTable = document.querySelector('#pdfKelebihanSKSDocument table');
-      const pdfThead = pdfTable.querySelector('thead');
-      const pdfTbody = document.getElementById('pdfSksTableBody');
-      pdfTbody.innerHTML = '';
-
-      if (selectedDosen === 'all') {
-        // MODE REKAPITULASI SEMUA DOSEN UNTUK KEUANGAN
-        const dosenMap = {};
-        attendanceData.forEach(d => {
-          const n = normDosen(d.pengajar);
-          if (n) dosenMap[n] = true;
-        });
-        const allDosenList = Object.keys(dosenMap).sort();
-        const results = allDosenList.map(n => ({
-          dosen: n,
-          ...calculateLecturerSKS(n, selectedPeriode)
-        }));
-
-        let grandTotalSks = 0, grandKelebihan = 0, grandSesi = 0, grandHadir = 0, grandRombel = 0;
-        results.forEach(r => {
-          grandTotalSks += r.totalSks;
-          grandKelebihan += r.kelebihanSks;
-          grandSesi += r.totalSesi;
-          grandHadir += r.totalHadir;
-          grandRombel += r.totalRombel;
-        });
-        const grandAvgHadir = grandSesi > 0 ? (grandHadir / grandSesi * 100).toFixed(1) : '0';
-
-        document.getElementById('pdfSksDosenName').textContent = `Rekapitulasi Kolektif Seluruh Dosen (${results.length} Dosen)`;
-        document.getElementById('pdfSksSignDosenName').textContent = 'Koordinator Beban Dosen';
-        document.getElementById('pdfSksTotalDiampu').textContent = `${grandTotalSks} SKS`;
-        document.getElementById('pdfSksRombelCount').textContent = grandRombel;
-        document.getElementById('pdfSksKelebihan').textContent = (grandKelebihan > 0 ? `+${grandKelebihan}` : '0') + ' SKS';
-        document.getElementById('pdfSksValKelebihan').textContent = `${grandKelebihan} SKS`;
-        document.getElementById('pdfSksAvgHadir').textContent = `${grandAvgHadir}%`;
-        document.getElementById('pdfSksTotalSesi').textContent = grandSesi;
-
-        document.getElementById('pdfSksFooterTotal').textContent = `${grandTotalSks} SKS`;
-        document.getElementById('pdfSksFooterSesi').textContent = `${grandSesi} Sesi`;
-        document.getElementById('pdfSksFooterHadir').textContent = `${grandAvgHadir}%`;
-        document.getElementById('pdfSksFooterKelebihan').textContent = `Kelebihan: +${grandKelebihan} SKS`;
-
-        pdfThead.innerHTML = `
-          <tr class="bg-slate-100 text-slate-800 text-[10px] font-bold uppercase border-b border-slate-300">
-            <th class="p-2 border-r border-slate-300 text-center w-8">No</th>
-            <th class="p-2 border-r border-slate-300">Nama Dosen Pengampu</th>
-            <th class="p-2 border-r border-slate-300 text-center w-24">Total Rombel</th>
-            <th class="p-2 border-r border-slate-300 text-center w-24">Beban SKS</th>
-            <th class="p-2 border-r border-slate-300 text-center w-24">Beban Wajib</th>
-            <th class="p-2 border-r border-slate-300 text-center w-28">Kelebihan SKS</th>
-            <th class="p-2 border-r border-slate-300 text-center w-20">% Hadir</th>
-            <th class="p-2 text-center w-32">Status BAUK</th>
-          </tr>
-        `;
-
-        results.forEach((r, idx) => {
-          const tr = document.createElement('tr');
-          tr.className = idx % 2 === 0 ? "bg-white" : "bg-slate-50";
-          const statusKelebihan = r.kelebihanSks > 0
-            ? `<span class="font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">+${r.kelebihanSks} SKS Insentif</span>`
-            : `<span class="text-slate-500">Standar Wajib (9 SKS)</span>`;
-          tr.innerHTML = `
-            <td class="p-2 border-r border-slate-300 text-center font-mono">${idx + 1}</td>
-            <td class="p-2 border-r border-slate-300 font-bold text-slate-900">${r.dosen}</td>
-            <td class="p-2 border-r border-slate-300 text-center">${r.totalRombel} Rombel</td>
-            <td class="p-2 border-r border-slate-300 text-center font-bold text-slate-900">${r.totalSks} SKS</td>
-            <td class="p-2 border-r border-slate-300 text-center text-slate-600">9 SKS</td>
-            <td class="p-2 border-r border-slate-300 text-center font-black ${r.kelebihanSks > 0 ? 'text-emerald-700 bg-emerald-50' : 'text-slate-600'}">${r.kelebihanSks > 0 ? '+' + r.kelebihanSks : '0'} SKS</td>
-            <td class="p-2 border-r border-slate-300 text-center font-medium">${r.avgHadir}%</td>
-            <td class="p-2 text-center text-[10px]">${statusKelebihan}</td>
-          `;
-          pdfTbody.appendChild(tr);
-        });
-
-      } else {
-        // MODE INDIVIDUAL PER DOSEN SPESIFIK
-        const res = calculateLecturerSKS(selectedDosen, selectedPeriode);
-
-        document.getElementById('pdfSksDosenName').textContent = selectedDosen;
-        document.getElementById('pdfSksSignDosenName').textContent = selectedDosen;
-        document.getElementById('pdfSksTotalDiampu').textContent = `${res.totalSks} SKS`;
-        document.getElementById('pdfSksRombelCount').textContent = res.totalRombel;
-        document.getElementById('pdfSksKelebihan').textContent = (res.kelebihanSks > 0 ? `+${res.kelebihanSks}` : '0') + ' SKS';
-        document.getElementById('pdfSksValKelebihan').textContent = `${res.kelebihanSks} SKS`;
-        document.getElementById('pdfSksAvgHadir').textContent = `${res.avgHadir}%`;
-        document.getElementById('pdfSksTotalSesi').textContent = res.totalSesi;
-
-        document.getElementById('pdfSksFooterTotal').textContent = `${res.totalSks} SKS`;
-        document.getElementById('pdfSksFooterSesi').textContent = `${res.totalSesi} Sesi`;
-        document.getElementById('pdfSksFooterHadir').textContent = `${res.avgHadir}%`;
-        document.getElementById('pdfSksFooterKelebihan').textContent = `Kelebihan: +${res.kelebihanSks} SKS`;
-
-        pdfThead.innerHTML = `
-          <tr class="bg-slate-100 text-slate-800 text-[10px] font-bold uppercase border-b border-slate-300">
-            <th class="p-2 border-r border-slate-300 text-center w-8">No</th>
-            <th class="p-2 border-r border-slate-300">Mata Kuliah & Kode Rombel</th>
-            <th class="p-2 border-r border-slate-300 w-28">Program Studi</th>
-            <th class="p-2 border-r border-slate-300 w-28">Jenis Kelas</th>
-            <th class="p-2 border-r border-slate-300 text-center w-14">Bobot</th>
-            <th class="p-2 border-r border-slate-300 text-center w-20">Realisasi</th>
-            <th class="p-2 border-r border-slate-300 text-center w-16">% Hadir</th>
-            <th class="p-2 text-center w-36">Alokasi Beban</th>
-          </tr>
-        `;
-
-        res.rombelList.forEach((r, idx) => {
-          const tr = document.createElement('tr');
-          tr.className = idx % 2 === 0 ? "bg-white" : "bg-slate-50";
-          const alokasiClass = r.isKelebihan ? "font-bold text-emerald-800 bg-emerald-50/80" : "text-slate-600";
-          tr.innerHTML = `
-            <td class="p-2 border-r border-slate-300 text-center font-mono">${idx + 1}</td>
-            <td class="p-2 border-r border-slate-300">
-              <strong class="text-slate-900 block">${r.mk}</strong>
-              <span class="text-[9.5px] text-slate-500 font-mono">${r.kmk}</span>
-            </td>
-            <td class="p-2 border-r border-slate-300 whitespace-nowrap">${r.prodi}</td>
-            <td class="p-2 border-r border-slate-300 whitespace-nowrap">${r.jenis_kelas}</td>
-            <td class="p-2 border-r border-slate-300 text-center font-bold text-slate-900">${r.sks} SKS</td>
-            <td class="p-2 border-r border-slate-300 text-center text-slate-700">${r.total} Sesi</td>
-            <td class="p-2 border-r border-slate-300 text-center font-medium">${r.pctHadir}%</td>
-            <td class="p-2 text-center ${alokasiClass}">${r.alokasi}</td>
-          `;
-          pdfTbody.appendChild(tr);
-        });
+      const elSubHeader = document.getElementById('pdfMondosSubHeader');
+      if (elSubHeader) {
+        let subTh = '';
+        for (let c = 1; c <= mondos.maxCols; c++) {
+          subTh += `<th class="p-1 border-r border-slate-900 text-center w-14">${c}</th>`;
+        }
+        elSubHeader.innerHTML = subTh;
       }
+
+      // Update Body & Footer Tabel
+      const elTableBody = document.getElementById('pdfMondosTableBody');
+      if (elTableBody) elTableBody.innerHTML = tableHTML.tbodyHTML;
+
+      const elFooterColspan = document.getElementById('pdfMondosFooterColspan');
+      if (elFooterColspan) elFooterColspan.setAttribute('colspan', 6 + mondos.maxCols);
+
+      const elFooterTotal = document.getElementById('pdfMondosFooterTotalSks');
+      if (elFooterTotal) elFooterTotal.textContent = mondos.grandTotalSks;
+
+      // Update Tanda Tangan
+      const elKaprodiTitle = document.getElementById('pdfMondosSignKaprodiTitle');
+      if (elKaprodiTitle) elKaprodiTitle.textContent = mondos.kaprodiTitle;
+
+      const elKaprodiName = document.getElementById('pdfMondosSignKaprodiName');
+      if (elKaprodiName) elKaprodiName.textContent = mondos.kaprodiName;
+
+      const elSignDate = document.getElementById('pdfMondosSignDate');
+      if (elSignDate) elSignDate.textContent = today;
+
+      const elMakerTitle = document.getElementById('pdfMondosSignMakerTitle');
+      if (elMakerTitle) elMakerTitle.textContent = mondos.sekretarisTitle;
+
+      const elMakerName = document.getElementById('pdfMondosSignMakerName');
+      if (elMakerName) elMakerName.textContent = mondos.sekretarisName;
 
       // Buka Print Area Kelebihan SKS
       const element = document.getElementById('pdfKelebihanSKSDocument');
       const printContainer = document.getElementById('printAreaKelebihanSKS');
       printContainer.classList.remove('hidden');
 
-      const cleanDosenFilename = selectedDosen.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 25);
+      const cleanProdi = (mondos.activeProdi || 'Prodi').replace(/[^a-zA-Z0-9]/g, '_');
+      const cleanDosen = selectedDosen !== 'all' ? `_${selectedDosen.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 20)}` : '';
       const opt = {
-        margin: [8, 8, 8, 8],
-        filename: `Laporan_Kelebihan_SKS_BAUK_${cleanDosenFilename}_${new Date().toISOString().slice(0,10)}.pdf`,
+        margin: [6, 6, 6, 6],
+        filename: `Mondos_DT_${cleanProdi}${cleanDosen}_${new Date().toISOString().slice(0,10)}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
       };
 
       html2pdf().set(opt).from(element).save().then(() => {
         printContainer.classList.add('hidden');
-        showToast('Laporan Kelebihan SKS BAUK berhasil diunduh ke PDF.');
+        showToast('Laporan Mondos DT (Landscape PDF) berhasil diunduh.');
       }).catch(err => {
         console.error('html2pdf fallback to print:', err);
         window.print();
