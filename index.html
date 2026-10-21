@@ -2192,6 +2192,13 @@
       if (dosenList.length === 0) {
         selDosen.innerHTML = '<option value="">(Belum ada data dosen)</option>';
       } else {
+        if (dosenList.length > 1) {
+          const optAll = document.createElement('option');
+          optAll.value = 'all';
+          optAll.textContent = `👥 Rekapitulasi Semua Dosen (${dosenList.length} Dosen)`;
+          selDosen.appendChild(optAll);
+        }
+
         dosenList.forEach(n => {
           const opt = document.createElement('option');
           opt.value = n;
@@ -2233,6 +2240,14 @@
       lucide.createIcons();
     }
 
+    function selectSpecificDosen(dosenName) {
+      const sel = document.getElementById('sksFilterDosen');
+      if (sel) {
+        sel.value = dosenName;
+        renderKelebihanSKS();
+      }
+    }
+
     function closeKelebihanSKSModal() {
       document.getElementById('kelebihanSKSModal').classList.add('hidden');
     }
@@ -2241,65 +2256,158 @@
       const selectedDosen = document.getElementById('sksFilterDosen')?.value || '';
       const selectedPeriode = document.getElementById('sksFilterPeriode')?.value || 'all';
 
-      const res = calculateLecturerSKS(selectedDosen, selectedPeriode);
+      const dosenMap = {};
+      attendanceData.forEach(d => {
+        const n = normDosen(d.pengajar);
+        if (n) dosenMap[n] = true;
+      });
+      const allDosenList = Object.keys(dosenMap).sort();
 
-      document.getElementById('sksModalTotalDiampu').textContent = `${res.totalSks} SKS`;
-      document.getElementById('sksModalTotalRombel').textContent = res.totalRombel;
-      document.getElementById('sksModalKelebihan').textContent = (res.kelebihanSks > 0 ? `+${res.kelebihanSks}` : '0') + ' SKS';
-      document.getElementById('sksModalAvgHadir').textContent = `${res.avgHadir}%`;
-      document.getElementById('sksModalTotalSesi').textContent = res.totalSesi;
-
+      const thead = document.querySelector('#kelebihanSKSModal table thead');
       const tbody = document.getElementById('sksTableBody');
       tbody.innerHTML = '';
 
-      if (res.rombelList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-400">Tidak ada rombel kelas yang ditemukan untuk kriteria ini.</td></tr>`;
-      } else {
-        res.rombelList.forEach((r, idx) => {
+      if (selectedDosen === 'all') {
+        // MODE: REKAPITULASI SEMUA DOSEN (KOMPARASI PER DOSEN)
+        const results = allDosenList.map(n => ({
+          dosen: n,
+          ...calculateLecturerSKS(n, selectedPeriode)
+        }));
+
+        let grandTotalSks = 0;
+        let grandKelebihanSks = 0;
+        let grandRombel = 0;
+        let grandSesi = 0;
+        let grandHadir = 0;
+
+        results.forEach(r => {
+          grandTotalSks += r.totalSks;
+          grandKelebihanSks += r.kelebihanSks;
+          grandRombel += r.totalRombel;
+          grandSesi += r.totalSesi;
+          grandHadir += r.totalHadir;
+        });
+
+        const grandAvgHadir = grandSesi > 0 ? (grandHadir / grandSesi * 100).toFixed(1) : '0';
+
+        document.getElementById('sksModalTotalDiampu').textContent = `${grandTotalSks} SKS`;
+        document.getElementById('sksModalTotalRombel').textContent = `${grandRombel} Rombel (${results.length} Dosen)`;
+        document.getElementById('sksModalKelebihan').textContent = (grandKelebihanSks > 0 ? `+${grandKelebihanSks}` : '0') + ' SKS';
+        document.getElementById('sksModalAvgHadir').textContent = `${grandAvgHadir}%`;
+        document.getElementById('sksModalTotalSesi').textContent = grandSesi;
+
+        thead.innerHTML = `
+          <tr>
+            <th class="py-2.5 px-3 text-center w-10">No</th>
+            <th class="py-2.5 px-3">Nama Dosen Pengampu</th>
+            <th class="py-2.5 px-3 text-center w-24">Total Rombel</th>
+            <th class="py-2.5 px-3 text-center w-28">Total SKS Diampu</th>
+            <th class="py-2.5 px-3 text-center w-28">Beban Wajib</th>
+            <th class="py-2.5 px-3 text-center w-32">Kelebihan SKS</th>
+            <th class="py-2.5 px-3 text-center w-24">% Presensi</th>
+            <th class="py-2.5 px-3 text-center w-28">Rincian MK</th>
+          </tr>
+        `;
+
+        results.forEach((r, idx) => {
           const tr = document.createElement('tr');
           tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
 
-          const prodiBadge = r.prodi === 'Teknik Lingkungan'
-            ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200">Tek. Lingkungan</span>`
-            : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">Tek. Informatika</span>`;
-
-          let jenisBadge = '';
-          if (r.jenis_kelas === 'Mahasiswa Khusus PDAM Depok') {
-            jenisBadge = `<span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-cyan-50 text-cyan-700 border border-cyan-200">PDAM Depok</span>`;
-          } else if (r.jenis_kelas === 'Kelas Sore Karyawan') {
-            jenisBadge = `<span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">Sore Karyawan</span>`;
-          } else {
-            jenisBadge = `<span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200">Pagi Reguler</span>`;
-          }
-
-          const alokasiBadge = r.isKelebihan
-            ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center justify-center"><i data-lucide="check-circle-2" class="w-3 h-3 mr-1 inline"></i>${r.alokasi}</span>`
-            : `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">${r.alokasi}</span>`;
+          const kelebihanBadge = r.kelebihanSks > 0
+            ? `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">+${r.kelebihanSks} SKS</span>`
+            : `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-500">0 SKS</span>`;
 
           tr.innerHTML = `
-            <td class="py-2.5 px-3 text-center text-slate-400 font-mono">${idx + 1}</td>
-            <td class="py-2.5 px-3">
-              <strong class="text-slate-900 block leading-tight">${r.mk}</strong>
-              <span class="text-[10px] text-slate-500 font-mono">${r.kmk}</span>
+            <td class="py-3 px-3 text-center text-slate-400 font-mono">${idx + 1}</td>
+            <td class="py-3 px-3">
+              <strong class="text-slate-900 block text-xs">${r.dosen}</strong>
+              <span class="text-[10px] text-slate-500">Fakultas Teknik</span>
             </td>
-            <td class="py-2.5 px-3">${prodiBadge}</td>
-            <td class="py-2.5 px-3">${jenisBadge}</td>
-            <td class="py-2.5 px-3 text-center font-bold text-slate-800">${r.sks} SKS</td>
-            <td class="py-2.5 px-3 text-center text-slate-600">${r.total} Sesi</td>
-            <td class="py-2.5 px-3 text-center font-semibold text-slate-700">${r.pctHadir}%</td>
-            <td class="py-2.5 px-3 text-center">${alokasiBadge}</td>
+            <td class="py-3 px-3 text-center font-semibold text-slate-700">${r.totalRombel} Rombel</td>
+            <td class="py-3 px-3 text-center font-black text-slate-900 text-xs">${r.totalSks} SKS</td>
+            <td class="py-3 px-3 text-center text-slate-600">12 SKS</td>
+            <td class="py-3 px-3 text-center">${kelebihanBadge}</td>
+            <td class="py-3 px-3 text-center font-medium text-slate-700">${r.avgHadir}%</td>
+            <td class="py-3 px-3 text-center">
+              <button type="button" onclick="selectSpecificDosen('${r.dosen}')" class="px-2.5 py-1 text-[11px] font-bold rounded-lg text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition">
+                Rincian &rarr;
+              </button>
+            </td>
           `;
           tbody.appendChild(tr);
         });
+
+      } else {
+        // MODE: RINCIAN INDIVIDUAL PER DOSEN SPESIFIK
+        const res = calculateLecturerSKS(selectedDosen, selectedPeriode);
+
+        document.getElementById('sksModalTotalDiampu').textContent = `${res.totalSks} SKS`;
+        document.getElementById('sksModalTotalRombel').textContent = `${res.totalRombel} Rombel`;
+        document.getElementById('sksModalKelebihan').textContent = (res.kelebihanSks > 0 ? `+${res.kelebihanSks}` : '0') + ' SKS';
+        document.getElementById('sksModalAvgHadir').textContent = `${res.avgHadir}%`;
+        document.getElementById('sksModalTotalSesi').textContent = res.totalSesi;
+
+        thead.innerHTML = `
+          <tr>
+            <th class="py-2.5 px-3 text-center w-8">No</th>
+            <th class="py-2.5 px-3">Mata Kuliah & Kode Rombel</th>
+            <th class="py-2.5 px-3">Program Studi</th>
+            <th class="py-2.5 px-3">Jenis Kelas</th>
+            <th class="py-2.5 px-3 text-center w-16">Bobot</th>
+            <th class="py-2.5 px-3 text-center w-20">Realisasi</th>
+            <th class="py-2.5 px-3 text-center w-16">% Hadir</th>
+            <th class="py-2.5 px-3 text-center w-36">Alokasi Beban</th>
+          </tr>
+        `;
+
+        if (res.rombelList.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-400">Tidak ada rombel kelas yang ditemukan untuk dosen ini.</td></tr>`;
+        } else {
+          res.rombelList.forEach((r, idx) => {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+
+            const prodiBadge = r.prodi === 'Teknik Lingkungan'
+              ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200">Tek. Lingkungan</span>`
+              : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">Tek. Informatika</span>`;
+
+            let jenisBadge = '';
+            if (r.jenis_kelas === 'Mahasiswa Khusus PDAM Depok') {
+              jenisBadge = `<span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-cyan-50 text-cyan-700 border border-cyan-200">PDAM Depok</span>`;
+            } else if (r.jenis_kelas === 'Kelas Sore Karyawan') {
+              jenisBadge = `<span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">Sore Karyawan</span>`;
+            } else {
+              jenisBadge = `<span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200">Pagi Reguler</span>`;
+            }
+
+            const alokasiBadge = r.isKelebihan
+              ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center justify-center"><i data-lucide="check-circle-2" class="w-3 h-3 mr-1 inline"></i>${r.alokasi}</span>`
+              : `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">${r.alokasi}</span>`;
+
+            tr.innerHTML = `
+              <td class="py-2.5 px-3 text-center text-slate-400 font-mono">${idx + 1}</td>
+              <td class="py-2.5 px-3">
+                <strong class="text-slate-900 block leading-tight">${r.mk}</strong>
+                <span class="text-[10px] text-slate-500 font-mono">${r.kmk}</span>
+              </td>
+              <td class="py-2.5 px-3">${prodiBadge}</td>
+              <td class="py-2.5 px-3">${jenisBadge}</td>
+              <td class="py-2.5 px-3 text-center font-bold text-slate-800">${r.sks} SKS</td>
+              <td class="py-2.5 px-3 text-center text-slate-600">${r.total} Sesi</td>
+              <td class="py-2.5 px-3 text-center font-semibold text-slate-700">${r.pctHadir}%</td>
+              <td class="py-2.5 px-3 text-center">${alokasiBadge}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
       }
 
       lucide.createIcons();
     }
 
     function exportKelebihanSKSPDF() {
-      const selectedDosen = document.getElementById('sksFilterDosen')?.value || 'MEGA WAHYU RHAMADANI, S.T., M.M.S.I';
+      const selectedDosen = document.getElementById('sksFilterDosen')?.value || 'all';
       const selectedPeriode = document.getElementById('sksFilterPeriode')?.value || 'all';
-      const res = calculateLecturerSKS(selectedDosen, selectedPeriode);
 
       const today = new Date().toLocaleDateString('id-ID', {
         day: 'numeric',
@@ -2311,52 +2419,137 @@
         ? 'Satu Semester Penuh (Semester Ganjil 2026/2027)'
         : 'Bulan ' + monthLabel(selectedPeriode) + ' 2026/2027';
 
-      // Update Elemen di Dokumen Cetak
       document.getElementById('pdfSksPrintDate').textContent = today;
-      document.getElementById('pdfSksDosenName').textContent = selectedDosen;
-      document.getElementById('pdfSksSignDosenName').textContent = selectedDosen;
       document.getElementById('pdfSksPeriodeLabel').textContent = periodeLabel;
 
       const docNumMonth = (new Date().getMonth() + 1).toString().padStart(2, '0');
       document.getElementById('pdfSksDocNumber').textContent = `SP-KSKS/FT/${new Date().getFullYear()}/${docNumMonth}`;
 
-      document.getElementById('pdfSksTotalDiampu').textContent = `${res.totalSks} SKS`;
-      document.getElementById('pdfSksRombelCount').textContent = res.totalRombel;
-      document.getElementById('pdfSksKelebihan').textContent = (res.kelebihanSks > 0 ? `+${res.kelebihanSks}` : '0') + ' SKS';
-      document.getElementById('pdfSksValKelebihan').textContent = `${res.kelebihanSks} SKS`;
-      document.getElementById('pdfSksAvgHadir').textContent = `${res.avgHadir}%`;
-      document.getElementById('pdfSksTotalSesi').textContent = res.totalSesi;
-
-      document.getElementById('pdfSksFooterTotal').textContent = `${res.totalSks} SKS`;
-      document.getElementById('pdfSksFooterSesi').textContent = `${res.totalSesi} Sesi`;
-      document.getElementById('pdfSksFooterHadir').textContent = `${res.avgHadir}%`;
-      document.getElementById('pdfSksFooterKelebihan').textContent = `Kelebihan: +${res.kelebihanSks} SKS`;
-
-      // Render Rows Tabel PDF
+      const pdfTable = document.querySelector('#pdfKelebihanSKSDocument table');
+      const pdfThead = pdfTable.querySelector('thead');
       const pdfTbody = document.getElementById('pdfSksTableBody');
       pdfTbody.innerHTML = '';
 
-      res.rombelList.forEach((r, idx) => {
-        const tr = document.createElement('tr');
-        tr.className = idx % 2 === 0 ? "bg-white" : "bg-slate-50";
+      if (selectedDosen === 'all') {
+        // MODE REKAPITULASI SEMUA DOSEN UNTUK KEUANGAN
+        const dosenMap = {};
+        attendanceData.forEach(d => {
+          const n = normDosen(d.pengajar);
+          if (n) dosenMap[n] = true;
+        });
+        const allDosenList = Object.keys(dosenMap).sort();
+        const results = allDosenList.map(n => ({
+          dosen: n,
+          ...calculateLecturerSKS(n, selectedPeriode)
+        }));
 
-        const alokasiClass = r.isKelebihan ? "font-bold text-emerald-800 bg-emerald-50/80" : "text-slate-600";
+        let grandTotalSks = 0, grandKelebihan = 0, grandSesi = 0, grandHadir = 0, grandRombel = 0;
+        results.forEach(r => {
+          grandTotalSks += r.totalSks;
+          grandKelebihan += r.kelebihanSks;
+          grandSesi += r.totalSesi;
+          grandHadir += r.totalHadir;
+          grandRombel += r.totalRombel;
+        });
+        const grandAvgHadir = grandSesi > 0 ? (grandHadir / grandSesi * 100).toFixed(1) : '0';
 
-        tr.innerHTML = `
-          <td class="p-2 border-r border-slate-300 text-center font-mono">${idx + 1}</td>
-          <td class="p-2 border-r border-slate-300">
-            <strong class="text-slate-900 block">${r.mk}</strong>
-            <span class="text-[9.5px] text-slate-500 font-mono">${r.kmk}</span>
-          </td>
-          <td class="p-2 border-r border-slate-300 whitespace-nowrap">${r.prodi}</td>
-          <td class="p-2 border-r border-slate-300 whitespace-nowrap">${r.jenis_kelas}</td>
-          <td class="p-2 border-r border-slate-300 text-center font-bold text-slate-900">${r.sks} SKS</td>
-          <td class="p-2 border-r border-slate-300 text-center text-slate-700">${r.total} Sesi</td>
-          <td class="p-2 border-r border-slate-300 text-center font-medium">${r.pctHadir}%</td>
-          <td class="p-2 text-center ${alokasiClass}">${r.alokasi}</td>
+        document.getElementById('pdfSksDosenName').textContent = `Rekapitulasi Kolektif Seluruh Dosen (${results.length} Dosen)`;
+        document.getElementById('pdfSksSignDosenName').textContent = 'Koordinator Beban Dosen';
+        document.getElementById('pdfSksTotalDiampu').textContent = `${grandTotalSks} SKS`;
+        document.getElementById('pdfSksRombelCount').textContent = grandRombel;
+        document.getElementById('pdfSksKelebihan').textContent = (grandKelebihan > 0 ? `+${grandKelebihan}` : '0') + ' SKS';
+        document.getElementById('pdfSksValKelebihan').textContent = `${grandKelebihan} SKS`;
+        document.getElementById('pdfSksAvgHadir').textContent = `${grandAvgHadir}%`;
+        document.getElementById('pdfSksTotalSesi').textContent = grandSesi;
+
+        document.getElementById('pdfSksFooterTotal').textContent = `${grandTotalSks} SKS`;
+        document.getElementById('pdfSksFooterSesi').textContent = `${grandSesi} Sesi`;
+        document.getElementById('pdfSksFooterHadir').textContent = `${grandAvgHadir}%`;
+        document.getElementById('pdfSksFooterKelebihan').textContent = `Kelebihan: +${grandKelebihan} SKS`;
+
+        pdfThead.innerHTML = `
+          <tr class="bg-slate-100 text-slate-800 text-[10px] font-bold uppercase border-b border-slate-300">
+            <th class="p-2 border-r border-slate-300 text-center w-8">No</th>
+            <th class="p-2 border-r border-slate-300">Nama Dosen Pengampu</th>
+            <th class="p-2 border-r border-slate-300 text-center w-24">Total Rombel</th>
+            <th class="p-2 border-r border-slate-300 text-center w-24">Beban SKS</th>
+            <th class="p-2 border-r border-slate-300 text-center w-24">Beban Wajib</th>
+            <th class="p-2 border-r border-slate-300 text-center w-28">Kelebihan SKS</th>
+            <th class="p-2 border-r border-slate-300 text-center w-20">% Hadir</th>
+            <th class="p-2 text-center w-32">Status Keuangan</th>
+          </tr>
         `;
-        pdfTbody.appendChild(tr);
-      });
+
+        results.forEach((r, idx) => {
+          const tr = document.createElement('tr');
+          tr.className = idx % 2 === 0 ? "bg-white" : "bg-slate-50";
+          const statusKelebihan = r.kelebihanSks > 0
+            ? `<span class="font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">+${r.kelebihanSks} SKS Insentif</span>`
+            : `<span class="text-slate-500">Standar Wajib (12 SKS)</span>`;
+          tr.innerHTML = `
+            <td class="p-2 border-r border-slate-300 text-center font-mono">${idx + 1}</td>
+            <td class="p-2 border-r border-slate-300 font-bold text-slate-900">${r.dosen}</td>
+            <td class="p-2 border-r border-slate-300 text-center">${r.totalRombel} Rombel</td>
+            <td class="p-2 border-r border-slate-300 text-center font-bold text-slate-900">${r.totalSks} SKS</td>
+            <td class="p-2 border-r border-slate-300 text-center text-slate-600">12 SKS</td>
+            <td class="p-2 border-r border-slate-300 text-center font-black ${r.kelebihanSks > 0 ? 'text-emerald-700 bg-emerald-50' : 'text-slate-600'}">${r.kelebihanSks > 0 ? '+' + r.kelebihanSks : '0'} SKS</td>
+            <td class="p-2 border-r border-slate-300 text-center font-medium">${r.avgHadir}%</td>
+            <td class="p-2 text-center text-[10px]">${statusKelebihan}</td>
+          `;
+          pdfTbody.appendChild(tr);
+        });
+
+      } else {
+        // MODE INDIVIDUAL PER DOSEN SPESIFIK
+        const res = calculateLecturerSKS(selectedDosen, selectedPeriode);
+
+        document.getElementById('pdfSksDosenName').textContent = selectedDosen;
+        document.getElementById('pdfSksSignDosenName').textContent = selectedDosen;
+        document.getElementById('pdfSksTotalDiampu').textContent = `${res.totalSks} SKS`;
+        document.getElementById('pdfSksRombelCount').textContent = res.totalRombel;
+        document.getElementById('pdfSksKelebihan').textContent = (res.kelebihanSks > 0 ? `+${res.kelebihanSks}` : '0') + ' SKS';
+        document.getElementById('pdfSksValKelebihan').textContent = `${res.kelebihanSks} SKS`;
+        document.getElementById('pdfSksAvgHadir').textContent = `${res.avgHadir}%`;
+        document.getElementById('pdfSksTotalSesi').textContent = res.totalSesi;
+
+        document.getElementById('pdfSksFooterTotal').textContent = `${res.totalSks} SKS`;
+        document.getElementById('pdfSksFooterSesi').textContent = `${res.totalSesi} Sesi`;
+        document.getElementById('pdfSksFooterHadir').textContent = `${res.avgHadir}%`;
+        document.getElementById('pdfSksFooterKelebihan').textContent = `Kelebihan: +${res.kelebihanSks} SKS`;
+
+        pdfThead.innerHTML = `
+          <tr class="bg-slate-100 text-slate-800 text-[10px] font-bold uppercase border-b border-slate-300">
+            <th class="p-2 border-r border-slate-300 text-center w-8">No</th>
+            <th class="p-2 border-r border-slate-300">Mata Kuliah & Kode Rombel</th>
+            <th class="p-2 border-r border-slate-300 w-28">Program Studi</th>
+            <th class="p-2 border-r border-slate-300 w-28">Jenis Kelas</th>
+            <th class="p-2 border-r border-slate-300 text-center w-14">Bobot</th>
+            <th class="p-2 border-r border-slate-300 text-center w-20">Realisasi</th>
+            <th class="p-2 border-r border-slate-300 text-center w-16">% Hadir</th>
+            <th class="p-2 text-center w-36">Alokasi Beban</th>
+          </tr>
+        `;
+
+        res.rombelList.forEach((r, idx) => {
+          const tr = document.createElement('tr');
+          tr.className = idx % 2 === 0 ? "bg-white" : "bg-slate-50";
+          const alokasiClass = r.isKelebihan ? "font-bold text-emerald-800 bg-emerald-50/80" : "text-slate-600";
+          tr.innerHTML = `
+            <td class="p-2 border-r border-slate-300 text-center font-mono">${idx + 1}</td>
+            <td class="p-2 border-r border-slate-300">
+              <strong class="text-slate-900 block">${r.mk}</strong>
+              <span class="text-[9.5px] text-slate-500 font-mono">${r.kmk}</span>
+            </td>
+            <td class="p-2 border-r border-slate-300 whitespace-nowrap">${r.prodi}</td>
+            <td class="p-2 border-r border-slate-300 whitespace-nowrap">${r.jenis_kelas}</td>
+            <td class="p-2 border-r border-slate-300 text-center font-bold text-slate-900">${r.sks} SKS</td>
+            <td class="p-2 border-r border-slate-300 text-center text-slate-700">${r.total} Sesi</td>
+            <td class="p-2 border-r border-slate-300 text-center font-medium">${r.pctHadir}%</td>
+            <td class="p-2 text-center ${alokasiClass}">${r.alokasi}</td>
+          `;
+          pdfTbody.appendChild(tr);
+        });
+      }
 
       // Buka Print Area Kelebihan SKS
       const element = document.getElementById('pdfKelebihanSKSDocument');
