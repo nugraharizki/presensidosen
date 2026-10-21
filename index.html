@@ -624,70 +624,50 @@
   <!-- PRINT / EXPORT TEMPLATE: LAPORAN MONDOS DT (KELEBIHAN SKS) -->
   <!-- ======================================================== -->
   <div id="printAreaKelebihanSKS" class="hidden">
-    <div class="p-8 max-w-[1100px] mx-auto bg-white text-slate-900 leading-normal font-sans" id="pdfKelebihanSKSDocument">
+    <div style="width: 1050px; margin: 0 auto; padding: 20px 24px; background-color: #ffffff; color: #0f172a; font-family: Arial, Helvetica, sans-serif;" id="pdfKelebihanSKSDocument">
       
       <!-- HEADER JUDUL RESMI MONDOS DT (CENTERED) -->
-      <div class="text-center mb-6">
-        <h1 class="text-sm font-black text-slate-900 uppercase tracking-wider">
+      <div style="text-align: center; margin-bottom: 16px;">
+        <h1 style="margin: 0; font-size: 13.5px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; color: #0f172a; line-height: 1.3;">
           MONITORING KEHADIRAN DOSEN TETAP SEMESTER GANJIL TA 2026/2027
         </h1>
-        <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wide mt-1">
+        <h2 style="margin: 3px 0 0 0; font-size: 11px; font-weight: 800; letter-spacing: 0.2px; text-transform: uppercase; color: #1e293b; line-height: 1.3;">
           <span id="pdfMondosProdiTitle">PROGRAM STUDI S1 - TEKNIK LINGKUNGAN</span> 
-          <span id="pdfMondosPeriodeTitle">(Periode 14 September - 20 Oktober 2026)</span>
+          <span id="pdfMondosPeriodeTitle" style="font-weight: 600; text-transform: none;">(Periode 15 September - 20 Oktober 2026)</span>
         </h2>
       </div>
 
       <!-- TABEL RESMI MONDOS DT -->
-      <table class="w-full text-xs border border-slate-900 border-collapse mb-8">
-        <thead>
-          <tr class="bg-white text-slate-900 font-bold text-[10px] uppercase border-b border-slate-900">
-            <th rowspan="2" class="p-1.5 border-r border-slate-900 text-center w-8">No.</th>
-            <th rowspan="2" class="p-1.5 border-r border-slate-900 text-center w-48">NAMA DOSEN</th>
-            <th rowspan="2" class="p-1.5 border-r border-slate-900 text-center">MATA KULIAH</th>
-            <th rowspan="2" class="p-1.5 border-r border-slate-900 text-center w-20">KELAS</th>
-            <th rowspan="2" class="p-1.5 border-r border-slate-900 text-center w-12">SEMT</th>
-            <th rowspan="2" class="p-1.5 border-r border-slate-900 text-center w-10">SKS</th>
-            <th id="pdfMondosPertColspan" colspan="6" class="p-1.5 border-r border-slate-900 text-center">PERTEMUAN KE</th>
-            <th rowspan="2" class="p-1.5 border-r border-slate-900 text-center w-14">JMLH PERT</th>
-            <th rowspan="2" class="p-1.5 text-center w-14">TOTAL SKS</th>
-          </tr>
-          <tr id="pdfMondosSubHeader" class="bg-white text-slate-900 font-bold text-[9.5px] border-b border-slate-900">
-            <!-- Rendered via JS -->
-          </tr>
+      <table id="pdfMondosTable" style="width: 100%; border-collapse: collapse; border: 1.5px solid #0f172a; margin-bottom: 22px; font-family: Arial, Helvetica, sans-serif;">
+        <thead id="pdfMondosThead">
+          <!-- Rendered dynamically via JS for 100% precision and zero text clipping -->
         </thead>
-        <tbody id="pdfMondosTableBody" class="text-[10px]">
+        <tbody id="pdfMondosTableBody">
           <!-- Section row & data rows rendered dynamically via JS -->
         </tbody>
-        <tfoot>
-          <tr class="font-bold border-t-2 border-slate-900 text-[11px] bg-white">
-            <td id="pdfMondosFooterColspan" colspan="12" class="p-2 text-left font-black border-r border-slate-900 uppercase">Jumlah</td>
-            <td id="pdfMondosFooterTotalSks" class="p-2 text-center font-black">0</td>
-          </tr>
+        <tfoot id="pdfMondosTfoot">
+          <!-- Rendered dynamically via JS -->
         </tfoot>
       </table>
 
-      <!-- LEMBAR PENGESAHAN TANDA TANGAN (KAPRODI & SEKRETARIS PRODI) -->
-      <div class="grid grid-cols-2 text-xs pt-4">
-        <div class="text-center flex flex-col justify-between h-36">
-          <div>
-            <p class="font-medium text-slate-800">Disetujui Oleh,</p>
-            <p class="font-semibold text-slate-900" id="pdfMondosSignKaprodiTitle">Ketua Program Studi Teknik Lingkungan</p>
-          </div>
-          <div>
-            <p class="font-bold underline text-slate-900" id="pdfMondosSignKaprodiName">Endah Yunari N,ST.MT</p>
-          </div>
-        </div>
-        <div class="text-center flex flex-col justify-between h-36">
-          <div>
-            <p class="text-slate-800 mb-0.5"><span id="pdfMondosSignCity">Jakarta</span>, <span id="pdfMondosSignDate">21 Oktober 2026</span></p>
-            <p class="font-medium text-slate-800">Dibuat Oleh,</p>
-            <p class="font-semibold text-slate-900" id="pdfMondosSignMakerTitle">Sekretaris Program Studi Teknik Lingkungan</p>
-          </div>
-          <div>
-            <p class="font-bold underline text-slate-900" id="pdfMondosSignMakerName">Eda Loisa</p>
-          </div>
-        </div>
-      </div>
+      <!-- LEMBAR PENGESAHAN TANDA TANGAN (TABLE BASED, 100% RELIABLE) -->
+      <table style="width: 100%; border: none; border-collapse: collapse; font-family: Arial, Helvetica, sans-serif; color: #000000; margin-top: 15px;">
+        <tr>
+          <td style="width: 50%; text-align: center; vertical-align: top; border: none; padding: 0;">
+            <div style="font-size: 11px; color: #1e293b;">Disetujui Oleh,</div>
+            <div style="font-size: 11px; font-weight: bold; color: #0f172a; margin-top: 2px;" id="pdfMondosSignKaprodiTitle">Ketua Program Studi Teknik Lingkungan</div>
+            <div style="height: 60px;"></div>
+            <div style="font-size: 11px; font-weight: bold; text-decoration: underline; color: #000000;" id="pdfMondosSignKaprodiName">Endah Yunari N, ST., MT.</div>
+          </td>
+          <td style="width: 50%; text-align: center; vertical-align: top; border: none; padding: 0;">
+            <div style="font-size: 11px; color: #1e293b;"><span id="pdfMondosSignCityDate">Jakarta, 21 Oktober 2026</span></div>
+            <div style="font-size: 11px; color: #1e293b; margin-top: 2px;">Dibuat Oleh,</div>
+            <div style="font-size: 11px; font-weight: bold; color: #0f172a; margin-top: 1px;" id="pdfMondosSignMakerTitle">Sekretaris Program Studi Teknik Lingkungan</div>
+            <div style="height: 60px;"></div>
+            <div style="font-size: 11px; font-weight: bold; text-decoration: underline; color: #000000;" id="pdfMondosSignMakerName">Eda Loisa</div>
+          </td>
+        </tr>
+      </table>
 
     </div>
   </div>
@@ -956,6 +936,44 @@
         <span class="text-[10px] text-sky-800 font-bold bg-sky-100 px-2 py-0.5 rounded border border-sky-300">Format Resmi Standar S1</span>
       </div>
 
+      <!-- Pengaturan Pejabat Penandatangan Laporan (Kaprodi & Sekretaris) -->
+      <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl shrink-0 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-800 flex items-center">
+            <i data-lucide="pen-tool" class="w-3.5 h-3.5 mr-1.5 text-emerald-600"></i>
+            Pengaturan Tanda Tangan & Pejabat Pengesahan (PDF):
+          </span>
+          <button type="button" onclick="resetDefaultSignatures()" class="text-[10.5px] text-emerald-700 hover:text-emerald-900 font-bold hover:underline flex items-center">
+            <i data-lucide="rotate-ccw" class="w-3 h-3 mr-1 inline"></i>
+            Reset Default Nama
+          </button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <div>
+            <label class="block text-[10.5px] font-bold text-slate-700 mb-1 flex items-center">
+              Nama Ketua Program Studi (Kaprodi):
+            </label>
+            <input type="text" id="sksInputKaprodiName" oninput="handleSignatureInputChange()" class="w-full py-1.5 px-2.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-slate-800" placeholder="Nama & Gelar Lengkap Kaprodi">
+          </div>
+          <div>
+            <label class="block text-[10.5px] font-bold text-slate-700 mb-1 flex items-center">
+              Nama Pembuat / Sekretaris Prodi:
+            </label>
+            <input type="text" id="sksInputMakerName" oninput="handleSignatureInputChange()" class="w-full py-1.5 px-2.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-slate-800" placeholder="Nama & Gelar Pembuat">
+          </div>
+          <div>
+            <label class="block text-[10.5px] font-bold text-slate-700 mb-1 flex items-center">
+              Kota & Tanggal Pengesahan:
+            </label>
+            <input type="text" id="sksInputCityDate" oninput="handleSignatureInputChange()" class="w-full py-1.5 px-2.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold text-slate-800" placeholder="Contoh: Jakarta, 21 Oktober 2026">
+          </div>
+        </div>
+        <div class="flex items-center justify-between text-[10px] text-slate-500">
+          <span>*Nama Kaprodi dan Sekretaris dapat Anda ubah sesuai Prodi. Perubahan akan langsung tercetak pada dokumen PDF.</span>
+          <span id="sksProdiBadgeText" class="font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Teknik Informatika</span>
+        </div>
+      </div>
+
       <!-- Action Buttons Footer -->
       <div class="flex items-center justify-between pt-2.5 border-t border-slate-200 shrink-0">
         <button type="button" onclick="closeKelebihanSKSModal()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
@@ -966,8 +984,6 @@
           Cetak / Unduh Mondos DT (PDF Landscape)
         </button>
       </div>
-    </div>
-  </div>
     </div>
   </div>
 
@@ -2247,8 +2263,103 @@
       }
 
       document.getElementById('kelebihanSKSModal').classList.remove('hidden');
+      updateSignatureInputs(activeProdi || 'all');
       renderKelebihanSKS();
       lucide.createIcons();
+    }
+
+    // Default konfigurasi penandatangan per Program Studi (dapat disesuaikan bebas oleh pengguna)
+    const DEFAULT_SIGNATURES = {
+      'Teknik Lingkungan': {
+        kaprodi: 'Endah Yunari N, ST., MT.',
+        kaprodiTitle: 'Ketua Program Studi Teknik Lingkungan',
+        maker: 'Eda Loisa',
+        makerTitle: 'Sekretaris Program Studi Teknik Lingkungan'
+      },
+      'Teknik Informatika': {
+        kaprodi: 'Sugiyatno, S.Kom, M.Kom',
+        kaprodiTitle: 'Ketua Program Studi Teknik Informatika',
+        maker: 'Sekretaris Program Studi Teknik Informatika',
+        makerTitle: 'Sekretaris Program Studi Teknik Informatika'
+      },
+      'all': {
+        kaprodi: 'Sugiyatno, S.Kom, M.Kom',
+        kaprodiTitle: 'Ketua Program Studi',
+        maker: 'Sekretaris Program Studi',
+        makerTitle: 'Sekretaris Program Studi'
+      }
+    };
+
+    function getSignaturesForProdi(prodi) {
+      const key = prodi && DEFAULT_SIGNATURES[prodi] ? prodi : 'all';
+      try {
+        const saved = localStorage.getItem('mondos_sign_' + key);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.kaprodi) return parsed;
+        }
+      } catch (e) {
+        console.warn('Gagal membaca signature dari localStorage:', e);
+      }
+      return { ...DEFAULT_SIGNATURES[key] };
+    }
+
+    function updateSignatureInputs(prodi) {
+      const currentProdi = prodi || document.getElementById('sksFilterProdi')?.value || 'all';
+      const sigs = getSignaturesForProdi(currentProdi);
+
+      const inKaprodi = document.getElementById('sksInputKaprodiName');
+      const inMaker = document.getElementById('sksInputMakerName');
+      const inCityDate = document.getElementById('sksInputCityDate');
+      const badgeText = document.getElementById('sksProdiBadgeText');
+
+      if (inKaprodi) inKaprodi.value = sigs.kaprodi || '';
+      if (inMaker) inMaker.value = sigs.maker || '';
+      if (inCityDate && !inCityDate.value) {
+        const todayStr = new Date().toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        });
+        inCityDate.value = `Jakarta, ${todayStr}`;
+      }
+      if (badgeText) {
+        badgeText.textContent = currentProdi === 'all' ? 'Kolektif Seluruh Prodi' : currentProdi;
+      }
+    }
+
+    function handleSignatureInputChange() {
+      const currentProdi = document.getElementById('sksFilterProdi')?.value || 'all';
+      const key = currentProdi && DEFAULT_SIGNATURES[currentProdi] ? currentProdi : 'all';
+      const inKaprodi = document.getElementById('sksInputKaprodiName')?.value || '';
+      const inMaker = document.getElementById('sksInputMakerName')?.value || '';
+      const inCityDate = document.getElementById('sksInputCityDate')?.value || '';
+
+      const def = DEFAULT_SIGNATURES[key] || DEFAULT_SIGNATURES['all'];
+      const dataToSave = {
+        kaprodi: inKaprodi,
+        kaprodiTitle: def.kaprodiTitle,
+        maker: inMaker,
+        makerTitle: def.makerTitle,
+        cityDate: inCityDate
+      };
+
+      try {
+        localStorage.setItem('mondos_sign_' + key, JSON.stringify(dataToSave));
+      } catch (e) {
+        console.warn('Gagal menyimpan signature ke localStorage:', e);
+      }
+    }
+
+    function resetDefaultSignatures() {
+      const currentProdi = document.getElementById('sksFilterProdi')?.value || 'all';
+      const key = currentProdi && DEFAULT_SIGNATURES[currentProdi] ? currentProdi : 'all';
+      try {
+        localStorage.removeItem('mondos_sign_' + key);
+      } catch (e) {}
+
+      updateSignatureInputs(currentProdi);
+      showToast(`Nama penandatangan di-reset ke default (${currentProdi === 'all' ? 'Umum' : currentProdi}).`);
     }
 
     function selectSpecificDosen(dosenName) {
@@ -2393,17 +2504,7 @@
         prodiTitle = `PROGRAM STUDI S1 - TEKNIK INFORMATIKA & TEKNIK LINGKUNGAN`;
       }
 
-      let kaprodiName = 'Sugiyatno, S.Kom, M.Kom';
-      let kaprodiTitle = 'Ketua Program Studi Teknik Informatika';
-      let sekretarisName = 'Sekretaris Program Studi';
-      let sekretarisTitle = 'Sekretaris Program Studi Teknik Informatika';
-
-      if (activeProdi === 'Teknik Lingkungan') {
-        kaprodiName = 'Endah Yunari N,ST.MT';
-        kaprodiTitle = 'Ketua Program Studi Teknik Lingkungan';
-        sekretarisName = 'Eda Loisa';
-        sekretarisTitle = 'Sekretaris Program Studi Teknik Lingkungan';
-      }
+      const sigs = getSignaturesForProdi(activeProdi);
 
       return {
         dosens: resultDosens,
@@ -2416,91 +2517,132 @@
         periodeText,
         prodiTitle,
         activeProdi,
-        kaprodiName,
-        kaprodiTitle,
-        sekretarisName,
-        sekretarisTitle
+        kaprodiName: sigs.kaprodi,
+        kaprodiTitle: sigs.kaprodiTitle,
+        sekretarisName: sigs.maker,
+        sekretarisTitle: sigs.makerTitle
       };
     }
 
-    // Render tabel Mondos DT (digunakan bersama untuk tampilan Modal dan Template PDF Cetak)
+    // Render tabel Mondos DT (dengan inline styling bersih untuk PDF agar tidak terpotong garis)
     function renderMondosTableHTML(mondosData, isPDF = false) {
       const { dosens, maxCols, grandTotalSks } = mondosData;
       const colCount = 6 + maxCols + 2;
 
+      const thStyle = isPDF
+        ? 'border: 1px solid #1e293b; padding: 6px 3px; font-size: 9px; font-weight: bold; text-align: center; vertical-align: middle; background-color: #f8fafc; color: #0f172a; line-height: 1.25;'
+        : 'p-1.5 border-r border-slate-300 text-center text-[10px] font-bold text-slate-800 bg-slate-100';
+
+      const subThStyle = isPDF
+        ? 'border: 1px solid #1e293b; padding: 4px 2px; font-size: 8.5px; font-weight: bold; text-align: center; vertical-align: middle; background-color: #f1f5f9; color: #0f172a;'
+        : 'p-1 border-r border-slate-300 text-center w-14 text-[9.5px] font-bold bg-slate-100 text-slate-800';
+
       let theadHTML = `
-        <tr class="${isPDF ? 'bg-white text-slate-900 border-b border-slate-900' : 'bg-slate-100 text-slate-800 border-b border-slate-300'} font-bold text-[10px] uppercase">
-          <th rowspan="2" class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center w-8">No.</th>
-          <th rowspan="2" class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center w-48">NAMA DOSEN</th>
-          <th rowspan="2" class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center">MATA KULIAH</th>
-          <th rowspan="2" class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center w-20">KELAS</th>
-          <th rowspan="2" class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center w-12">SEMT</th>
-          <th rowspan="2" class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center w-10">SKS</th>
-          <th colspan="${maxCols}" class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center">PERTEMUAN KE</th>
-          <th rowspan="2" class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center w-14">JMLH PERT</th>
-          <th rowspan="2" class="p-1.5 text-center w-14">TOTAL SKS</th>
+        <tr>
+          <th rowspan="2" style="${thStyle}; width: 28px;">No.</th>
+          <th rowspan="2" style="${thStyle}; width: 155px;">NAMA DOSEN</th>
+          <th rowspan="2" style="${thStyle}; min-width: 110px;">MATA KULIAH</th>
+          <th rowspan="2" style="${thStyle}; width: 55px;">KELAS</th>
+          <th rowspan="2" style="${thStyle}; width: 35px;">SEMT</th>
+          <th rowspan="2" style="${thStyle}; width: 32px;">SKS</th>
+          <th colspan="${maxCols}" style="${thStyle}; letter-spacing: 0.5px;">PERTEMUAN KE</th>
+          <th rowspan="2" style="${thStyle}; width: 45px;">JMLH PERT</th>
+          <th rowspan="2" style="${thStyle}; width: 52px;">TOTAL SKS</th>
         </tr>
-        <tr class="${isPDF ? 'bg-white text-slate-900 border-b border-slate-900' : 'bg-slate-100 text-slate-800 border-b border-slate-300'} font-bold text-[9.5px]">
+        <tr>
       `;
 
       for (let c = 1; c <= maxCols; c++) {
-        theadHTML += `<th class="p-1 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center w-14">${c}</th>`;
+        theadHTML += `<th style="${subThStyle}; width: 42px;">${c}</th>`;
       }
       theadHTML += `</tr>`;
 
+      const catTdStyle = isPDF
+        ? 'border: 1px solid #1e293b; padding: 5px 8px; font-size: 10px; font-weight: bold; background-color: #f1f5f9; color: #0f172a; text-align: left;'
+        : 'p-1.5 font-bold text-emerald-900 bg-emerald-50/70 border-b border-emerald-200 text-[10.5px]';
+
       let tbodyHTML = `
-        <tr class="${isPDF ? 'bg-white font-bold border-b border-slate-900' : 'bg-emerald-50/70 font-bold border-b border-emerald-200'}">
-          <td colspan="${colCount}" class="p-1.5 font-bold ${isPDF ? 'text-slate-900' : 'text-emerald-900'} text-[10.5px]">Kelebihan SKS*)</td>
+        <tr>
+          <td colspan="${colCount}" style="${catTdStyle}">Kelebihan SKS*)</td>
         </tr>
       `;
 
       if (dosens.length === 0) {
-        tbodyHTML += `<tr><td colspan="${colCount}" class="p-6 text-center text-slate-400">Tidak ada data pertemuan mengajar pada filter yang dipilih.</td></tr>`;
+        tbodyHTML += `<tr><td colspan="${colCount}" style="border: 1px solid #cbd5e1; padding: 18px; text-align: center; color: #64748b; font-size: 11px;">Tidak ada data pertemuan mengajar pada filter yang dipilih.</td></tr>`;
       } else {
         let dosenIdx = 0;
         dosens.forEach(d => {
           dosenIdx++;
           const rombelCount = d.rombels.length;
+
           d.rombels.forEach((r, rIdx) => {
-            tbodyHTML += `<tr class="${isPDF ? 'border-b border-slate-400' : 'border-b border-slate-100 hover:bg-slate-50 transition'} text-[10px]">`;
+            const rowBg = isPDF
+              ? (rIdx % 2 === 1 ? 'background-color: #fafbfc;' : 'background-color: #ffffff;')
+              : (rIdx % 2 === 1 ? 'bg-slate-50/50' : 'bg-white');
+
+            tbodyHTML += `<tr class="${!isPDF ? 'hover:bg-slate-50 transition border-b border-slate-100' : ''}" style="${rowBg}">`;
 
             if (rIdx === 0) {
+              const dosenCellExtra = isPDF
+                ? `border: 1px solid #1e293b; padding: 5px 6px; font-weight: bold; color: #0f172a; vertical-align: top; font-size: 9.5px; line-height: 1.35; background-color: #ffffff;`
+                : `p-1.5 border-r border-slate-300 font-bold text-slate-900 align-top text-[10px]`;
+              const noCellExtra = isPDF
+                ? `border: 1px solid #1e293b; padding: 5px 2px; text-align: center; font-family: monospace; font-size: 9.5px; vertical-align: top; background-color: #ffffff;`
+                : `p-1.5 border-r border-slate-300 text-center font-mono align-top text-[10px]`;
+
               tbodyHTML += `
-                <td rowspan="${rombelCount}" class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center font-mono align-top">${dosenIdx}</td>
-                <td rowspan="${rombelCount}" class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} font-bold text-slate-900 align-top">
+                <td rowspan="${rombelCount}" style="${noCellExtra}">${dosenIdx}</td>
+                <td rowspan="${rombelCount}" style="${dosenCellExtra}">
                   <div>${d.dosen}</div>
                   ${!isPDF && d.kelebihanSks > 0 ? `<span class="inline-block mt-1 px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">+${d.kelebihanSks} SKS Lebih</span>` : ''}
                 </td>
               `;
             }
 
+            const tdBase = isPDF
+              ? 'border: 1px solid #cbd5e1; padding: 4.5px 3.5px; font-size: 9px; vertical-align: middle; line-height: 1.25;'
+              : 'p-1.5 border-r border-slate-300 text-[10px]';
+
             tbodyHTML += `
-              <td class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-slate-900">${r.mk}</td>
-              <td class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center text-slate-700">${r.kelas}</td>
-              <td class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center text-slate-700">${r.semt}</td>
-              <td class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center font-bold text-slate-900">${r.sks}</td>
+              <td style="${tdBase}; text-align: left; color: #0f172a; font-weight: 500;">${r.mk}</td>
+              <td style="${tdBase}; text-align: center; color: #334155;">${r.kelas}</td>
+              <td style="${tdBase}; text-align: center; color: #334155;">${r.semt}</td>
+              <td style="${tdBase}; text-align: center; font-weight: bold; color: #0f172a;">${r.sks}</td>
             `;
 
             for (let c = 0; c < maxCols; c++) {
               const sess = r.sessions[c];
               const dateStr = sess ? formatShortDate(sess.tanggal) : '-';
               const isDate = dateStr !== '-';
-              tbodyHTML += `<td class="p-1 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center font-medium ${isDate ? 'text-slate-900' : 'text-slate-400'}">${dateStr}</td>`;
+              const dateColor = isDate
+                ? (isPDF ? 'color: #0f172a; font-weight: 600;' : 'text-slate-900 font-medium')
+                : (isPDF ? 'color: #94a3b8;' : 'text-slate-400 font-normal');
+              tbodyHTML += `<td style="${tdBase}; text-align: center; ${dateColor}">${dateStr}</td>`;
             }
 
+            const pertStyle = isPDF ? 'font-weight: 600; text-align: center; color: #0f172a;' : 'text-center font-semibold text-slate-800';
+            const totalStyle = isPDF ? 'font-weight: bold; text-align: center; color: #0f172a; background-color: #f8fafc;' : 'text-center font-bold text-slate-900';
+
             tbodyHTML += `
-              <td class="p-1.5 border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} text-center font-semibold text-slate-800">${r.jmlhPert}x</td>
-              <td class="p-1.5 text-center font-bold text-slate-900">${r.totalSks}</td>
+              <td style="${tdBase}; ${pertStyle}">${r.jmlhPert}x</td>
+              <td style="${tdBase}; ${totalStyle}">${r.totalSks}</td>
             </tr>`;
           });
         });
       }
 
       const footerColspan = 6 + maxCols;
+      const ftrStyle = isPDF
+        ? 'border: 1.5px solid #0f172a; padding: 6px 8px; font-size: 10px; font-weight: 900; background-color: #f1f5f9; color: #0f172a;'
+        : 'p-2 text-left font-black border-r border-slate-300 uppercase text-[11px] bg-slate-100';
+      const ftrTotalStyle = isPDF
+        ? 'border: 1.5px solid #0f172a; padding: 6px 4px; font-size: 11px; font-weight: 900; text-align: center; background-color: #f1f5f9; color: #0f172a;'
+        : 'p-2 text-center font-black text-slate-900 text-[11px] bg-slate-100';
+
       const tfootHTML = `
-        <tr class="font-bold border-t-2 ${isPDF ? 'border-slate-900 bg-white' : 'border-slate-300 bg-slate-100'} text-[11px]">
-          <td colspan="${footerColspan}" class="p-2 text-left font-black border-r ${isPDF ? 'border-slate-900' : 'border-slate-300'} uppercase">Jumlah</td>
-          <td class="p-2 text-center font-black text-slate-900">${grandTotalSks}</td>
+        <tr>
+          <td colspan="${footerColspan}" style="${ftrStyle}">JUMLAH</td>
+          <td style="${ftrTotalStyle}">${grandTotalSks}</td>
         </tr>
       `;
 
@@ -2517,6 +2659,9 @@
         : getMonthDateRange(selectedPeriode);
       const hintEl = document.getElementById('sksPeriodeHintText');
       if (hintEl) hintEl.textContent = hintText;
+
+      // Sinkronkan input pejabat penandatangan dengan Prodi yang dipilih
+      updateSignatureInputs(selectedProdi);
 
       const mondosData = getMondosData(selectedDosen, selectedPeriode, selectedProdi);
 
@@ -2559,57 +2704,43 @@
       const mondos = getMondosData(selectedDosen, selectedPeriode, selectedProdi);
       const tableHTML = renderMondosTableHTML(mondos, true);
 
-      const today = new Date().toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      });
-
-      // Update Kop Header
+      // Update Kop Header PDF
       const elProdiTitle = document.getElementById('pdfMondosProdiTitle');
       if (elProdiTitle) elProdiTitle.textContent = mondos.prodiTitle;
 
       const elPeriodeTitle = document.getElementById('pdfMondosPeriodeTitle');
       if (elPeriodeTitle) elPeriodeTitle.textContent = mondos.periodeText;
 
-      // Update Header Sub-kolom Pertemuan (1..N)
-      const elColspan = document.getElementById('pdfMondosPertColspan');
-      if (elColspan) elColspan.setAttribute('colspan', mondos.maxCols);
+      // Inject Thead, Tbody & Tfoot secara bersih (Bebas dari bug garis terpotong)
+      const elThead = document.getElementById('pdfMondosThead');
+      if (elThead) elThead.innerHTML = tableHTML.theadHTML;
 
-      const elSubHeader = document.getElementById('pdfMondosSubHeader');
-      if (elSubHeader) {
-        let subTh = '';
-        for (let c = 1; c <= mondos.maxCols; c++) {
-          subTh += `<th class="p-1 border-r border-slate-900 text-center w-14">${c}</th>`;
-        }
-        elSubHeader.innerHTML = subTh;
-      }
-
-      // Update Body & Footer Tabel
       const elTableBody = document.getElementById('pdfMondosTableBody');
       if (elTableBody) elTableBody.innerHTML = tableHTML.tbodyHTML;
 
-      const elFooterColspan = document.getElementById('pdfMondosFooterColspan');
-      if (elFooterColspan) elFooterColspan.setAttribute('colspan', 6 + mondos.maxCols);
+      const elTfoot = document.getElementById('pdfMondosTfoot');
+      if (elTfoot) elTfoot.innerHTML = tableHTML.tfootHTML;
 
-      const elFooterTotal = document.getElementById('pdfMondosFooterTotalSks');
-      if (elFooterTotal) elFooterTotal.textContent = mondos.grandTotalSks;
+      // Baca nama penandatangan dari input form yang dapat diedit user
+      const customKaprodiName = document.getElementById('sksInputKaprodiName')?.value.trim() || mondos.kaprodiName;
+      const customMakerName = document.getElementById('sksInputMakerName')?.value.trim() || mondos.sekretarisName;
+      const customCityDate = document.getElementById('sksInputCityDate')?.value.trim() || `Jakarta, ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`;
 
-      // Update Tanda Tangan
+      // Update Lembar Pengesahan Tanda Tangan
       const elKaprodiTitle = document.getElementById('pdfMondosSignKaprodiTitle');
       if (elKaprodiTitle) elKaprodiTitle.textContent = mondos.kaprodiTitle;
 
       const elKaprodiName = document.getElementById('pdfMondosSignKaprodiName');
-      if (elKaprodiName) elKaprodiName.textContent = mondos.kaprodiName;
+      if (elKaprodiName) elKaprodiName.textContent = customKaprodiName;
 
-      const elSignDate = document.getElementById('pdfMondosSignDate');
-      if (elSignDate) elSignDate.textContent = today;
+      const elSignCityDate = document.getElementById('pdfMondosSignCityDate');
+      if (elSignCityDate) elSignCityDate.textContent = customCityDate;
 
       const elMakerTitle = document.getElementById('pdfMondosSignMakerTitle');
       if (elMakerTitle) elMakerTitle.textContent = mondos.sekretarisTitle;
 
       const elMakerName = document.getElementById('pdfMondosSignMakerName');
-      if (elMakerName) elMakerName.textContent = mondos.sekretarisName;
+      if (elMakerName) elMakerName.textContent = customMakerName;
 
       // Buka Print Area Kelebihan SKS
       const element = document.getElementById('pdfKelebihanSKSDocument');
@@ -2622,7 +2753,12 @@
         margin: [6, 6, 6, 6],
         filename: `Mondos_DT_${cleanProdi}${cleanDosen}_${new Date().toISOString().slice(0,10)}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          windowWidth: 1100
+        },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
       };
 
