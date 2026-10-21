@@ -664,7 +664,8 @@
         </div>
         <div class="space-y-1">
           <p><span class="text-slate-500 inline-block w-28">Tahun Akademik</span>: <span class="text-slate-800 font-semibold">Semester Ganjil 2026/2027</span></p>
-          <p><span class="text-slate-500 inline-block w-28">Periode Hitung</span>: <strong id="pdfSksPeriodeLabel" class="text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Satu Semester Penuh</strong></p>
+          <p><span class="text-slate-500 inline-block w-28">Periode Hitung</span>: <strong id="pdfSksPeriodeLabel" class="text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Bulan September 2026</strong></p>
+          <p><span class="text-slate-500 inline-block w-28">Rentang Waktu</span>: <strong id="pdfSksRentangWaktu" class="text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-300 font-mono">1 - 30 September 2026</strong></p>
           <p><span class="text-slate-500 inline-block w-28">Dasar Regulasi</span>: <span class="text-slate-700">SK Ketua Sekolah Tinggi (Beban Pokok Wajib 9 SKS)</span></p>
           <p><span class="text-slate-500 inline-block w-28">Sumber Data</span>: <strong class="text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-mono">Portal LMS</strong></p>
         </div>
@@ -735,7 +736,7 @@
           <span class="text-[10px] text-slate-500 italic">*Diisi / divalidasi oleh Bagian Umum & Keuangan (BAUK)</span>
         </div>
         <p class="text-[10px] text-slate-600 leading-relaxed">
-          Telah dilakukan rekonsiliasi data antara realisasi log presensi mengajar dosen (Sumber Data: Portal LMS) dengan batas standar beban pokok mengajar (9 SKS). Kelebihan SKS yang tercantum di atas memenuhi kualifikasi untuk diproses honorariumnya sesuai ketentuan Sekolah Tinggi.
+          Telah dilakukan rekonsiliasi data antara realisasi log presensi mengajar dosen (Sumber Data: Portal LMS, Rentang Waktu: <strong id="pdfSksNoteRentang" class="text-slate-900 font-semibold">1 - 30 September 2026</strong>) dengan batas standar beban pokok mengajar (9 SKS). Kelebihan SKS yang tercantum di atas memenuhi kualifikasi untuk diproses honorariumnya sesuai ketentuan Sekolah Tinggi.
         </p>
         <div class="grid grid-cols-3 gap-3 pt-1 text-[11px]">
           <div>
@@ -991,6 +992,10 @@
             <option value="all">📅 Satu Semester Penuh (Akumulatif Seluruh Rombel)</option>
             <!-- Months populated via JS -->
           </select>
+          <div id="sksPeriodeHintBox" class="mt-1.5 flex items-center justify-between text-[11px] text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+            <span class="font-medium flex items-center"><i data-lucide="clock" class="w-3.5 h-3.5 mr-1 text-emerald-600 inline"></i>Keterangan Rentang Waktu:</span>
+            <strong id="sksPeriodeHintText" class="font-bold text-emerald-900 font-mono">1 - 30 September 2026</strong>
+          </div>
         </div>
       </div>
 
@@ -1489,6 +1494,18 @@
       return `${NAMA_BULAN[parseInt(mo, 10) - 1] || mo} ${y}`;
     }
 
+    function getMonthDateRange(key) {
+      if (!key || key === 'all') return 'Satu Semester Penuh (Akumulatif)';
+      const parts = key.split('-');
+      if (parts.length < 2) return '';
+      const y = parseInt(parts[0], 10);
+      const mo = parseInt(parts[1], 10);
+      if (isNaN(y) || isNaN(mo) || mo < 1 || mo > 12) return '';
+      const lastDay = new Date(y, mo, 0).getDate();
+      const namaBulan = NAMA_BULAN[mo - 1] || mo;
+      return `1 - ${lastDay} ${namaBulan} ${y}`;
+    }
+
     function normDosen(name) {
       return String(name || '').replace(/\s+/g, ' ').trim();
     }
@@ -1565,7 +1582,7 @@
       const bulanCount = {};
       attendanceData.forEach(d => { const k = getMonthKey(d.tanggal); if (k) bulanCount[k] = (bulanCount[k] || 0) + 1; });
       const bulanList = Object.keys(bulanCount).sort();
-      fillSelect('filterBulan', bulanList.map(k => ({ value: k, label: `${monthLabel(k)} (${bulanCount[k]} sesi)` })), `📅 Semua Bulan (${bulanList.length})`);
+      fillSelect('filterBulan', bulanList.map(k => ({ value: k, label: `${monthLabel(k)} (${getMonthDateRange(k)} • ${bulanCount[k]} sesi)` })), `📅 Semua Bulan (${bulanList.length})`);
     }
 
     // Render summary cards per Course
@@ -1826,7 +1843,7 @@
       updateDosenHeader();
 
       let filterLabel = [];
-      filterLabel.push(bulanFilterVal ? 'Periode ' + monthLabel(bulanFilterVal) : 'Semua Bulan');
+      filterLabel.push(bulanFilterVal ? `Periode ${monthLabel(bulanFilterVal)} (${getMonthDateRange(bulanFilterVal)})` : 'Semua Bulan');
       if (prodiFilterVal) filterLabel.push(prodiFilterVal);
       if (jenisFilterVal) filterLabel.push(jenisFilterVal);
       document.getElementById('pdfFilterInfoLabel').textContent = filterLabel.join(' • ');
@@ -2234,11 +2251,11 @@
       });
       const bulanList = Object.keys(bulanCount).sort();
       const selPeriode = document.getElementById('sksFilterPeriode');
-      selPeriode.innerHTML = '<option value="all">📅 Satu Semester Penuh (Akumulatif Seluruh Rombel)</option>';
+      selPeriode.innerHTML = '<option value="all">📅 Satu Semester Penuh (Akumulatif Semester Ganjil 2026/2027)</option>';
       bulanList.forEach(k => {
         const opt = document.createElement('option');
         opt.value = k;
-        opt.textContent = `📅 Periode ${monthLabel(k)} (${bulanCount[k]} sesi terlaksana)`;
+        opt.textContent = `📅 Periode ${monthLabel(k)} (Keterangan: ${getMonthDateRange(k)} • ${bulanCount[k]} sesi terlaksana)`;
         selPeriode.appendChild(opt);
       });
 
@@ -2267,6 +2284,12 @@
     function renderKelebihanSKS() {
       const selectedDosen = document.getElementById('sksFilterDosen')?.value || '';
       const selectedPeriode = document.getElementById('sksFilterPeriode')?.value || 'all';
+
+      const hintText = selectedPeriode === 'all'
+        ? 'Satu Semester Penuh (Akumulatif Semester Ganjil 2026/2027)'
+        : getMonthDateRange(selectedPeriode);
+      const hintEl = document.getElementById('sksPeriodeHintText');
+      if (hintEl) hintEl.textContent = hintText;
 
       const dosenMap = {};
       attendanceData.forEach(d => {
@@ -2431,8 +2454,16 @@
         ? 'Satu Semester Penuh (Semester Ganjil 2026/2027)'
         : 'Periode ' + monthLabel(selectedPeriode);
 
+      const rentangWaktuText = selectedPeriode === 'all'
+        ? 'Akumulatif Semester Ganjil 2026/2027'
+        : getMonthDateRange(selectedPeriode);
+
       document.getElementById('pdfSksPrintDate').textContent = today;
       document.getElementById('pdfSksPeriodeLabel').textContent = periodeLabel;
+      const rentangEl = document.getElementById('pdfSksRentangWaktu');
+      if (rentangEl) rentangEl.textContent = rentangWaktuText;
+      const noteRentangEl = document.getElementById('pdfSksNoteRentang');
+      if (noteRentangEl) noteRentangEl.textContent = rentangWaktuText;
 
       const docNumMonth = (new Date().getMonth() + 1).toString().padStart(2, '0');
       document.getElementById('pdfSksDocNumber').textContent = `SP-KSKS/BAUK/${new Date().getFullYear()}/${docNumMonth}`;
