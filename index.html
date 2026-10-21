@@ -660,7 +660,7 @@
         <div class="space-y-1">
           <p><span class="text-slate-500 inline-block w-28">Tahun Akademik</span>: <span class="text-slate-800 font-semibold">Semester Ganjil 2026/2027</span></p>
           <p><span class="text-slate-500 inline-block w-28">Periode Hitung</span>: <strong id="pdfSksPeriodeLabel" class="text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Satu Semester Penuh</strong></p>
-          <p><span class="text-slate-500 inline-block w-28">Dasar Regulasi</span>: <span class="text-slate-700">SK Rektor Beban Kerja Standar Dosen (Maksimal 12 SKS)</span></p>
+          <p><span class="text-slate-500 inline-block w-28">Dasar Regulasi</span>: <span class="text-slate-700">SK Rektor Beban Kerja Standar Dosen (Beban Pokok Wajib 9 SKS)</span></p>
         </div>
       </div>
 
@@ -673,13 +673,13 @@
         </div>
         <div class="border border-blue-200 rounded-lg p-2.5 text-center bg-blue-50">
           <span class="text-[10px] text-blue-700 font-medium uppercase tracking-wider block">Beban Standar Wajib</span>
-          <span class="text-xl font-black text-blue-900">12 SKS</span>
+          <span class="text-xl font-black text-blue-900">9 SKS</span>
           <span class="text-[9.5px] text-blue-600 block mt-0.5">Batas Beban Standar</span>
         </div>
         <div class="border-2 border-emerald-500 rounded-lg p-2.5 text-center bg-emerald-50">
           <span class="text-[10px] text-emerald-800 font-black uppercase tracking-wider block">Kelebihan SKS Diajukan</span>
           <span id="pdfSksKelebihan" class="text-xl font-black text-emerald-700">0 SKS</span>
-          <span class="text-[9.5px] text-emerald-700 font-bold block mt-0.5">Hak Insentif Dosen</span>
+          <span class="text-[9.5px] text-emerald-700 font-bold block mt-0.5">Hak Insentif (> 9 SKS)</span>
         </div>
         <div class="border border-amber-200 rounded-lg p-2.5 text-center bg-amber-50">
           <span class="text-[10px] text-amber-700 font-medium uppercase tracking-wider block">Realisasi Kehadiran</span>
@@ -692,7 +692,7 @@
       <div class="mb-5">
         <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider mb-1.5 flex items-center justify-between">
           <span>Rincian Mata Kuliah & Rombongan Belajar yang Diampu</span>
-          <span class="text-[10px] text-slate-500 font-normal">Urutan akumulasi alokasi 12 SKS Wajib & Kelebihan SKS</span>
+          <span class="text-[10px] text-slate-500 font-normal">Urutan akumulasi alokasi 9 SKS Wajib & Kelebihan SKS</span>
         </h3>
         <table class="w-full text-left text-xs border border-slate-300 border-collapse">
           <thead>
@@ -729,7 +729,7 @@
           <span class="text-[10px] text-slate-500 italic">*Diisi / divalidasi oleh Bagian Keuangan</span>
         </div>
         <p class="text-[10px] text-slate-600 leading-relaxed">
-          Telah dilakukan rekonsiliasi data antara realisasi log presensi mengajar dosen dengan batas standar beban mengajar (12 SKS). Kelebihan SKS yang tercantum di atas memenuhi kualifikasi untuk diproses honorariumnya sesuai ketentuan universitas.
+          Telah dilakukan rekonsiliasi data antara realisasi log presensi mengajar dosen dengan batas standar beban pokok mengajar (9 SKS). Kelebihan SKS yang tercantum di atas memenuhi kualifikasi untuk diproses honorariumnya sesuai ketentuan universitas.
         </p>
         <div class="grid grid-cols-3 gap-3 pt-1 text-[11px]">
           <div>
@@ -957,7 +957,7 @@
           </div>
           <div>
             <h3 class="font-extrabold text-slate-900 text-sm sm:text-base">Perhitungan & Pengajuan Kelebihan SKS Dosen</h3>
-            <p class="text-xs text-slate-500">Batas Standar: <strong>12 SKS</strong> &bull; Dokumen Rekapitulasi untuk Verifikasi <strong>Bagian Keuangan</strong></p>
+            <p class="text-xs text-slate-500">Batas Standar Wajib: <strong>9 SKS</strong> &bull; Dihitung Kelebihan SKS jika <strong>&gt; 9 SKS</strong> untuk <strong>Bagian Keuangan</strong></p>
           </div>
         </div>
         <button type="button" onclick="closeKelebihanSKSModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition">
@@ -997,13 +997,13 @@
         </div>
         <div class="p-3 rounded-xl bg-blue-50 border border-blue-200 text-center">
           <span class="text-[10.5px] font-medium text-blue-700 block uppercase tracking-wide">Beban Standar Wajib</span>
-          <span class="text-xl sm:text-2xl font-black text-blue-900 mt-0.5 block">12 SKS</span>
-          <span class="text-[10px] text-blue-600">Batas Maksimal Institusi</span>
+          <span class="text-xl sm:text-2xl font-black text-blue-900 mt-0.5 block">9 SKS</span>
+          <span class="text-[10px] text-blue-600">Beban Pokok Institusi</span>
         </div>
         <div class="p-3 rounded-xl bg-emerald-50 border-2 border-emerald-400 text-center shadow-sm">
           <span class="text-[10.5px] font-bold text-emerald-800 block uppercase tracking-wide">Kelebihan SKS</span>
           <span id="sksModalKelebihan" class="text-xl sm:text-2xl font-black text-emerald-700 mt-0.5 block">+0 SKS</span>
-          <span class="text-[10px] font-bold text-emerald-700">Diajukan ke Keuangan</span>
+          <span class="text-[10px] font-bold text-emerald-700">Dihitung jika &gt; 9 SKS</span>
         </div>
         <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-center">
           <span class="text-[10.5px] font-medium text-amber-700 block uppercase tracking-wide">Rata-rata Presensi</span>
@@ -2144,7 +2144,7 @@
       rombelList.sort((a, b) => a.prodi.localeCompare(b.prodi) || a.mk.localeCompare(b.mk));
 
       const totalSks = rombelList.reduce((acc, r) => acc + r.sks, 0);
-      const standarWajib = 12;
+      const standarWajib = 9;
       const kelebihanSks = Math.max(0, totalSks - standarWajib);
       const avgHadir = totalSesi > 0 ? (totalHadir / totalSesi * 100).toFixed(1) : '0';
 
@@ -2152,7 +2152,7 @@
       rombelList.forEach(r => {
         cumSks += r.sks;
         if (cumSks <= standarWajib) {
-          r.alokasi = 'Beban Wajib (12 SKS)';
+          r.alokasi = 'Beban Wajib (9 SKS)';
           r.isKelebihan = false;
         } else if (cumSks - r.sks < standarWajib) {
           const partWajib = standarWajib - (cumSks - r.sks);
@@ -2325,7 +2325,7 @@
             </td>
             <td class="py-3 px-3 text-center font-semibold text-slate-700">${r.totalRombel} Rombel</td>
             <td class="py-3 px-3 text-center font-black text-slate-900 text-xs">${r.totalSks} SKS</td>
-            <td class="py-3 px-3 text-center text-slate-600">12 SKS</td>
+            <td class="py-3 px-3 text-center text-slate-600">9 SKS</td>
             <td class="py-3 px-3 text-center">${kelebihanBadge}</td>
             <td class="py-3 px-3 text-center font-medium text-slate-700">${r.avgHadir}%</td>
             <td class="py-3 px-3 text-center">
@@ -2485,13 +2485,13 @@
           tr.className = idx % 2 === 0 ? "bg-white" : "bg-slate-50";
           const statusKelebihan = r.kelebihanSks > 0
             ? `<span class="font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">+${r.kelebihanSks} SKS Insentif</span>`
-            : `<span class="text-slate-500">Standar Wajib (12 SKS)</span>`;
+            : `<span class="text-slate-500">Standar Wajib (9 SKS)</span>`;
           tr.innerHTML = `
             <td class="p-2 border-r border-slate-300 text-center font-mono">${idx + 1}</td>
             <td class="p-2 border-r border-slate-300 font-bold text-slate-900">${r.dosen}</td>
             <td class="p-2 border-r border-slate-300 text-center">${r.totalRombel} Rombel</td>
             <td class="p-2 border-r border-slate-300 text-center font-bold text-slate-900">${r.totalSks} SKS</td>
-            <td class="p-2 border-r border-slate-300 text-center text-slate-600">12 SKS</td>
+            <td class="p-2 border-r border-slate-300 text-center text-slate-600">9 SKS</td>
             <td class="p-2 border-r border-slate-300 text-center font-black ${r.kelebihanSks > 0 ? 'text-emerald-700 bg-emerald-50' : 'text-slate-600'}">${r.kelebihanSks > 0 ? '+' + r.kelebihanSks : '0'} SKS</td>
             <td class="p-2 border-r border-slate-300 text-center font-medium">${r.avgHadir}%</td>
             <td class="p-2 text-center text-[10px]">${statusKelebihan}</td>
