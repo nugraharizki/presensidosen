@@ -16,8 +16,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- SheetJS for Excel / CSV parsing & export -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- xlsx-js-style for rich Excel (.xlsx) formatting, cell borders, colors & styles -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -2404,7 +2404,8 @@
         { s: { r: 8, c: 0 }, e: { r: 8, c: totalCols - 1 } }
       ];
 
-      let currentRow = 9;
+      const dataStartRow = 9;
+      let currentRow = dataStartRow;
       let totalSemuaPertemuan = 0;
 
       mondos.dosens.forEach((dosenObj, dIdx) => {
@@ -2444,6 +2445,9 @@
         }
       });
 
+      const dataEndRow = currentRow - 1;
+      const footerRowIndex = currentRow;
+
       // Baris Footer JUMLAH
       const footerRow = ["JUMLAH"];
       for (let c = 1; c < 6 + maxCols; c++) {
@@ -2460,6 +2464,7 @@
       aoa.push([]);
       aoa.push([]);
       currentRow += 2;
+      const sigRowStart = currentRow;
 
       // Tata Letak Tanda Tangan Kiri (Disetujui Oleh) & Kanan (Dibuat Oleh)
       const leftCol = 1;
@@ -2507,24 +2512,160 @@
       merges.push({ s: { r: currentRow + 6, c: leftCol }, e: { r: currentRow + 6, c: leftColEnd } });
       merges.push({ s: { r: currentRow + 6, c: rightCol }, e: { r: currentRow + 6, c: rightColEnd } });
 
-      // Lebar Kolom Spreadsheet
+      // Lebar Kolom Spreadsheet Proporsional & Rapi
       const cols = [
-        { wch: 5 },  // No.
-        { wch: 28 }, // NAMA DOSEN
-        { wch: 26 }, // MATA KULIAH
+        { wch: 6 },  // No.
+        { wch: 34 }, // NAMA DOSEN (lebar agar gelar & nama tidak terpotong)
+        { wch: 36 }, // MATA KULIAH
         { wch: 14 }, // KELAS
-        { wch: 6 },  // SEMT
-        { wch: 6 }   // SKS
+        { wch: 8 },  // SEMT
+        { wch: 8 }   // SKS
       ];
       for (let c = 0; c < maxCols; c++) {
-        cols.push({ wch: 10 }); // Kolom Pertemuan 1..N
+        cols.push({ wch: 12 }); // Kolom Pertemuan 1..N
       }
-      cols.push({ wch: 11 }); // JMLH PERT
-      cols.push({ wch: 11 }); // TOTAL SKS
+      cols.push({ wch: 13 }); // JMLH PERT
+      cols.push({ wch: 13 }); // TOTAL SKS
 
       const ws = XLSX.utils.aoa_to_sheet(aoa);
       ws['!merges'] = merges;
       ws['!cols'] = cols;
+
+      // Styling & Border Profesional Clean Look
+      const borderThin = {
+        top: { style: "thin", color: { rgb: "94A3B8" } },
+        bottom: { style: "thin", color: { rgb: "94A3B8" } },
+        left: { style: "thin", color: { rgb: "94A3B8" } },
+        right: { style: "thin", color: { rgb: "94A3B8" } }
+      };
+
+      const borderHeader = {
+        top: { style: "medium", color: { rgb: "334155" } },
+        bottom: { style: "medium", color: { rgb: "334155" } },
+        left: { style: "thin", color: { rgb: "64748B" } },
+        right: { style: "thin", color: { rgb: "64748B" } }
+      };
+
+      const borderFooter = {
+        top: { style: "medium", color: { rgb: "334155" } },
+        bottom: { style: "double", color: { rgb: "0F172A" } },
+        left: { style: "thin", color: { rgb: "94A3B8" } },
+        right: { style: "thin", color: { rgb: "94A3B8" } }
+      };
+
+      // 1. Kop Judul Dokumen (Baris 0 - 3)
+      if (ws["A1"]) ws["A1"].s = { font: { bold: true, sz: 13, name: "Calibri", color: { rgb: "0F172A" } }, alignment: { horizontal: "center", vertical: "center" } };
+      if (ws["A2"]) ws["A2"].s = { font: { bold: true, sz: 11, name: "Calibri", color: { rgb: "1E293B" } }, alignment: { horizontal: "center", vertical: "center" } };
+      if (ws["A3"]) ws["A3"].s = { font: { bold: true, sz: 11, name: "Calibri", color: { rgb: "0369A1" } }, alignment: { horizontal: "center", vertical: "center" } };
+      if (ws["A4"]) ws["A4"].s = { font: { italic: true, sz: 9.5, name: "Calibri", color: { rgb: "475569" } }, alignment: { horizontal: "center", vertical: "center" } };
+
+      // 2. Ringkasan KPI Beban SKS (Baris 4 - Soft Emerald Tint)
+      for (let c = 0; c < totalCols; c++) {
+        const cellRef = XLSX.utils.encode_cell({ r: 4, c: c });
+        if (!ws[cellRef]) ws[cellRef] = { t: "s", v: "" };
+        ws[cellRef].s = {
+          font: { bold: true, sz: 9.5, name: "Calibri", color: { rgb: "065F46" } },
+          fill: { fgColor: { rgb: "ECFDF5" } },
+          alignment: { horizontal: "center", vertical: "center" },
+          border: {
+            top: { style: "thin", color: { rgb: "A7F3D0" } },
+            bottom: { style: "thin", color: { rgb: "A7F3D0" } }
+          }
+        };
+      }
+
+      // 3. Header Tabel (Baris 6 dan 7 - Slate Header dengan Navy Text)
+      for (let r = 6; r <= 7; r++) {
+        for (let c = 0; c < totalCols; c++) {
+          const cellRef = XLSX.utils.encode_cell({ r: r, c: c });
+          if (!ws[cellRef]) ws[cellRef] = { t: "s", v: "" };
+          ws[cellRef].s = {
+            font: { bold: true, sz: 9.5, name: "Calibri", color: { rgb: "0F172A" } },
+            fill: { fgColor: { rgb: "E2E8F0" } },
+            alignment: { horizontal: "center", vertical: "center", wrapText: true },
+            border: borderHeader
+          };
+        }
+      }
+
+      // 4. Kategori Pemisah: Kelebihan SKS*) (Baris 8 - Emerald Highlight)
+      for (let c = 0; c < totalCols; c++) {
+        const cellRef = XLSX.utils.encode_cell({ r: 8, c: c });
+        if (!ws[cellRef]) ws[cellRef] = { t: "s", v: "" };
+        ws[cellRef].s = {
+          font: { bold: true, sz: 10, name: "Calibri", color: { rgb: "166534" } },
+          fill: { fgColor: { rgb: "DCFCE7" } },
+          alignment: { horizontal: "left", vertical: "center" },
+          border: {
+            top: { style: "thin", color: { rgb: "86EFAC" } },
+            bottom: { style: "thin", color: { rgb: "86EFAC" } },
+            left: { style: "thin", color: { rgb: "86EFAC" } },
+            right: { style: "thin", color: { rgb: "86EFAC" } }
+          }
+        };
+      }
+
+      // 5. Data Rows (Baris dataStartRow s/d dataEndRow dengan Zebra Striping)
+      for (let r = dataStartRow; r <= dataEndRow; r++) {
+        const isOdd = (r - dataStartRow) % 2 === 1;
+        const rowBg = isOdd ? "F8FAFC" : "FFFFFF";
+
+        for (let c = 0; c < totalCols; c++) {
+          const cellRef = XLSX.utils.encode_cell({ r: r, c: c });
+          if (!ws[cellRef]) ws[cellRef] = { t: "s", v: "" };
+
+          let alignH = "center";
+          if (c === 1 || c === 2) alignH = "left"; // Nama Dosen & Mata Kuliah rata kiri
+
+          const isBold = (c === 0 || c === 1 || c === 5 || c >= 6 + maxCols);
+          const cellBg = (c >= 6 + maxCols) ? "F1F5F9" : rowBg; // JMLH PERT dan TOTAL SKS highlight lembut
+
+          ws[cellRef].s = {
+            font: {
+              bold: isBold,
+              sz: 9.5,
+              name: "Calibri",
+              color: ws[cellRef].v === "-" ? { rgb: "94A3B8" } : { rgb: "0F172A" }
+            },
+            fill: { fgColor: { rgb: cellBg } },
+            alignment: { horizontal: alignH, vertical: "center", wrapText: true },
+            border: borderThin
+          };
+        }
+      }
+
+      // 6. Footer JUMLAH (Baris footerRowIndex dengan Double Accounting Border)
+      for (let c = 0; c < totalCols; c++) {
+        const cellRef = XLSX.utils.encode_cell({ r: footerRowIndex, c: c });
+        if (!ws[cellRef]) ws[cellRef] = { t: "s", v: "" };
+        ws[cellRef].s = {
+          font: { bold: true, sz: 10, name: "Calibri", color: { rgb: "0F172A" } },
+          fill: { fgColor: { rgb: "E2E8F0" } },
+          alignment: { horizontal: c === 0 ? "left" : "center", vertical: "center" },
+          border: borderFooter
+        };
+      }
+
+      // 7. Area Tanda Tangan
+      const sigFormatRows = [sigRowStart, sigRowStart + 1, sigRowStart + 2, sigRowStart + 6];
+      sigFormatRows.forEach(r => {
+        [leftCol, rightCol].forEach(c => {
+          const cellRef = XLSX.utils.encode_cell({ r: r, c: c });
+          if (ws[cellRef] && ws[cellRef].v) {
+            const isName = (r === sigRowStart + 6);
+            ws[cellRef].s = {
+              font: {
+                bold: isName || r === sigRowStart + 1,
+                underline: isName,
+                sz: isName ? 10 : 9.5,
+                name: "Calibri",
+                color: { rgb: "0F172A" }
+              },
+              alignment: { horizontal: "center", vertical: "center" }
+            };
+          }
+        });
+      });
 
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Mondos DT");
@@ -2879,21 +3020,21 @@
 
       const ws = XLSX.utils.aoa_to_sheet(aoa);
       ws['!cols'] = [
-        { wch: 5 },  // No
+        { wch: 6 },  // No
         { wch: 14 }, // Tanggal
-        { wch: 28 }, // Dosen
-        { wch: 20 }, // Prodi
-        { wch: 26 }, // Mata Kuliah
-        { wch: 22 }, // Kode MK
-        { wch: 15 }, // Jenis Kelas
-        { wch: 6 },  // SKS
+        { wch: 32 }, // Dosen
+        { wch: 22 }, // Prodi
+        { wch: 32 }, // Mata Kuliah
+        { wch: 20 }, // Kode MK & Kelas
+        { wch: 14 }, // Jenis Kelas
+        { wch: 8 },  // SKS
         { wch: 16 }, // Jadwal
         { wch: 12 }, // Ruangan
-        { wch: 20 }, // Status Presensi
+        { wch: 22 }, // Status Presensi
         { wch: 12 }, // Datang
         { wch: 12 }, // Pulang
         { wch: 22 }, // Terlambat
-        { wch: 25 }  // Komentar
+        { wch: 28 }  // Komentar
       ];
 
       ws['!merges'] = [
@@ -2901,6 +3042,81 @@
         { s: { r: 1, c: 0 }, e: { r: 1, c: 14 } },
         { s: { r: 2, c: 0 }, e: { r: 2, c: 14 } }
       ];
+
+      // Border & Styling Profesional
+      const borderThin = {
+        top: { style: "thin", color: { rgb: "CBD5E1" } },
+        bottom: { style: "thin", color: { rgb: "CBD5E1" } },
+        left: { style: "thin", color: { rgb: "CBD5E1" } },
+        right: { style: "thin", color: { rgb: "CBD5E1" } }
+      };
+
+      const borderHeader = {
+        top: { style: "medium", color: { rgb: "334155" } },
+        bottom: { style: "medium", color: { rgb: "334155" } },
+        left: { style: "thin", color: { rgb: "64748B" } },
+        right: { style: "thin", color: { rgb: "64748B" } }
+      };
+
+      // Header Judul Dokumen (Baris 0 - 2)
+      if (ws["A1"]) ws["A1"].s = { font: { bold: true, sz: 12, name: "Calibri", color: { rgb: "0F172A" } }, alignment: { horizontal: "center", vertical: "center" } };
+      if (ws["A2"]) ws["A2"].s = { font: { italic: true, sz: 9.5, name: "Calibri", color: { rgb: "475569" } }, alignment: { horizontal: "center", vertical: "center" } };
+      if (ws["A3"]) ws["A3"].s = { font: { italic: true, sz: 9, name: "Calibri", color: { rgb: "64748B" } }, alignment: { horizontal: "center", vertical: "center" } };
+
+      // Header Tabel Kolom (Baris 4 - Slate Fill)
+      for (let c = 0; c < 15; c++) {
+        const cellRef = XLSX.utils.encode_cell({ r: 4, c: c });
+        if (!ws[cellRef]) ws[cellRef] = { t: "s", v: "" };
+        ws[cellRef].s = {
+          font: { bold: true, sz: 9.5, name: "Calibri", color: { rgb: "0F172A" } },
+          fill: { fgColor: { rgb: "E2E8F0" } },
+          alignment: { horizontal: "center", vertical: "center", wrapText: true },
+          border: borderHeader
+        };
+      }
+
+      // Baris Data Presensi (Baris 5 ke atas dengan Zebra Striping & Status Badges)
+      for (let r = 5; r < aoa.length; r++) {
+        const isOdd = (r - 5) % 2 === 1;
+        const rowBg = isOdd ? "F8FAFC" : "FFFFFF";
+
+        for (let c = 0; c < 15; c++) {
+          const cellRef = XLSX.utils.encode_cell({ r: r, c: c });
+          if (!ws[cellRef]) ws[cellRef] = { t: "s", v: "" };
+
+          let alignH = "center";
+          if (c === 2 || c === 3 || c === 4 || c === 14) alignH = "left"; // Dosen, Prodi, MK, Komentar rata kiri
+
+          let fontColor = { rgb: "0F172A" };
+          let cellBg = rowBg;
+          let isBold = (c === 0 || c === 2);
+
+          // Status Badge styling di kolom 10 (Status Presensi)
+          if (c === 10) {
+            const val = String(ws[cellRef].v || '');
+            if (val.includes('Tepat Waktu')) {
+              cellBg = "DCFCE7";
+              fontColor = { rgb: "166534" };
+              isBold = true;
+            } else if (val.includes('Terlambat')) {
+              cellBg = "FEF3C7";
+              fontColor = { rgb: "9A3412" };
+              isBold = true;
+            } else if (val.includes('Tidak Hadir') || val.includes('Alpha')) {
+              cellBg = "FEE2E2";
+              fontColor = { rgb: "991B1B" };
+              isBold = true;
+            }
+          }
+
+          ws[cellRef].s = {
+            font: { bold: isBold, sz: 9.5, name: "Calibri", color: fontColor },
+            fill: { fgColor: { rgb: cellBg } },
+            alignment: { horizontal: alignH, vertical: "center", wrapText: true },
+            border: borderThin
+          };
+        }
+      }
 
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Rekap Presensi");
