@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Sistem Monitoring Kehadiran Dosen</title>
   <!-- Favicon & App Icons -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -97,13 +100,13 @@
           <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 mr-1"></i>
           Reset Data
         </button>
-        <button id="btnKelebihanSKS" onclick="openKelebihanSKSModal()" class="inline-flex items-center px-3.5 py-2 text-xs font-semibold rounded-lg text-emerald-800 bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400 transition shadow-sm" title="Hitung & Unduh Rekap Mondos DT (Kelebihan SKS) Format Excel">
+        <button id="btnKelebihanSKS" onclick="openKelebihanSKSModal()" class="inline-flex items-center px-3.5 py-2 text-xs font-semibold rounded-lg text-emerald-800 bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400 transition shadow-sm" title="Buka Pratinjau Rekap Mondos DT & Pengaturan Tanda Tangan">
           <i data-lucide="calculator" class="w-4 h-4 mr-1.5 text-emerald-600"></i>
-          Kelebihan SKS / Mondos DT
+          Kelebihan SKS
         </button>
-        <button id="btnExportExcel" onclick="exportDashboardExcel()" class="inline-flex items-center px-4 py-2 text-xs font-semibold rounded-lg text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 shadow-md shadow-emerald-200 transition active:scale-95" title="Unduh data presensi aktif ke Microsoft Excel (.xlsx)">
+        <button id="btnExportMondos" onclick="exportMondosExcel()" class="inline-flex items-center px-4 py-2 text-xs font-bold rounded-lg text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 shadow-md shadow-emerald-200 transition active:scale-95" title="Unduh Rekapitulasi Mondos DT (.xlsx) persis sesuai tampilan tabel">
           <i data-lucide="file-spreadsheet" class="w-4 h-4 mr-1.5"></i>
-          Ekspor Excel (.xlsx)
+          Unduh Mondos DT (.xlsx)
         </button>
       </div>
     </div>
@@ -772,9 +775,9 @@
         <button type="button" onclick="closeKelebihanSKSModal()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
           Tutup
         </button>
-        <button type="button" onclick="exportMondosExcel()" class="inline-flex items-center px-5 py-2.5 text-xs font-bold rounded-xl text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 shadow-md shadow-emerald-200 transition active:scale-95">
+        <button type="button" onclick="exportMondosExcel()" class="inline-flex items-center px-5 py-2.5 text-xs font-bold rounded-xl text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 shadow-md shadow-emerald-200 transition active:scale-95" title="Unduh berkas Excel sesuai format tabel di atas">
           <i data-lucide="file-spreadsheet" class="w-4 h-4 mr-2"></i>
-          Unduh Mondos DT (.xlsx)
+          Unduh Rekap Mondos DT (.xlsx)
         </button>
       </div>
     </div>
@@ -2347,15 +2350,16 @@
 
       // Baris Kop Dokumen Resmi
       const aoa = [
-        ["MONITORING KEHADIRAN DOSEN TETAP"],
+        ["MONITORING KEHADIRAN DOSEN TETAP (MONDOS DT)"],
         ["SEMESTER GANJIL TA 2026/2027"],
         [mondos.prodiTitle],
         [mondos.periodeText],
+        [`Total SKS Diampu: ${mondos.grandDiampuSks} SKS  |  Beban Standar: 9 SKS  |  Kelebihan SKS: ${mondos.grandKelebihanSks > 0 ? '+' + mondos.grandKelebihanSks : '0'} SKS  |  Total SKS Kehadiran: ${mondos.grandTotalSks}`],
         []
       ];
 
-      // Baris Header Utama (Row Index 5)
-      const rowHeader1 = ["No.", "NAMA DOSEN", "MATA KULIAH", "KELAS", "SEMT", "SKS", "PERTEMUAN KE"];
+      // Baris Header Utama (Row Index 6)
+      const rowHeader1 = ["NO.", "NAMA DOSEN", "MATA KULIAH", "KELAS", "SEMT", "SKS", "PERTEMUAN KE"];
       for (let c = 1; c < maxCols; c++) {
         rowHeader1.push("");
       }
@@ -2363,7 +2367,7 @@
       rowHeader1.push("TOTAL SKS");
       aoa.push(rowHeader1);
 
-      // Baris Sub-Header Pertemuan 1..N (Row Index 6)
+      // Baris Sub-Header Pertemuan 1..N (Row Index 7)
       const rowHeader2 = ["", "", "", "", "", ""];
       for (let c = 1; c <= maxCols; c++) {
         rowHeader2.push(c);
@@ -2372,7 +2376,7 @@
       rowHeader2.push("");
       aoa.push(rowHeader2);
 
-      // Baris Pemisah Kategori: Kelebihan SKS*) (Row Index 7)
+      // Baris Pemisah Kategori: Kelebihan SKS*) (Row Index 8)
       const rowCat = ["Kelebihan SKS*)"];
       for (let c = 1; c < totalCols; c++) rowCat.push("");
       aoa.push(rowCat);
@@ -2383,23 +2387,24 @@
         { s: { r: 1, c: 0 }, e: { r: 1, c: totalCols - 1 } },
         { s: { r: 2, c: 0 }, e: { r: 2, c: totalCols - 1 } },
         { s: { r: 3, c: 0 }, e: { r: 3, c: totalCols - 1 } },
+        { s: { r: 4, c: 0 }, e: { r: 4, c: totalCols - 1 } },
 
         // Header Merges (2-baris vertikal & PERTEMUAN KE horizontal)
-        { s: { r: 5, c: 0 }, e: { r: 6, c: 0 } }, // No.
-        { s: { r: 5, c: 1 }, e: { r: 6, c: 1 } }, // NAMA DOSEN
-        { s: { r: 5, c: 2 }, e: { r: 6, c: 2 } }, // MATA KULIAH
-        { s: { r: 5, c: 3 }, e: { r: 6, c: 3 } }, // KELAS
-        { s: { r: 5, c: 4 }, e: { r: 6, c: 4 } }, // SEMT
-        { s: { r: 5, c: 5 }, e: { r: 6, c: 5 } }, // SKS
-        { s: { r: 5, c: 6 }, e: { r: 5, c: 6 + maxCols - 1 } }, // PERTEMUAN KE (1..N)
-        { s: { r: 5, c: 6 + maxCols }, e: { r: 6, c: 6 + maxCols } }, // JMLH PERT
-        { s: { r: 5, c: 6 + maxCols + 1 }, e: { r: 6, c: 6 + maxCols + 1 } }, // TOTAL SKS
+        { s: { r: 6, c: 0 }, e: { r: 7, c: 0 } }, // NO.
+        { s: { r: 6, c: 1 }, e: { r: 7, c: 1 } }, // NAMA DOSEN
+        { s: { r: 6, c: 2 }, e: { r: 7, c: 2 } }, // MATA KULIAH
+        { s: { r: 6, c: 3 }, e: { r: 7, c: 3 } }, // KELAS
+        { s: { r: 6, c: 4 }, e: { r: 7, c: 4 } }, // SEMT
+        { s: { r: 6, c: 5 }, e: { r: 7, c: 5 } }, // SKS
+        { s: { r: 6, c: 6 }, e: { r: 6, c: 6 + maxCols - 1 } }, // PERTEMUAN KE (1..N)
+        { s: { r: 6, c: 6 + maxCols }, e: { r: 7, c: 6 + maxCols } }, // JMLH PERT
+        { s: { r: 6, c: 6 + maxCols + 1 }, e: { r: 7, c: 6 + maxCols + 1 } }, // TOTAL SKS
 
         // Category separator merge
-        { s: { r: 7, c: 0 }, e: { r: 7, c: totalCols - 1 } }
+        { s: { r: 8, c: 0 }, e: { r: 8, c: totalCols - 1 } }
       ];
 
-      let currentRow = 8;
+      let currentRow = 9;
       let totalSemuaPertemuan = 0;
 
       mondos.dosens.forEach((dosenObj, dIdx) => {
@@ -2415,16 +2420,16 @@
           row.push(rombel.semt);
           row.push(rombel.sks);
 
-          // Kolom Tanggal Pertemuan
+          // Kolom Tanggal Pertemuan (gunakan '-' jika sesi kosong, persis tampilan pratinjau)
           for (let c = 0; c < maxCols; c++) {
             if (rombel.sessions[c]) {
               row.push(formatShortDate(rombel.sessions[c].tanggal));
             } else {
-              row.push("");
+              row.push("-");
             }
           }
 
-          row.push(rombel.jmlhPert);
+          row.push(`${rombel.jmlhPert}x`);
           row.push(rombel.totalSks);
 
           totalSemuaPertemuan += rombel.jmlhPert;
@@ -2444,7 +2449,7 @@
       for (let c = 1; c < 6 + maxCols; c++) {
         footerRow.push("");
       }
-      footerRow.push(totalSemuaPertemuan);
+      footerRow.push(totalSemuaPertemuan > 0 ? `${totalSemuaPertemuan}x` : "");
       footerRow.push(mondos.grandTotalSks);
       aoa.push(footerRow);
 
