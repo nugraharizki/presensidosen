@@ -539,10 +539,11 @@
             <thead>
               <tr class="text-[11px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 bg-slate-50/70">
                 <th class="py-2.5 px-3 w-12 text-center">No</th>
-                <th class="py-2.5 px-3 w-44">Waktu</th>
-                <th class="py-2.5 px-3 w-36">Kategori</th>
+                <th class="py-2.5 px-3 w-40">Waktu</th>
+                <th class="py-2.5 px-3 w-32">Kategori</th>
+                <th class="py-2.5 px-3 w-64">Nama File / Berkas</th>
                 <th class="py-2.5 px-3">Aktivitas & Rincian</th>
-                <th class="py-2.5 px-3 w-44 text-center">Status / Dampak</th>
+                <th class="py-2.5 px-3 w-40 text-center">Status / Dampak</th>
               </tr>
             </thead>
             <tbody id="activityLogTableBody" class="divide-y divide-slate-100 font-normal text-slate-700">
@@ -1132,7 +1133,7 @@
     }
 
     // Clean & standardize record with flexible normalized matching
-    function cleanRecord(rawItem, index) {
+    function cleanRecord(rawItem, index, sourceFileName = '') {
       const normalized = {};
       for (const k in rawItem) {
         if (Object.prototype.hasOwnProperty.call(rawItem, k)) {
@@ -1186,7 +1187,8 @@
         kembali: getVal('Kembali', 'jam pulang', 'pulang', 'checkout'),
         terlambat: getVal('Terlambat', 'keterlambatan', 'late'),
         komentar: getVal('Komentar', 'catatan', 'keterangan', 'notes'),
-        ganti_jadwal: gantiJadwal
+        ganti_jadwal: gantiJadwal,
+        source_file: sourceFileName || rawItem.source_file || 'presensi_mega_wahyu_rhamadani.csv'
       };
     }
 
@@ -1886,6 +1888,7 @@
       renderDashboard();
       addActivityLog({
         type: 'edit',
+        fileName: deriveDosenFileName(item.pengajar, item),
         title: `Edit Sesi: ${item.mata_kuliah} (${item.kode_mk})`,
         details: `Dosen: ${item.pengajar || '-'} • Tanggal: ${newTanggal} • Jam: ${newJadwal} • Presensi: ${item.presensi}`,
         impact: 'Sesi Diperbarui',
@@ -1916,6 +1919,7 @@
         renderDashboard();
         addActivityLog({
           type: 'delete',
+          fileName: deriveDosenFileName(deletedCopy.pengajar, deletedCopy),
           title: 'Hapus 1 Baris Presensi',
           details: `Mata Kuliah: ${deletedCopy.mata_kuliah} (${deletedCopy.kode_mk}) • Tanggal: ${deletedCopy.tanggal} • Dosen: ${deletedCopy.pengajar || '-'}`,
           impact: '1 Sesi Dihapus',
@@ -1994,12 +1998,14 @@
         return;
       }
 
-      const targetCount = attendanceData.filter(d => normDosen(d.pengajar) === target).length;
+      const targetRows = attendanceData.filter(d => normDosen(d.pengajar) === target);
+      const targetCount = targetRows.length;
       if (targetCount === 0) {
         alert('Tidak ada sesi perkuliahan ditemukan untuk dosen ini.');
         closeDeleteDosenModal();
         return;
       }
+      const targetFileName = deriveDosenFileName(target, targetRows[0]);
 
       // Hapus data untuk dosen terpilih
       attendanceData = attendanceData.filter(d => normDosen(d.pengajar) !== target);
@@ -2023,8 +2029,9 @@
       renderDashboard();
       addActivityLog({
         type: 'delete',
+        fileName: targetFileName,
         title: `Hapus Data Dosen: ${target}`,
-        details: `Seluruh sesi presensi dosen (${targetCount} sesi) telah dihapus dari database sistem.`,
+        details: `Berkas Terkait: ${targetFileName} • Seluruh sesi presensi dosen (${targetCount} sesi) telah dihapus dari database sistem.`,
         impact: `${targetCount} Sesi Dihapus`,
         impactType: 'rose'
       });
@@ -2050,29 +2057,117 @@
       return `${day} ${month} ${year}, ${hours}:${mins}:${secs}`;
     }
 
+    function deriveDosenFileName(dosenName, sampleRecord) {
+      if (sampleRecord && sampleRecord.source_file) {
+        const isMega = String(dosenName || '').toUpperCase().includes('MEGA WAHYU');
+        if (isMega || sampleRecord.source_file !== 'presensi_mega_wahyu_rhamadani.csv') {
+          return sampleRecord.source_file;
+        }
+      }
+      if (String(dosenName || '').toUpperCase().includes('MEGA WAHYU')) {
+        return 'presensi_mega_wahyu_rhamadani.csv';
+      }
+      const baseName = String(dosenName || 'dosen')
+        .split(',')[0]
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_|_$/g, '');
+      return `presensi_${baseName || 'dosen'}.xlsx`;
+    }
+
+    function extractFileNameFromLog(log) {
+      if (!log) return 'presensi_mega_wahyu_rhamadani.csv';
+      if (log.fileName && String(log.fileName).trim()) return String(log.fileName).trim();
+      const combined = `${log.title || ''} ${log.details || ''}`;
+      const match = combined.match(/([a-zA-Z0-9_\-\.]+\.(?:xlsx|xls|csv))/i);
+      if (match) return match[1];
+      return 'presensi_mega_wahyu_rhamadani.csv';
+    }
+
+    function buildDefaultLogsFromAttendanceData() {
+      const logs = [];
+      if (!Array.isArray(attendanceData) || attendanceData.length === 0) {
+        logs.push({
+          id: 'log_init_default',
+          timestamp: new Date().toISOString(),
+          formattedTime: formatLogTime(new Date()),
+          type: 'upload',
+          fileName: 'presensi_mega_wahyu_rhamadani.csv',
+          title: 'Upload Berkas: presensi_mega_wahyu_rhamadani.csv',
+          details: 'Nama File: presensi_mega_wahyu_rhamadani.csv • Dosen: MEGA WAHYU RHAMADANI, S.T., M.M.S.I • Data presensi awal portal akademik STT Pekerjaan Umum.',
+          impact: '128 Sesi Aktif',
+          impactType: 'sky'
+        });
+        return logs;
+      }
+
+      // Kelompokkan berdasarkan dosen agar semua file dosen yang pernah diupload tampil jelas
+      const dosenGroups = {};
+      attendanceData.forEach(item => {
+        const dName = normDosen(item.pengajar) || 'MEGA WAHYU RHAMADANI, S.T., M.M.S.I';
+        if (!dosenGroups[dName]) {
+          dosenGroups[dName] = { count: 0, prodis: new Set(), sample: item };
+        }
+        dosenGroups[dName].count++;
+        if (item.prodi) dosenGroups[dName].prodis.add(item.prodi);
+        if (item.source_file && item.source_file !== 'presensi_mega_wahyu_rhamadani.csv') {
+          dosenGroups[dName].sample = item;
+        }
+      });
+
+      Object.keys(dosenGroups).forEach((dName, idx) => {
+        const grp = dosenGroups[dName];
+        const fName = deriveDosenFileName(dName, grp.sample);
+        const prodiList = [...grp.prodis].join(', ') || 'Teknik Informatika';
+        logs.push({
+          id: 'log_dataset_' + idx + '_' + Date.now(),
+          timestamp: new Date().toISOString(),
+          formattedTime: formatLogTime(new Date()),
+          type: 'upload',
+          fileName: fName,
+          title: `Upload Berkas: ${fName}`,
+          details: `Nama File: ${fName} • Dosen: ${dName} • Prodi: ${prodiList} (${grp.count} sesi presensi aktif).`,
+          impact: `${grp.count} Sesi Aktif`,
+          impactType: 'sky'
+        });
+      });
+
+      return logs;
+    }
+
     function getActivityLogs() {
       try {
         const stored = localStorage.getItem('presensi_activity_logs');
         if (stored) {
           const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            // Bersihkan log_seed_ versi lama yang belum memiliki atribut fileName
+            const validLogs = parsed.filter(l => !(String(l.id || '').startsWith('log_seed_') && !l.fileName));
+            if (validLogs.length > 0) {
+              // Pastikan semua log memiliki properti fileName dan cek apakah ada dosen di attendanceData yang belum tercatat
+              validLogs.forEach(l => {
+                if (!l.fileName) l.fileName = extractFileNameFromLog(l);
+              });
+              const defaultDatasetLogs = buildDefaultLogsFromAttendanceData();
+              defaultDatasetLogs.forEach(defLog => {
+                const alreadyLogged = validLogs.some(l =>
+                  l.type === 'upload' &&
+                  (l.fileName === defLog.fileName || (l.details && defLog.details && l.details.includes(defLog.fileName)))
+                );
+                if (!alreadyLogged) {
+                  validLogs.push(defLog);
+                }
+              });
+              localStorage.setItem('presensi_activity_logs', JSON.stringify(validLogs));
+              return validLogs;
+            }
+          }
         }
       } catch (e) {
         console.warn('Gagal membaca log aktivitas dari storage:', e);
       }
-      // Log default jika storage masih kosong
-      const initialLogs = [
-        {
-          id: 'log_seed_' + Date.now(),
-          timestamp: new Date().toISOString(),
-          formattedTime: formatLogTime(new Date()),
-          type: 'upload',
-          title: 'Pemuatan Data Presensi Dosen Portal STT PU',
-          details: 'Data presensi awal aktif berhasil dimuat ke dalam portal monitoring.',
-          impact: '128 Sesi Aktif',
-          impactType: 'sky'
-        }
-      ];
+
+      const initialLogs = buildDefaultLogsFromAttendanceData();
       localStorage.setItem('presensi_activity_logs', JSON.stringify(initialLogs));
       return initialLogs;
     }
@@ -2086,13 +2181,15 @@
       }
     }
 
-    function addActivityLog({ type = 'info', title, details, impact = 'Berhasil', impactType = 'sky' }) {
+    function addActivityLog({ type = 'info', fileName = '', title, details, impact = 'Berhasil', impactType = 'sky' }) {
       const logs = getActivityLogs();
+      const resolvedFile = fileName || extractFileNameFromLog({ title, details });
       const newEntry = {
         id: 'log_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
         timestamp: new Date().toISOString(),
         formattedTime: formatLogTime(new Date()),
         type,
+        fileName: resolvedFile,
         title,
         details,
         impact,
@@ -2179,6 +2276,21 @@
       }
     }
 
+    function getFileBadgeHtml(log) {
+      const fName = log.fileName || extractFileNameFromLog(log);
+      const isExcel = /\.(xlsx|xls)$/i.test(fName);
+      const badgeCls = isExcel
+        ? 'bg-emerald-50/90 text-emerald-900 border-emerald-200'
+        : 'bg-sky-50/90 text-sky-900 border-sky-200';
+      const iconColor = isExcel ? 'text-emerald-600' : 'text-sky-600';
+      return `
+        <div class="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold border ${badgeCls} max-w-[240px] shadow-2xs" title="Nama File: ${fName}">
+          <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 mr-1.5 ${iconColor} shrink-0"></i>
+          <span class="truncate font-mono">${fName}</span>
+        </div>
+      `;
+    }
+
     function getImpactBadgeHtml(impact, impactType) {
       let colorCls = 'bg-slate-50 text-slate-700 border-slate-200';
       if (impactType === 'sky') colorCls = 'bg-sky-50 text-sky-700 border-sky-200';
@@ -2218,7 +2330,9 @@
 
       if (emptyBox) emptyBox.classList.add('hidden');
       tbody.innerHTML = filtered.map((log, index) => {
+        const fName = log.fileName || extractFileNameFromLog(log);
         const catBadge = getCategoryBadgeHtml(log.type);
+        const fileBadge = getFileBadgeHtml(log);
         const impBadge = getImpactBadgeHtml(log.impact, log.impactType);
         return `
           <tr class="hover:bg-slate-50/80 transition group">
@@ -2227,8 +2341,14 @@
               <span class="inline-flex items-center"><i data-lucide="clock" class="w-3 h-3 mr-1.5 text-slate-400"></i>${log.formattedTime}</span>
             </td>
             <td class="py-2.5 px-3 whitespace-nowrap">${catBadge}</td>
+            <td class="py-2.5 px-3 whitespace-nowrap">${fileBadge}</td>
             <td class="py-2.5 px-3">
-              <strong class="text-slate-800 block text-xs font-semibold leading-snug">${log.title}</strong>
+              <div class="flex flex-wrap items-center gap-1.5">
+                <strong class="text-slate-800 text-xs font-semibold leading-snug">${log.title}</strong>
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                  <i data-lucide="file-text" class="w-2.5 h-2.5 mr-1 text-sky-600"></i>${fName}
+                </span>
+              </div>
               <span class="text-slate-500 text-[11px] mt-0.5 block leading-relaxed">${log.details}</span>
             </td>
             <td class="py-2.5 px-3 text-center whitespace-nowrap">${impBadge}</td>
@@ -3281,7 +3401,7 @@
           }
 
           if (rows && rows.length > 0) {
-            pendingImportData = rows.map((r, i) => cleanRecord(r, i));
+            pendingImportData = rows.map((r, i) => cleanRecord(r, i, file.name));
             
             // Tampilkan Staging Area dengan tombol PROCEED
             document.getElementById('uploadStageDefault').classList.add('hidden');
@@ -3348,13 +3468,19 @@
         return;
       }
 
-      // Terapkan penentuan Program Studi jika pengguna memilih prodi spesifik
+      // Terapkan penentuan Program Studi & tandai source_file pada setiap baris data
       const prodiMode = document.getElementById('stagingProdiMode')?.value || 'auto';
-      if (prodiMode !== 'auto') {
-        pendingImportData.forEach(item => {
+      pendingImportData.forEach(item => {
+        item.source_file = pendingFileName;
+        if (prodiMode !== 'auto') {
           item.prodi = prodiMode;
-        });
-      }
+        }
+      });
+
+      const uploadedDosens = [...new Set(pendingImportData.map(d => normDosen(d.pengajar)).filter(Boolean))];
+      const dosenSummary = uploadedDosens.length > 0
+        ? (uploadedDosens.length <= 2 ? uploadedDosens.join(', ') : `${uploadedDosens[0]} (+${uploadedDosens.length - 1} dosen lainnya)`)
+        : '-';
 
       const mode = document.querySelector('input[name="stagingImportMode"]:checked')?.value || 'merge';
 
@@ -3405,10 +3531,11 @@
       
       addActivityLog({
         type: 'upload',
+        fileName: pendingFileName,
         title: `Upload Berkas: ${pendingFileName}`,
         details: mode === 'replace'
-          ? `Ganti Total: ${attendanceData.length} baris dimuat • Prodi: ${prodiInfo}`
-          : `Mode Gabungkan & Overwrite: ${updated} baris di-overwrite, ${added} baris baru • Prodi: ${prodiInfo}`,
+          ? `Nama File: ${pendingFileName} • Dosen: ${dosenSummary} • Ganti Total: ${attendanceData.length} baris dimuat • Prodi: ${prodiInfo}`
+          : `Nama File: ${pendingFileName} • Dosen: ${dosenSummary} • Mode Gabungkan & Overwrite: ${updated} baris di-overwrite, ${added} baris baru • Prodi: ${prodiInfo}`,
         impact: mode === 'replace' ? `${attendanceData.length} Baris Dimuat` : `${updated} Overwrite • ${added} Baru`,
         impactType: 'sky'
       });
