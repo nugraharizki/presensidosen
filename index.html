@@ -753,19 +753,19 @@
           </div>
           <div>
             <label class="block text-[10.5px] font-bold text-slate-700 mb-1 flex items-center">
-              Nama Pembuat / Sekretaris Prodi:
+              Pembuat / Sumber Data Laporan (Kanan):
             </label>
-            <input type="text" id="sksInputMakerName" oninput="handleSignatureInputChange()" class="w-full py-1.5 px-2.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-slate-800" placeholder="Nama & Gelar Pembuat">
+            <input type="text" id="sksInputMakerName" oninput="handleSignatureInputChange()" class="w-full py-1.5 px-2.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-slate-800" placeholder="Dilansir dari Portal Sistem Akademik dan Sistem Pembelajaran Online LMS STT Pekerjaan Umum">
           </div>
           <div>
             <label class="block text-[10.5px] font-bold text-slate-700 mb-1 flex items-center">
               Kota & Tanggal Pengesahan:
             </label>
-            <input type="text" id="sksInputCityDate" oninput="handleSignatureInputChange()" class="w-full py-1.5 px-2.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold text-slate-800" placeholder="Contoh: Jakarta, 21 Oktober 2026">
+            <input type="text" id="sksInputCityDate" oninput="handleSignatureInputChange()" class="w-full py-1.5 px-2.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold text-slate-800" placeholder="Contoh: Jakarta, 27 Oktober 2026">
           </div>
         </div>
         <div class="flex items-center justify-between text-[10px] text-slate-500">
-          <span>*Nama Kaprodi dan Sekretaris dapat Anda ubah sesuai Prodi. Perubahan akan langsung tercantum pada berkas Excel.</span>
+          <span>*Nama Kaprodi dan Sumber Data dapat Anda sesuaikan. Perubahan akan langsung tercantum pada berkas Excel.</span>
           <span id="sksProdiBadgeText" class="font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Teknik Informatika</span>
         </div>
       </div>
@@ -1923,25 +1923,27 @@
       lucide.createIcons();
     }
 
-    // Default konfigurasi penandatangan per Program Studi (dapat disesuaikan bebas oleh pengguna)
+    // Default konfigurasi penandatangan & sumber data per Program Studi
+    const OFFICIAL_SOURCE_TEXT = 'Dilansir dari Portal Sistem Akademik dan Sistem Pembelajaran Online LMS STT Pekerjaan Umum';
+
     const DEFAULT_SIGNATURES = {
       'Teknik Lingkungan': {
         kaprodi: 'Endah Yunari N, ST., MT.',
         kaprodiTitle: 'Ketua Program Studi Teknik Lingkungan',
-        maker: 'Eda Loisa',
-        makerTitle: 'Sekretaris Program Studi Teknik Lingkungan'
+        maker: OFFICIAL_SOURCE_TEXT,
+        makerTitle: OFFICIAL_SOURCE_TEXT
       },
       'Teknik Informatika': {
         kaprodi: 'Sugiyatno, S.Kom, M.Kom',
         kaprodiTitle: 'Ketua Program Studi Teknik Informatika',
-        maker: 'Sekretaris Program Studi Teknik Informatika',
-        makerTitle: 'Sekretaris Program Studi Teknik Informatika'
+        maker: OFFICIAL_SOURCE_TEXT,
+        makerTitle: OFFICIAL_SOURCE_TEXT
       },
       'all': {
         kaprodi: 'Sugiyatno, S.Kom, M.Kom',
         kaprodiTitle: 'Ketua Program Studi',
-        maker: 'Sekretaris Program Studi',
-        makerTitle: 'Sekretaris Program Studi'
+        maker: OFFICIAL_SOURCE_TEXT,
+        makerTitle: OFFICIAL_SOURCE_TEXT
       }
     };
 
@@ -1951,7 +1953,14 @@
         const saved = localStorage.getItem('mondos_sign_' + key);
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (parsed && parsed.kaprodi) return parsed;
+          if (parsed && parsed.kaprodi) {
+            // Migrasi otomatis jika masih tersimpan nilai lama 'Sekretaris Program Studi...'
+            if (!parsed.maker || parsed.maker.includes('Sekretaris Program Studi')) {
+              parsed.maker = OFFICIAL_SOURCE_TEXT;
+              parsed.makerTitle = OFFICIAL_SOURCE_TEXT;
+            }
+            return parsed;
+          }
         }
       } catch (e) {
         console.warn('Gagal membaca signature dari localStorage:', e);
@@ -2466,11 +2475,16 @@
       currentRow += 2;
       const sigRowStart = currentRow;
 
-      // Tata Letak Tanda Tangan Kiri (Disetujui Oleh) & Kanan (Dibuat Oleh)
+      // Tata Letak Tanda Tangan Kiri (Disetujui Oleh) & Kanan (Dibuat Oleh / Sumber Data)
       const leftCol = 1;
       const leftColEnd = Math.min(3, Math.floor(totalCols / 2) - 1);
-      const rightCol = Math.max(leftColEnd + 2, totalCols - 4);
+      const rightCol = Math.max(leftColEnd + 2, totalCols - 5);
       const rightColEnd = totalCols - 1;
+
+      const isSystemSource = customMakerName.toLowerCase().includes('dilansir') ||
+                             customMakerName.toLowerCase().includes('portal') ||
+                             customMakerName.toLowerCase().includes('lms') ||
+                             customMakerName.toLowerCase().includes('sistem');
 
       // Baris TTD 1: Disetujui Oleh, / Kota & Tanggal
       const sigRow1 = new Array(totalCols).fill("");
@@ -2478,15 +2492,15 @@
       sigRow1[rightCol] = customCityDate;
       aoa.push(sigRow1);
 
-      // Baris TTD 2: Jabatan Kaprodi / Dibuat Oleh,
+      // Baris TTD 2: Jabatan Kaprodi / Keterangan Sumber Data atau 'Dibuat Oleh,'
       const sigRow2 = new Array(totalCols).fill("");
       sigRow2[leftCol] = mondos.kaprodiTitle;
-      sigRow2[rightCol] = "Dibuat Oleh,";
+      sigRow2[rightCol] = isSystemSource ? customMakerName : "Dibuat Oleh,";
       aoa.push(sigRow2);
 
-      // Baris TTD 3: (kosong) / Jabatan Pembuat/Sekretaris
+      // Baris TTD 3: (kosong) / Jabatan Pembuat/Sekretaris (jika perorangan)
       const sigRow3 = new Array(totalCols).fill("");
-      sigRow3[rightCol] = mondos.sekretarisTitle;
+      sigRow3[rightCol] = isSystemSource ? "" : (mondos.sekretarisTitle || "");
       aoa.push(sigRow3);
 
       // Ruang kosong untuk fisik tanda tangan (3 baris)
@@ -2494,23 +2508,27 @@
       aoa.push(new Array(totalCols).fill(""));
       aoa.push(new Array(totalCols).fill(""));
 
-      // Baris TTD 7: Nama Pejabat Pengesah
+      // Baris TTD 7: Nama Pejabat Pengesah (Kiri: Kaprodi, Kanan: Pembuat jika perorangan)
       const sigRowFinal = new Array(totalCols).fill("");
       sigRowFinal[leftCol] = customKaprodiName;
-      sigRowFinal[rightCol] = customMakerName;
+      sigRowFinal[rightCol] = isSystemSource ? "" : customMakerName;
       aoa.push(sigRowFinal);
 
-      // Merges Kolom TTD
+      // Merges Kolom TTD / Keterangan Sumber Data
       merges.push({ s: { r: currentRow, c: leftCol }, e: { r: currentRow, c: leftColEnd } });
       merges.push({ s: { r: currentRow, c: rightCol }, e: { r: currentRow, c: rightColEnd } });
 
       merges.push({ s: { r: currentRow + 1, c: leftCol }, e: { r: currentRow + 1, c: leftColEnd } });
-      merges.push({ s: { r: currentRow + 1, c: rightCol }, e: { r: currentRow + 1, c: rightColEnd } });
-
-      merges.push({ s: { r: currentRow + 2, c: rightCol }, e: { r: currentRow + 2, c: rightColEnd } });
-
       merges.push({ s: { r: currentRow + 6, c: leftCol }, e: { r: currentRow + 6, c: leftColEnd } });
-      merges.push({ s: { r: currentRow + 6, c: rightCol }, e: { r: currentRow + 6, c: rightColEnd } });
+
+      if (isSystemSource) {
+        // Gabungkan baris 2 s/d 3 agar keterangan sumber data memiliki ruang lapang dan terbaca penuh
+        merges.push({ s: { r: currentRow + 1, c: rightCol }, e: { r: currentRow + 2, c: rightColEnd } });
+      } else {
+        merges.push({ s: { r: currentRow + 1, c: rightCol }, e: { r: currentRow + 1, c: rightColEnd } });
+        merges.push({ s: { r: currentRow + 2, c: rightCol }, e: { r: currentRow + 2, c: rightColEnd } });
+        merges.push({ s: { r: currentRow + 6, c: rightCol }, e: { r: currentRow + 6, c: rightColEnd } });
+      }
 
       // Lebar Kolom Spreadsheet Proporsional & Rapi
       const cols = [
@@ -2646,22 +2664,28 @@
         };
       }
 
-      // 7. Area Tanda Tangan
+      // 7. Area Tanda Tangan & Sumber Data
       const sigFormatRows = [sigRowStart, sigRowStart + 1, sigRowStart + 2, sigRowStart + 6];
       sigFormatRows.forEach(r => {
         [leftCol, rightCol].forEach(c => {
           const cellRef = XLSX.utils.encode_cell({ r: r, c: c });
           if (ws[cellRef] && ws[cellRef].v) {
             const isName = (r === sigRowStart + 6);
+            const isSourceText = (c === rightCol && isSystemSource && r === sigRowStart + 1);
             ws[cellRef].s = {
               font: {
-                bold: isName || r === sigRowStart + 1,
-                underline: isName,
+                bold: (!isSourceText && (isName || r === sigRowStart + 1)),
+                italic: isSourceText,
+                underline: (!isSourceText && isName),
                 sz: isName ? 10 : 9.5,
                 name: "Calibri",
-                color: { rgb: "0F172A" }
+                color: { rgb: isSourceText ? "334155" : "0F172A" }
               },
-              alignment: { horizontal: "center", vertical: "center" }
+              alignment: {
+                horizontal: "center",
+                vertical: "center",
+                wrapText: true
+              }
             };
           }
         });
