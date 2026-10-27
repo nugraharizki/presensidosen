@@ -397,6 +397,11 @@
             </button>
           </div>
 
+          <!-- Filter Tahun -->
+          <select id="filterTahun" class="py-2 px-3 text-xs bg-white border border-violet-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 text-slate-700 font-semibold">
+            <option value="">🗓️ Semua Tahun</option>
+          </select>
+
           <!-- Filter Bulan -->
           <select id="filterBulan" class="py-2 px-3 text-xs bg-white border border-violet-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 text-slate-700 font-semibold">
             <option value="">📅 Semua Bulan</option>
@@ -644,8 +649,8 @@
         </button>
       </div>
 
-      <!-- Controls: Filter Dosen, Prodi & Periode -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200 shrink-0">
+      <!-- Controls: Filter Dosen, Prodi, Tahun & Periode -->
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200 shrink-0">
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center">
             <i data-lucide="user" class="w-3.5 h-3.5 mr-1 text-emerald-600"></i>
@@ -664,6 +669,15 @@
             <option value="all">🎓 Semua Program Studi</option>
             <option value="Teknik Informatika">Teknik Informatika</option>
             <option value="Teknik Lingkungan">Teknik Lingkungan</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center">
+            <i data-lucide="calendar-days" class="w-3.5 h-3.5 mr-1 text-emerald-600"></i>
+            Tahun:
+          </label>
+          <select id="sksFilterTahun" onchange="handleSksTahunChange()" class="w-full py-2 px-3 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold text-slate-800">
+            <option value="all">🗓️ Semua Tahun</option>
           </select>
         </div>
         <div>
@@ -1206,6 +1220,13 @@
       return '';
     }
 
+    // Mengubah tanggal menjadi kunci tahun "yyyy"
+    function getYearKey(tanggal) {
+      const mk = getMonthKey(tanggal);
+      if (mk) return mk.split('-')[0];
+      return '';
+    }
+
     function monthLabel(key) {
       if (!key) return 'Tanpa Tanggal';
       const [y, mo] = key.split('-');
@@ -1314,6 +1335,7 @@
     function getFilteredData({ includeSearch = true } = {}) {
       const searchVal = includeSearch ? document.getElementById('searchInput').value.toLowerCase() : '';
       const dosenVal = document.getElementById('filterDosen').value;
+      const tahunVal = document.getElementById('filterTahun')?.value || '';
       const bulanVal = document.getElementById('filterBulan').value;
       const prodiVal = document.getElementById('filterProdi').value;
       const jenisKelasVal = document.getElementById('filterJenisKelas').value;
@@ -1326,6 +1348,7 @@
           [item.mata_kuliah, item.kode_mk, item.ruangan, item.prodi, item.jenis_kelas, item.tanggal, item.komentar, item.pengajar]
             .some(v => String(v || '').toLowerCase().includes(searchVal));
         const matchDosen = !dosenVal || normDosen(item.pengajar) === dosenVal;
+        const matchTahun = !tahunVal || getYearKey(item.tanggal) === tahunVal;
         const matchBulan = !bulanVal || getMonthKey(item.tanggal) === bulanVal;
         const matchProdi = !prodiVal || item.prodi === prodiVal;
         const matchJenisKelas = !jenisKelasVal || item.jenis_kelas === jenisKelasVal;
@@ -1335,7 +1358,7 @@
         else if (statusVal === 'A') matchStatus = (status === 'ALPHA');
         else if (statusVal === 'LATE') matchStatus = (status === 'LATE');
         else if (statusVal === 'PENDING') matchStatus = (status === 'PENDING');
-        return matchSearch && matchDosen && matchBulan && matchProdi && matchJenisKelas && matchMatkul && matchStatus;
+        return matchSearch && matchDosen && matchTahun && matchBulan && matchProdi && matchJenisKelas && matchMatkul && matchStatus;
       });
     }
 
@@ -1355,7 +1378,7 @@
       document.getElementById('dosenAvatar').textContent = initials || 'DS';
     }
 
-    // Populate Mata Kuliah, Dosen & Bulan Filter Dropdowns
+    // Populate Mata Kuliah, Dosen, Tahun & Bulan Filter Dropdowns
     function populateMatkulFilter() {
       const uniqueMatkul = [...new Set(attendanceData.map(d => d.mata_kuliah).filter(Boolean))].sort();
       fillSelect('filterMatkul', uniqueMatkul.map(m => ({ value: m, label: m })), `Semua Mata Kuliah (${uniqueMatkul.length})`);
@@ -1365,10 +1388,34 @@
       const dosenList = Object.keys(dosenCount).sort();
       fillSelect('filterDosen', dosenList.map(n => ({ value: n, label: `${n} (${dosenCount[n]})` })), `👤 Semua Dosen (${dosenList.length})`);
 
+      const tahunCount = {};
+      attendanceData.forEach(d => {
+        const y = getYearKey(d.tanggal);
+        if (y) tahunCount[y] = (tahunCount[y] || 0) + 1;
+      });
+      const tahunList = Object.keys(tahunCount).sort();
+      fillSelect('filterTahun', tahunList.map(y => ({ value: y, label: `🗓️ Tahun ${y} (${tahunCount[y]} sesi)` })), `🗓️ Semua Tahun (${tahunList.length})`);
+
+      updateBulanFilterOptions();
+    }
+
+    function updateBulanFilterOptions() {
+      const selectedTahun = document.getElementById('filterTahun')?.value || '';
+      const currentBulan = document.getElementById('filterBulan')?.value || '';
       const bulanCount = {};
-      attendanceData.forEach(d => { const k = getMonthKey(d.tanggal); if (k) bulanCount[k] = (bulanCount[k] || 0) + 1; });
+      attendanceData.forEach(d => {
+        const y = getYearKey(d.tanggal);
+        if (selectedTahun && y !== selectedTahun) return;
+        const k = getMonthKey(d.tanggal);
+        if (k) bulanCount[k] = (bulanCount[k] || 0) + 1;
+      });
       const bulanList = Object.keys(bulanCount).sort();
-      fillSelect('filterBulan', bulanList.map(k => ({ value: k, label: `${monthLabel(k)} (${getMonthDateRange(k)} • ${bulanCount[k]} sesi)` })), `📅 Semua Bulan (${bulanList.length})`);
+      const defaultLabel = selectedTahun ? `📅 Semua Bulan di ${selectedTahun} (${bulanList.length})` : `📅 Semua Bulan (${bulanList.length})`;
+      fillSelect('filterBulan', bulanList.map(k => ({ value: k, label: `${monthLabel(k)} (${getMonthDateRange(k)} • ${bulanCount[k]} sesi)` })), defaultLabel);
+
+      if (currentBulan && bulanList.includes(currentBulan)) {
+        document.getElementById('filterBulan').value = currentBulan;
+      }
     }
 
     // Render summary cards per Course
@@ -1521,8 +1568,9 @@
 
       // Hitung Beban SKS Dosen untuk Badge di Header
       const activeDosenVal = document.getElementById('filterDosen')?.value || '';
+      const activeTahunVal = document.getElementById('filterTahun')?.value || 'all';
       const activeBulanVal = document.getElementById('filterBulan')?.value || 'all';
-      const sksCalc = calculateLecturerSKS(activeDosenVal, activeBulanVal);
+      const sksCalc = calculateLecturerSKS(activeDosenVal, activeBulanVal, activeTahunVal);
       const headerTotalSKSEl = document.getElementById('headerTotalSKS');
       const headerKelebihanSKSEl = document.getElementById('headerKelebihanSKS');
       if (headerTotalSKSEl) headerTotalSKSEl.textContent = sksCalc.totalSks;
@@ -1780,8 +1828,11 @@
     // ========================================================
     // PERHITUNGAN & REKAPITULASI KELEBIHAN SKS UNTUK KEUANGAN
     // ========================================================
-    function calculateLecturerSKS(targetDosen, targetPeriode = 'all') {
+    function calculateLecturerSKS(targetDosen, targetPeriode = 'all', targetTahun = 'all') {
       let filtered = attendanceData;
+      if (targetTahun && targetTahun !== 'all') {
+        filtered = filtered.filter(item => getYearKey(item.tanggal) === targetTahun);
+      }
       if (targetDosen) {
         filtered = filtered.filter(item => normDosen(item.pengajar) === targetDosen);
       }
@@ -1889,26 +1940,31 @@
         }
       }
 
-      // Populate Periode Dropdown
-      const bulanCount = {};
+      // Populate Tahun Dropdown di Modal
+      const tahunCount = {};
       attendanceData.forEach(d => {
-        const k = getMonthKey(d.tanggal);
-        if (k) bulanCount[k] = (bulanCount[k] || 0) + 1;
+        const y = getYearKey(d.tanggal);
+        if (y) tahunCount[y] = (tahunCount[y] || 0) + 1;
       });
-      const bulanList = Object.keys(bulanCount).sort();
-      const selPeriode = document.getElementById('sksFilterPeriode');
-      selPeriode.innerHTML = '<option value="all">📅 Satu Semester Penuh (Akumulatif Semester Ganjil 2026/2027)</option>';
-      bulanList.forEach(k => {
-        const opt = document.createElement('option');
-        opt.value = k;
-        opt.textContent = `📅 Periode ${monthLabel(k)} (Keterangan: ${getMonthDateRange(k)} • ${bulanCount[k]} sesi terlaksana)`;
-        selPeriode.appendChild(opt);
-      });
-
-      const activeBulan = document.getElementById('filterBulan')?.value;
-      if (activeBulan && bulanList.includes(activeBulan)) {
-        selPeriode.value = activeBulan;
+      const tahunList = Object.keys(tahunCount).sort();
+      const selTahun = document.getElementById('sksFilterTahun');
+      if (selTahun) {
+        selTahun.innerHTML = '<option value="all">🗓️ Semua Tahun</option>';
+        tahunList.forEach(y => {
+          const opt = document.createElement('option');
+          opt.value = y;
+          opt.textContent = `🗓️ Tahun ${y} (${tahunCount[y]} sesi)`;
+          selTahun.appendChild(opt);
+        });
+        const activeTahun = document.getElementById('filterTahun')?.value;
+        if (activeTahun && tahunList.includes(activeTahun)) {
+          selTahun.value = activeTahun;
+        } else {
+          selTahun.value = 'all';
+        }
       }
+
+      updateSksPeriodeOptions();
 
       // Sinkronkan filter prodi modal dengan filter prodi aktif pada dashboard
       const activeProdi = document.getElementById('filterProdi')?.value;
@@ -1921,6 +1977,46 @@
       updateSignatureInputs(activeProdi || 'all');
       renderKelebihanSKS();
       lucide.createIcons();
+    }
+
+    function updateSksPeriodeOptions() {
+      const selectedTahun = document.getElementById('sksFilterTahun')?.value || 'all';
+      const selPeriode = document.getElementById('sksFilterPeriode');
+      if (!selPeriode) return;
+
+      const currentPeriode = selPeriode.value;
+      const bulanCount = {};
+      attendanceData.forEach(d => {
+        const y = getYearKey(d.tanggal);
+        if (selectedTahun !== 'all' && y !== selectedTahun) return;
+        const k = getMonthKey(d.tanggal);
+        if (k) bulanCount[k] = (bulanCount[k] || 0) + 1;
+      });
+      const bulanList = Object.keys(bulanCount).sort();
+      selPeriode.innerHTML = selectedTahun !== 'all'
+        ? `<option value="all">📅 Satu Tahun Penuh ${selectedTahun} (Akumulatif Seluruh Sesi)</option>`
+        : '<option value="all">📅 Satu Semester Penuh (Akumulatif Semester Ganjil 2026/2027)</option>';
+
+      bulanList.forEach(k => {
+        const opt = document.createElement('option');
+        opt.value = k;
+        opt.textContent = `📅 Periode ${monthLabel(k)} (Keterangan: ${getMonthDateRange(k)} • ${bulanCount[k]} sesi terlaksana)`;
+        selPeriode.appendChild(opt);
+      });
+
+      if (currentPeriode && bulanList.includes(currentPeriode)) {
+        selPeriode.value = currentPeriode;
+      } else {
+        const activeBulan = document.getElementById('filterBulan')?.value;
+        if (activeBulan && bulanList.includes(activeBulan)) {
+          selPeriode.value = activeBulan;
+        }
+      }
+    }
+
+    function handleSksTahunChange() {
+      updateSksPeriodeOptions();
+      renderKelebihanSKS();
     }
 
     // Default konfigurasi penandatangan & sumber data per Program Studi
@@ -2039,8 +2135,12 @@
     }
 
     // Builder data Mondos DT (Monitoring Kehadiran Dosen Tetap & Kelebihan SKS)
-    function getMondosData(targetDosen = 'all', targetPeriode = 'all', targetProdi = 'all') {
+    function getMondosData(targetDosen = 'all', targetPeriode = 'all', targetProdi = 'all', targetTahun = 'all') {
       let filtered = attendanceData;
+
+      if (targetTahun && targetTahun !== 'all') {
+        filtered = filtered.filter(item => getYearKey(item.tanggal) === targetTahun);
+      }
 
       if (targetDosen && targetDosen !== 'all') {
         filtered = filtered.filter(item => normDosen(item.pengajar) === targetDosen);
@@ -2150,6 +2250,8 @@
         periodeText = `(Periode ${minStr} - ${maxStr})`;
       } else if (targetPeriode && targetPeriode !== 'all') {
         periodeText = `(Periode ${getMonthDateRange(targetPeriode)})`;
+      } else if (targetTahun && targetTahun !== 'all') {
+        periodeText = `(Tahun Akademik ${targetTahun})`;
       } else {
         periodeText = '(Semester Ganjil TA 2026/2027)';
       }
@@ -2292,19 +2394,25 @@
 
     function renderKelebihanSKS() {
       const selectedDosen = document.getElementById('sksFilterDosen')?.value || 'all';
+      const selectedTahun = document.getElementById('sksFilterTahun')?.value || 'all';
       const selectedPeriode = document.getElementById('sksFilterPeriode')?.value || 'all';
       const selectedProdi = document.getElementById('sksFilterProdi')?.value || 'all';
 
-      const hintText = selectedPeriode === 'all'
-        ? 'Satu Semester Penuh (Akumulatif Semester Ganjil 2026/2027)'
-        : getMonthDateRange(selectedPeriode);
+      let hintText = '';
+      if (selectedPeriode === 'all') {
+        hintText = selectedTahun !== 'all'
+          ? `Tahun ${selectedTahun} (Akumulatif Seluruh Sesi)`
+          : 'Satu Semester Penuh (Akumulatif Semester Ganjil 2026/2027)';
+      } else {
+        hintText = getMonthDateRange(selectedPeriode);
+      }
       const hintEl = document.getElementById('sksPeriodeHintText');
       if (hintEl) hintEl.textContent = hintText;
 
       // Sinkronkan input pejabat penandatangan dengan Prodi yang dipilih
       updateSignatureInputs(selectedProdi);
 
-      const mondosData = getMondosData(selectedDosen, selectedPeriode, selectedProdi);
+      const mondosData = getMondosData(selectedDosen, selectedPeriode, selectedProdi, selectedTahun);
 
       // Update KPI Cards
       const elTotalDiampu = document.getElementById('sksModalTotalDiampu');
@@ -2340,10 +2448,11 @@
     // Ekspor Resmi Mondos DT ke Format Spreadsheet Excel (.xlsx)
     function exportMondosExcel() {
       const selectedDosen = document.getElementById('sksFilterDosen')?.value || 'all';
+      const selectedTahun = document.getElementById('sksFilterTahun')?.value || 'all';
       const selectedPeriode = document.getElementById('sksFilterPeriode')?.value || 'all';
       const selectedProdi = document.getElementById('sksFilterProdi')?.value || 'all';
 
-      const mondos = getMondosData(selectedDosen, selectedPeriode, selectedProdi);
+      const mondos = getMondosData(selectedDosen, selectedPeriode, selectedProdi, selectedTahun);
       if (!mondos.dosens || mondos.dosens.length === 0) {
         showToast('Tidak ada data Mondos DT untuk diekspor.', 'error');
         return;
@@ -2694,9 +2803,10 @@
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Mondos DT");
 
+      const cleanYear = selectedTahun !== 'all' ? `_${selectedTahun}` : '';
       const cleanProdi = (mondos.activeProdi || 'Prodi').replace(/[^a-zA-Z0-9]/g, '_');
       const cleanDosen = selectedDosen !== 'all' ? `_${selectedDosen.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 20)}` : '';
-      const fileName = `Mondos_DT_${cleanProdi}${cleanDosen}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const fileName = `Mondos_DT_${cleanProdi}${cleanYear}${cleanDosen}_${new Date().toISOString().slice(0, 10)}.xlsx`;
 
       XLSX.writeFile(wb, fileName);
       showToast(`Format Mondos DT (${fileName}) berhasil diunduh.`);
@@ -2951,11 +3061,13 @@
         document.getElementById('fileUploadInfo').classList.add('hidden');
         document.getElementById('searchInput').value = '';
         document.getElementById('filterDosen').value = '';
+        document.getElementById('filterTahun').value = '';
         document.getElementById('filterBulan').value = '';
         document.getElementById('filterProdi').value = '';
         document.getElementById('filterJenisKelas').value = '';
         document.getElementById('filterMatkul').value = '';
         document.getElementById('filterStatus').value = '';
+        updateBulanFilterOptions();
       }
     });
 
@@ -2979,12 +3091,14 @@
       }
 
       const selDosen = document.getElementById('filterDosen')?.value;
+      const selTahun = document.getElementById('filterTahun')?.value;
       const selProdi = document.getElementById('filterProdi')?.value;
       const selBulan = document.getElementById('filterBulan')?.value;
       const selJenis = document.getElementById('filterJenisKelas')?.value;
 
       const subTitles = [];
       if (selDosen) subTitles.push(`Dosen: ${selDosen}`);
+      if (selTahun) subTitles.push(`Tahun: ${selTahun}`);
       if (selProdi) subTitles.push(`Prodi: ${selProdi}`);
       if (selBulan) subTitles.push(`Bulan: ${monthLabel(selBulan)}`);
       if (selJenis) subTitles.push(`Kelas: ${selJenis}`);
@@ -3145,8 +3259,9 @@
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Rekap Presensi");
 
+      const cleanYear = selTahun ? `_${selTahun}` : '';
       const cleanDosen = selDosen ? `_${selDosen.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 15)}` : '';
-      const fileName = `Rekap_Presensi_Dosen${cleanDosen}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const fileName = `Rekap_Presensi_Dosen${cleanYear}${cleanDosen}_${new Date().toISOString().slice(0, 10)}.xlsx`;
 
       XLSX.writeFile(wb, fileName);
       showToast(`Rekap Presensi (${fileName}) berhasil diunduh.`);
@@ -3155,6 +3270,10 @@
     // Search and filter listeners
     document.getElementById('searchInput').addEventListener('input', renderDashboard);
     document.getElementById('filterDosen').addEventListener('change', renderDashboard);
+    document.getElementById('filterTahun').addEventListener('change', () => {
+      updateBulanFilterOptions();
+      renderDashboard();
+    });
     document.getElementById('filterBulan').addEventListener('change', renderDashboard);
     document.getElementById('filterProdi').addEventListener('change', renderDashboard);
     document.getElementById('filterJenisKelas').addEventListener('change', renderDashboard);
