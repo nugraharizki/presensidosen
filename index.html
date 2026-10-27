@@ -1114,7 +1114,7 @@
         let inQuotes = false;
         for (let i = 0; i < line.length; i++) {
           const char = line[i];
-          if (char === '"' || char === "'") {
+          if (char === '"') {
             inQuotes = !inQuotes;
           } else if (char === ',' && !inQuotes) {
             result.push(cur.trim().replace(/^["']|["']$/g, '').trim());
@@ -1134,9 +1134,11 @@
         if (!lines[i].trim()) continue;
         const row = parseLine(lines[i]);
         const item = {};
-        headers.forEach((h, idx) => {
+        const maxCols = Math.max(headers.length, row.length);
+        for (let idx = 0; idx < maxCols; idx++) {
+          const h = headers[idx] ? headers[idx] : `_col_${idx}`;
           item[h] = row[idx] !== undefined ? row[idx] : '';
-        });
+        }
         data.push(item);
       }
       return data;
@@ -1145,10 +1147,13 @@
     // Clean & standardize record with flexible normalized matching
     function cleanRecord(rawItem, index, sourceFileName = '') {
       const normalized = {};
+      const allRawValues = [];
       for (const k in rawItem) {
         if (Object.prototype.hasOwnProperty.call(rawItem, k)) {
           const cleanKey = k.toLowerCase().replace(/[^a-z0-9]/g, '');
-          normalized[cleanKey] = rawItem[k] !== undefined && rawItem[k] !== null ? String(rawItem[k]).trim() : '';
+          const valStr = rawItem[k] !== undefined && rawItem[k] !== null ? String(rawItem[k]).trim() : '';
+          normalized[cleanKey] = valStr;
+          if (valStr) allRawValues.push(valStr);
         }
       }
 
@@ -1172,6 +1177,25 @@
 
       let gantiJadwal = getVal('Ganti Jadwal', 'ganti_jadwal', 'Ganti', 'status_ganti');
       gantiJadwal = gantiJadwal.replace(/<[^>]*>?/gm, '').trim();
+
+      // Fallback: pindai seluruh kolom pada baris jika "Presensi belum ada" atau "Ganti Jadwal" berada di kolom tanpa header
+      const combinedRowText = allRawValues.join(' | ').replace(/<[^>]*>?/gm, ' ').toLowerCase();
+      if (!gantiJadwal || gantiJadwal === '-') {
+        if (
+          combinedRowText.includes('presensi belum ada') ||
+          combinedRowText.includes('belum dimulai') ||
+          combinedRowText.includes('akan datang') ||
+          combinedRowText.includes('tidak ada mhs') ||
+          combinedRowText.includes('tidak ada mahasiswa')
+        ) {
+          gantiJadwal = 'Presensi belum ada';
+        } else if (
+          combinedRowText.includes('ganti jadwal') ||
+          combinedRowText.includes('gantijadwalpresensidosen')
+        ) {
+          gantiJadwal = 'Ganti Jadwal';
+        }
+      }
 
       const kodeMk = getVal('Kode MK dan Kelas', 'kode_mk', 'Kode MK', 'makul', 'matakuliah', 'rombel', 'kelas');
       const ruangan = getVal('Ruangan', 'ruang', 'room') || '-';
@@ -1243,9 +1267,11 @@
           const row = rows2D[i];
           if (!row || row.every(c => !String(c || '').trim())) continue;
           const item = {};
-          headers.forEach((h, colIdx) => {
-            if (h) item[h] = row[colIdx] !== undefined ? String(row[colIdx]).trim() : '';
-          });
+          const maxLen = Math.max(headers.length, row.length);
+          for (let colIdx = 0; colIdx < maxLen; colIdx++) {
+            const hKey = headers[colIdx] ? headers[colIdx] : `_col_${colIdx}`;
+            item[hKey] = row[colIdx] !== undefined ? String(row[colIdx]).trim() : '';
+          }
           records.push(item);
         }
         diag.push(`  → header di baris ${headerIdx + 1}, ${records.length} baris data`);
@@ -1299,15 +1325,27 @@
 
     // Determine status of an item
     function getItemStatus(item) {
-      const isFutureOrUnattended = item.ganti_jadwal.toLowerCase().includes('presensi belum ada') || 
-                                   (item.datang === '' && item.kembali === '' && !item.terlambat && !item.ganti_jadwal);
-      if (item.presensi === 'A' || item.ganti_jadwal.toLowerCase().includes('ganti jadwal')) {
+      const gantiStr = String(item.ganti_jadwal || '').toLowerCase();
+      const komentarStr = String(item.komentar || '').toLowerCase();
+      const terlambatStr = String(item.terlambat || '').toLowerCase();
+      const combinedNotes = `${gantiStr} ${komentarStr} ${terlambatStr}`;
+
+      const isFutureOrUnattended =
+        combinedNotes.includes('presensi belum ada') ||
+        combinedNotes.includes('belum dimulai') ||
+        combinedNotes.includes('akan datang') ||
+        combinedNotes.includes('tidak ada mhs') ||
+        combinedNotes.includes('tidak ada mahasiswa') ||
+        combinedNotes.includes('kelas kosong') ||
+        (String(item.datang || '').trim() === '' && String(item.kembali || '').trim() === '' && !item.terlambat && !item.ganti_jadwal);
+
+      if (String(item.presensi || '').toUpperCase() === 'A' || gantiStr.includes('ganti jadwal')) {
         return 'ALPHA';
       }
       if (isFutureOrUnattended) {
         return 'PENDING';
       }
-      if (item.terlambat.toLowerCase().includes('terlambat') || item.komentar.toLowerCase().includes('terlambat')) {
+      if (terlambatStr.includes('terlambat') || komentarStr.includes('terlambat')) {
         return 'LATE';
       }
       return 'HADIR_ONTIME';
@@ -2418,9 +2456,9 @@
       let totalHadir = 0;
 
       filtered.forEach(item => {
-        totalSesi++;
         const status = getItemStatus(item);
         const isHadir = (status === 'HADIR_ONTIME' || status === 'LATE');
+        if (status !== 'PENDING') totalSesi++;
         if (isHadir) totalHadir++;
 
         const key = `${item.mata_kuliah} - ${item.kode_mk}`;
@@ -2435,11 +2473,12 @@
             hadir: 0
           };
         }
-        rombelMap[key].total++;
+        if (status !== 'PENDING') rombelMap[key].total++;
         if (isHadir) rombelMap[key].hadir++;
       });
 
-      const rombelList = Object.values(rombelMap);
+      // Hanya tampilkan kelas yang real (memiliki minimal 1 pertemuan terlaksana / hadir > 0)
+      const rombelList = Object.values(rombelMap).filter(r => r.hadir > 0);
       rombelList.sort((a, b) => a.prodi.localeCompare(b.prodi) || a.mk.localeCompare(b.mk));
 
       const totalSks = rombelList.reduce((acc, r) => acc + r.sks, 0);
@@ -2792,19 +2831,22 @@
         const rombelKeys = Object.keys(dObj.rombels);
         let lecturerSksDiampu = 0;
 
-        const rombelList = rombelKeys.map(rk => {
-          const r = dObj.rombels[rk];
-          r.sessions.sort((a, b) => a.dObj - b.dObj);
-          if (r.sessions.length > maxCols) {
-            maxCols = r.sessions.length;
-          }
-          r.jmlhPert = r.sessions.length;
-          r.totalSks = r.sks * r.jmlhPert;
-          grandTotalSks += r.totalSks;
-          lecturerSksDiampu += r.sks;
-          totalRombels++;
-          return r;
-        });
+        // Hanya masukkan kelas real yang memiliki sesi pertemuan terlaksana (> 0)
+        const rombelList = rombelKeys
+          .map(rk => dObj.rombels[rk])
+          .filter(r => r.sessions.length > 0)
+          .map(r => {
+            r.sessions.sort((a, b) => a.dObj - b.dObj);
+            if (r.sessions.length > maxCols) {
+              maxCols = r.sessions.length;
+            }
+            r.jmlhPert = r.sessions.length;
+            r.totalSks = r.sks * r.jmlhPert;
+            grandTotalSks += r.totalSks;
+            lecturerSksDiampu += r.sks;
+            totalRombels++;
+            return r;
+          });
 
         rombelList.sort((a, b) => a.mk.localeCompare(b.mk) || a.kelas.localeCompare(b.kelas));
         const lecturerKelebihan = Math.max(0, lecturerSksDiampu - 9);
@@ -2818,7 +2860,7 @@
           kelebihanSks: lecturerKelebihan,
           rombels: rombelList
         };
-      });
+      }).filter(d => d.rombels.length > 0);
 
       // Format keterangan Periode tanggal otomatis
       let periodeText = '';
@@ -3741,7 +3783,24 @@
         showToast('Tidak ada data presensi yang sesuai filter untuk diekspor.', 'error');
         return;
       }
-      const data = typeof sortDataByDate === 'function' ? sortDataByDate(rawData, dateSortOrder) : rawData;
+
+      const selStatus = document.getElementById('filterStatus')?.value || '';
+      // Kecualikan pertemuan yang masih akan datang (PENDING / "Presensi belum ada") & kelas tidak terlaksana (ALPHA)
+      // kecuali pengguna secara spesifik memfilter status tersebut pada dropdown Status
+      const realData = (selStatus === 'PENDING' || selStatus === 'A')
+        ? rawData
+        : rawData.filter(item => {
+            const st = getItemStatus(item);
+            return st === 'HADIR_ONTIME' || st === 'LATE';
+          });
+
+      if (realData.length === 0) {
+        showToast('Tidak ada pertemuan yang sudah terlaksana (kelas real) pada filter ini untuk diekspor.', 'error');
+        return;
+      }
+
+      const excludedCount = rawData.length - realData.length;
+      const data = typeof sortDataByDate === 'function' ? sortDataByDate(realData, dateSortOrder) : realData;
 
       const selDosen = document.getElementById('filterDosen')?.value;
       const selTahun = document.getElementById('filterTahun')?.value;
@@ -3755,14 +3814,15 @@
       if (selProdi) subTitles.push(`Prodi: ${selProdi}`);
       if (selBulan) subTitles.push(`Bulan: ${monthLabel(selBulan)}`);
       if (selJenis) subTitles.push(`Kelas: ${selJenis}`);
-      const filterDesc = subTitles.length > 0 ? `(${subTitles.join(' • ')})` : '(Semua Data Presensi)';
+      subTitles.push('Hanya Kelas Real / Pertemuan Terlaksana');
+      const filterDesc = `(${subTitles.join(' • ')})`;
 
       const todayStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
       const aoa = [
         ["LAPORAN MONITORING PRESENSI & JADWAL MENGAJAR DOSEN"],
         [filterDesc],
-        [`Tanggal Unduh: ${todayStr} • Total: ${data.length} Sesi Presensi`],
+        [`Tanggal Unduh: ${todayStr} • Total: ${data.length} Sesi Terlaksana${excludedCount > 0 ? ` (${excludedCount} sesi mendatang/kosong dikecualikan)` : ''}`],
         [],
         [
           "No",
@@ -3921,11 +3981,11 @@
         type: 'export',
         fileName: fileName,
         title: 'Ekspor Rekap Presensi Dashboard (.xlsx)',
-        details: `Unduh berkas spreadsheet ${fileName} (${data.length} sesi presensi terfilter).`,
-        impact: `${data.length} Sesi Diekspor`,
+        details: `Unduh berkas spreadsheet ${fileName} (${data.length} sesi real terlaksana${excludedCount > 0 ? `, ${excludedCount} sesi mendatang/kosong dikecualikan` : ''}).`,
+        impact: `${data.length} Sesi Real`,
         impactType: 'emerald'
       });
-      showToast(`Rekap Presensi (${fileName}) berhasil diunduh.`);
+      showToast(`Rekap Presensi (${fileName}) berhasil diunduh: ${data.length} sesi real${excludedCount > 0 ? ` (${excludedCount} sesi mendatang/kosong dikecualikan)` : ''}.`);
     }
 
     // Search and filter listeners
