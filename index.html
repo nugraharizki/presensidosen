@@ -2119,17 +2119,23 @@
         const grp = dosenGroups[dName];
         const fName = deriveDosenFileName(dName, grp.sample);
         const prodiList = [...grp.prodis].join(', ') || 'Teknik Informatika';
-        logs.push({
+        const entry = {
           id: 'log_dataset_' + idx + '_' + Date.now(),
           timestamp: new Date().toISOString(),
           formattedTime: formatLogTime(new Date()),
           type: 'upload',
+          dosenName: dName,
           fileName: fName,
           title: `Upload Berkas: ${fName}`,
           details: `Nama File: ${fName} • Dosen: ${dName} • Prodi: ${prodiList} (${grp.count} sesi presensi aktif).`,
           impact: `${grp.count} Sesi Aktif`,
           impactType: 'sky'
-        });
+        };
+        if (String(dName).toUpperCase().includes('MEGA WAHYU')) {
+          logs.push(entry);
+        } else {
+          logs.unshift(entry);
+        }
       });
 
       return logs;
@@ -2152,10 +2158,10 @@
               defaultDatasetLogs.forEach(defLog => {
                 const alreadyLogged = validLogs.some(l =>
                   l.type === 'upload' &&
-                  (l.fileName === defLog.fileName || (l.details && defLog.details && l.details.includes(defLog.fileName)))
+                  (l.fileName === defLog.fileName || (l.details && defLog.dosenName && l.details.includes(defLog.dosenName)))
                 );
                 if (!alreadyLogged) {
-                  validLogs.push(defLog);
+                  validLogs.unshift(defLog);
                 }
               });
               localStorage.setItem('presensi_activity_logs', JSON.stringify(validLogs));
@@ -3483,14 +3489,15 @@
         : '-';
 
       const mode = document.querySelector('input[name="stagingImportMode"]:checked')?.value || 'merge';
+      let added = 0;
+      let updated = 0;
 
       if (mode === 'replace') {
         attendanceData = pendingImportData.map((d, idx) => ({ ...d, id: idx + 1, no: idx + 1 }));
+        added = attendanceData.length;
       } else {
         // Merge & Overwrite: Cocokkan kunci unik sesi (Dosen + Tanggal + Kode MK + Jadwal)
         // Data yang sama otomatis di-OVERWRITE, sesi baru di-APPEND
-        let added = 0;
-        let updated = 0;
         pendingImportData.forEach(newItem => {
           const key = getSessionRecordKey(newItem);
           const existingIdx = attendanceData.findIndex(d => getSessionRecordKey(d) === key);
@@ -3578,6 +3585,7 @@
     document.getElementById('fileInput').addEventListener('change', function(e) {
       if (e.target.files && e.target.files.length > 0) {
         handleSelectedFile(e.target.files[0]);
+        e.target.value = '';
       }
     });
 
@@ -3585,11 +3593,12 @@
     function restoreBuMegaData(mode = 'merge') {
       const parsed = parseCSV(RAW_INITIAL_CSV);
       const megaRecords = parsed.map((item, idx) => cleanRecord(item, idx));
+      let added = 0;
+      let updated = 0;
       if (mode === 'replace') {
         attendanceData = megaRecords;
+        added = megaRecords.length;
       } else {
-        let added = 0;
-        let updated = 0;
         megaRecords.forEach(newItem => {
           const key = getSessionRecordKey(newItem);
           const existingIdx = attendanceData.findIndex(d => getSessionRecordKey(d) === key);
@@ -3614,6 +3623,7 @@
       renderDashboard();
       addActivityLog({
         type: 'reset',
+        fileName: 'presensi_mega_wahyu_rhamadani.csv',
         title: 'Restore Data Bu Mega',
         details: mode === 'replace' ? 'Data presensi diganti penuh ke 128 sampel data Bu Mega.' : `Mode Gabungkan: ${updated} baris di-overwrite, ${added} baris baru ditambahkan.`,
         impact: `${attendanceData.length} Sesi Aktif`,
