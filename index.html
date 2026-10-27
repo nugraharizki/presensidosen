@@ -489,12 +489,18 @@
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-slate-600 font-medium mb-1">Tanggal</label>
-            <input type="text" id="editTanggal" disabled class="w-full bg-slate-100 p-2 rounded-lg border border-slate-200 text-slate-600">
+            <label class="block text-slate-700 font-semibold mb-1 flex items-center">
+              <i data-lucide="calendar" class="w-3.5 h-3.5 mr-1 text-sky-600 inline"></i>
+              Tanggal Sesi
+            </label>
+            <input type="text" id="editTanggal" placeholder="DD-MM-YYYY (cth: 15-09-2026)" class="w-full bg-white p-2 rounded-lg border border-slate-300 font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500">
           </div>
           <div>
-            <label class="block text-slate-600 font-medium mb-1">Jadwal Sesi</label>
-            <input type="text" id="editJadwal" disabled class="w-full bg-slate-100 p-2 rounded-lg border border-slate-200 text-slate-600">
+            <label class="block text-slate-700 font-semibold mb-1 flex items-center">
+              <i data-lucide="clock" class="w-3.5 h-3.5 mr-1 text-sky-600 inline"></i>
+              Jadwal Sesi
+            </label>
+            <input type="text" id="editJadwal" placeholder="cth: 18:30 - 21:00" class="w-full bg-white p-2 rounded-lg border border-slate-300 font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500">
           </div>
         </div>
         <div>
@@ -513,12 +519,18 @@
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-slate-700 font-medium mb-1">Jam Datang</label>
-            <input type="text" id="editJamDatang" placeholder="hh:mm (cth: 09:00)" class="w-full p-2 rounded-lg border border-slate-300">
+            <label class="block text-slate-700 font-semibold mb-1 flex items-center">
+              <i data-lucide="log-in" class="w-3.5 h-3.5 mr-1 text-emerald-600 inline"></i>
+              Jam Datang
+            </label>
+            <input type="text" id="editJamDatang" placeholder="hh:mm (cth: 18:30)" class="w-full p-2 bg-white rounded-lg border border-slate-300 font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500">
           </div>
           <div>
-            <label class="block text-slate-700 font-medium mb-1">Jam Kembali / Pulang</label>
-            <input type="text" id="editJamKembali" placeholder="hh:mm (cth: 11:30)" class="w-full p-2 rounded-lg border border-slate-300">
+            <label class="block text-slate-700 font-semibold mb-1 flex items-center">
+              <i data-lucide="log-out" class="w-3.5 h-3.5 mr-1 text-slate-600 inline"></i>
+              Jam Kembali / Pulang
+            </label>
+            <input type="text" id="editJamKembali" placeholder="hh:mm (cth: 21:00)" class="w-full p-2 bg-white rounded-lg border border-slate-300 font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500">
           </div>
         </div>
         <div>
@@ -1677,6 +1689,7 @@
       document.getElementById('editKomentar').value = item.terlambat || item.komentar || '';
 
       document.getElementById('editModal').classList.remove('hidden');
+      lucide.createIcons();
     }
 
     function closeEditModal() {
@@ -1688,18 +1701,30 @@
       if (activeEditingIndex === null) return;
       const item = attendanceData[activeEditingIndex];
 
+      const newTanggal = document.getElementById('editTanggal').value.trim();
+      const newJadwal = document.getElementById('editJadwal').value.trim();
+
+      if (!newTanggal) {
+        showToast('Tanggal sesi tidak boleh kosong.', 'danger');
+        return;
+      }
+
+      item.tanggal = newTanggal;
+      item.jadwal = newJadwal;
       item.prodi = document.getElementById('editProdi').value;
       item.presensi = document.getElementById('editStatusPresensi').value;
       item.datang = document.getElementById('editJamDatang').value.trim();
       item.kembali = document.getElementById('editJamKembali').value.trim();
       item.terlambat = document.getElementById('editKomentar').value.trim();
-      if (item.presensi === 'H' && item.ganti_jadwal.toLowerCase().includes('presensi belum ada')) {
+      if (item.presensi === 'H' && item.ganti_jadwal && item.ganti_jadwal.toLowerCase().includes('presensi belum ada')) {
         item.ganti_jadwal = '-';
       }
 
       saveData();
+      populateMatkulFilter();
       closeEditModal();
       renderDashboard();
+      showToast('Data tanggal, jam, dan kehadiran sesi berhasil diperbarui.');
     }
 
     // Edit & Delete row by ID
