@@ -435,6 +435,12 @@
             <option value="LATE">Terlambat</option>
             <option value="PENDING">Belum Dilaksanakan</option>
           </select>
+
+          <!-- Tombol Urutkan Tanggal -->
+          <button type="button" id="btnSortDate" onclick="toggleDateSort()" class="inline-flex items-center px-3 py-2 text-xs font-semibold rounded-lg bg-white border border-slate-300 hover:bg-slate-50 hover:border-sky-400 text-slate-700 transition shadow-sm shrink-0" title="Klik untuk mengubah urutan tanggal (Awal ↔ Terkini)">
+            <i id="btnSortDateIcon" data-lucide="arrow-up-narrow-wide" class="w-3.5 h-3.5 mr-1.5 text-sky-600"></i>
+            <span id="btnSortDateText">Urutan: <strong>Awal &rarr; Terkini</strong></span>
+          </button>
         </div>
 
         <div class="flex items-center space-x-2 text-xs text-slate-500">
@@ -448,7 +454,15 @@
           <thead class="bg-slate-100 text-slate-700 uppercase font-semibold text-[11px] tracking-wider sticky top-0 z-10 border-b border-slate-200">
             <tr>
               <th class="py-3 px-3 w-10 text-center">No</th>
-              <th class="py-3 px-3">Tanggal</th>
+              <th onclick="toggleDateSort()" class="py-3 px-3 cursor-pointer hover:bg-slate-200 transition select-none group" title="Klik untuk mengurutkan tanggal (Awal ↔ Terkini)">
+                <div class="inline-flex items-center space-x-1.5">
+                  <span class="group-hover:text-sky-700 font-bold">Tanggal</span>
+                  <span id="dateSortIndicator" class="inline-flex items-center space-x-1">
+                    <i data-lucide="arrow-up-narrow-wide" class="w-3.5 h-3.5 text-sky-600"></i>
+                    <span class="text-[9px] font-bold text-sky-700 bg-sky-100 px-1 py-0.2 rounded border border-sky-300">Awal &rarr; Akhir</span>
+                  </span>
+                </div>
+              </th>
               <th class="py-3 px-3">Program Studi</th>
               <th class="py-3 px-3">Jenis Kelas</th>
               <th class="py-3 px-3">Mata Kuliah & Kode</th>
@@ -952,6 +966,7 @@
 
     let attendanceData = [];
     let activeEditingIndex = null;
+    let dateSortOrder = 'asc'; // 'asc' = tanggal paling awal ke terkini, 'desc' = tanggal terkini ke paling awal
 
     // Deteksi Program Studi
     function detectProdi(kodeMk, ruangan) {
@@ -1298,6 +1313,55 @@
       return null;
     }
 
+    // ===== Pengurutan Data Berdasarkan Tanggal (Awal ke Terkini & Sebaliknya) =====
+    function getDateTimestamp(item) {
+      if (!item || !item.tanggal) return 0;
+      const d = parseDateObject(item.tanggal);
+      return d ? d.getTime() : 0;
+    }
+
+    function sortDataByDate(items, order = dateSortOrder) {
+      return [...items].sort((a, b) => {
+        const timeA = getDateTimestamp(a);
+        const timeB = getDateTimestamp(b);
+        if (timeA !== timeB) {
+          return order === 'asc' ? timeA - timeB : timeB - timeA;
+        }
+        return (a.id || 0) - (b.id || 0);
+      });
+    }
+
+    function toggleDateSort() {
+      dateSortOrder = dateSortOrder === 'asc' ? 'desc' : 'asc';
+      renderDashboard();
+      showToast(dateSortOrder === 'asc'
+        ? 'Tabel diurutkan dari Tanggal Paling Awal ke Terkini'
+        : 'Tabel diurutkan dari Tanggal Terkini ke Paling Awal');
+    }
+
+    function updateSortIndicators() {
+      const btnText = document.getElementById('btnSortDateText');
+      const btnIcon = document.getElementById('btnSortDateIcon');
+      const headerIndicator = document.getElementById('dateSortIndicator');
+
+      const isAsc = dateSortOrder === 'asc';
+      if (btnText) {
+        btnText.innerHTML = isAsc 
+          ? 'Urutan: <strong>Awal &rarr; Terkini</strong>' 
+          : 'Urutan: <strong>Terkini &rarr; Awal</strong>';
+      }
+      if (btnIcon) {
+        btnIcon.setAttribute('data-lucide', isAsc ? 'arrow-up-narrow-wide' : 'arrow-down-wide-narrow');
+        btnIcon.className = isAsc ? 'w-3.5 h-3.5 mr-1.5 text-sky-600' : 'w-3.5 h-3.5 mr-1.5 text-indigo-600';
+      }
+      if (headerIndicator) {
+        headerIndicator.innerHTML = isAsc
+          ? `<i data-lucide="arrow-up-narrow-wide" class="w-3.5 h-3.5 text-sky-600 shrink-0"></i><span class="text-[9px] font-bold text-sky-700 bg-sky-100 px-1 py-0.2 rounded border border-sky-300">Awal &rarr; Akhir</span>`
+          : `<i data-lucide="arrow-down-wide-narrow" class="w-3.5 h-3.5 text-indigo-600 shrink-0"></i><span class="text-[9px] font-bold text-indigo-700 bg-indigo-100 px-1 py-0.2 rounded border border-indigo-300">Terkini &rarr; Awal</span>`;
+      }
+      lucide.createIcons();
+    }
+
     function extractSemester(kodeMk) {
       const s = String(kodeMk || '');
       const m = s.match(/(?:TI|TL|PU|SI|IF)\s*([1-8])\d{3}/i) || s.match(/(?:-|\/)\s*([1-8])\d{3}/i);
@@ -1599,10 +1663,14 @@
       const tbody = document.getElementById('attendanceTableBody');
       tbody.innerHTML = '';
 
-      if (filtered.length === 0) {
+      // Urutkan data berdasarkan tanggal (Awal ke Terkini / Terkini ke Awal)
+      const sortedFiltered = sortDataByDate(filtered, dateSortOrder);
+      updateSortIndicators();
+
+      if (sortedFiltered.length === 0) {
         tbody.innerHTML = `<tr><td colspan="12" class="text-center py-8 text-slate-400">Tidak ada data yang sesuai filter</td></tr>`;
       } else {
-        filtered.forEach((item, index) => {
+        sortedFiltered.forEach((item, index) => {
           const status = getItemStatus(item);
           let badgeHtml = '';
           if (status === 'ALPHA') {
@@ -1633,7 +1701,7 @@
           const tr = document.createElement('tr');
           tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
           tr.innerHTML = `
-            <td class="py-2.5 px-3 text-center text-slate-400 font-mono">${item.no}</td>
+            <td class="py-2.5 px-3 text-center text-slate-400 font-mono">${index + 1}</td>
             <td class="py-2.5 px-3 font-medium text-slate-700 whitespace-nowrap">${item.tanggal}</td>
             <td class="py-2.5 px-3">${prodiBadgeTable}</td>
             <td class="py-2.5 px-3">${jenisBadgeTable}</td>
@@ -3109,11 +3177,12 @@
 
     // Ekspor Excel (.xlsx) untuk Data Presensi Dashboard Utama
     function exportDashboardExcel() {
-      const data = getFilteredData({ includeSearch: false });
-      if (!data || data.length === 0) {
+      const rawData = getFilteredData({ includeSearch: false });
+      if (!rawData || rawData.length === 0) {
         showToast('Tidak ada data presensi yang sesuai filter untuk diekspor.', 'error');
         return;
       }
+      const data = typeof sortDataByDate === 'function' ? sortDataByDate(rawData, dateSortOrder) : rawData;
 
       const selDosen = document.getElementById('filterDosen')?.value;
       const selTahun = document.getElementById('filterTahun')?.value;
