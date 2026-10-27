@@ -109,9 +109,9 @@
           <i data-lucide="calculator" class="w-4 h-4 mr-1.5 text-emerald-600"></i>
           Kelebihan SKS
         </button>
-        <button id="btnExportMondos" onclick="exportMondosExcel()" class="inline-flex items-center px-4 py-2 text-xs font-bold rounded-lg text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 shadow-md shadow-emerald-200 transition active:scale-95" title="Unduh Rekapitulasi Mondos DT (.xlsx) persis sesuai tampilan tabel">
+        <button id="btnExportMondos" onclick="exportMondosExcel('dashboard')" class="inline-flex items-center px-4 py-2 text-xs font-bold rounded-lg text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 shadow-md shadow-emerald-200 transition active:scale-95" title="Unduh Rekapitulasi Mondos DT (.xlsx) sesuai Dosen & Filter yang dipilih">
           <i data-lucide="file-spreadsheet" class="w-4 h-4 mr-1.5"></i>
-          Unduh Mondos DT (.xlsx)
+          <span id="btnExportMondosText">Unduh Mondos DT (.xlsx)</span>
         </button>
       </div>
     </div>
@@ -450,6 +450,16 @@
           <button type="button" id="btnSortDate" onclick="toggleDateSort()" class="inline-flex items-center px-3 py-2 text-xs font-semibold rounded-lg bg-white border border-slate-300 hover:bg-slate-50 hover:border-sky-400 text-slate-700 transition shadow-sm shrink-0" title="Klik untuk mengubah urutan tanggal (Awal ↔ Terkini)">
             <i id="btnSortDateIcon" data-lucide="arrow-up-narrow-wide" class="w-3.5 h-3.5 mr-1.5 text-sky-600"></i>
             <span id="btnSortDateText">Urutan: <strong>Awal &rarr; Terkini</strong></span>
+          </button>
+
+          <!-- Tombol Download Excel Sesuai Filter Dosen/Dropdown -->
+          <button type="button" id="btnFilterExportMondos" onclick="exportMondosExcel('dashboard')" class="inline-flex items-center px-3 py-2 text-xs font-bold rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 transition shadow-sm shrink-0" title="Download Mondos DT (.xlsx) khusus Dosen & Filter yang sedang dipilih di dropdown">
+            <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 mr-1.5"></i>
+            <span id="btnFilterExportMondosText">Unduh Mondos Sesuai Filter (.xlsx)</span>
+          </button>
+          <button type="button" id="btnFilterExportTable" onclick="exportDashboardExcel()" class="inline-flex items-center px-3 py-2 text-xs font-semibold rounded-lg text-emerald-800 bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 transition shadow-sm shrink-0" title="Download Rincian Tabel Presensi (.xlsx) khusus Dosen & Filter yang sedang dipilih di dropdown">
+            <i data-lucide="download" class="w-3.5 h-3.5 mr-1.5 text-emerald-600"></i>
+            <span>Unduh Tabel Filter (.xlsx)</span>
           </button>
         </div>
 
@@ -891,7 +901,7 @@
         <button type="button" onclick="closeKelebihanSKSModal()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
           Tutup
         </button>
-        <button type="button" onclick="exportMondosExcel()" class="inline-flex items-center px-5 py-2.5 text-xs font-bold rounded-xl text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 shadow-md shadow-emerald-200 transition active:scale-95" title="Unduh berkas Excel sesuai format tabel di atas">
+        <button type="button" onclick="exportMondosExcel('modal')" class="inline-flex items-center px-5 py-2.5 text-xs font-bold rounded-xl text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 shadow-md shadow-emerald-200 transition active:scale-95" title="Unduh berkas Excel sesuai format tabel di atas">
           <i data-lucide="file-spreadsheet" class="w-4 h-4 mr-2"></i>
           Unduh Rekap Mondos DT (.xlsx)
         </button>
@@ -1532,7 +1542,7 @@
       });
     }
 
-    // Header profil menyesuaikan dosen terpilih
+    // Header profil & label tombol ekspor menyesuaikan dosen terpilih
     function updateDosenHeader() {
       const dosenVal = document.getElementById('filterDosen').value;
       const allDosen = [...new Set(attendanceData.map(d => normDosen(d.pengajar)).filter(Boolean))];
@@ -1546,20 +1556,41 @@
         ? name.split(/[\s,]+/).filter(w => w && !w.includes('.')).map(w => w[0]).slice(0, 2).join('')
         : (allDosen.length === 0 ? '👤' : '👥');
       document.getElementById('dosenAvatar').textContent = initials || 'DS';
+
+      // Perbarui label tombol download agar jelas hanya mengunduh dosen terpilih
+      const btnHeaderText = document.getElementById('btnExportMondosText');
+      const btnFilterText = document.getElementById('btnFilterExportMondosText');
+      if (dosenVal) {
+        const shortName = dosenVal.split(',')[0].trim();
+        if (btnHeaderText) btnHeaderText.textContent = `Unduh Mondos: ${shortName} (.xlsx)`;
+        if (btnFilterText) btnFilterText.textContent = `Unduh Mondos: ${shortName} (.xlsx)`;
+      } else {
+        if (btnHeaderText) btnHeaderText.textContent = 'Unduh Mondos DT (.xlsx)';
+        if (btnFilterText) btnFilterText.textContent = 'Unduh Mondos Sesuai Filter (.xlsx)';
+      }
     }
 
     // Populate Mata Kuliah, Dosen, Tahun & Bulan Filter Dropdowns
     function populateMatkulFilter() {
-      const uniqueMatkul = [...new Set(attendanceData.map(d => d.mata_kuliah).filter(Boolean))].sort();
-      fillSelect('filterMatkul', uniqueMatkul.map(m => ({ value: m, label: m })), `Semua Mata Kuliah (${uniqueMatkul.length})`);
-
       const dosenCount = {};
       attendanceData.forEach(d => { const n = normDosen(d.pengajar); if (n) dosenCount[n] = (dosenCount[n] || 0) + 1; });
       const dosenList = Object.keys(dosenCount).sort();
       fillSelect('filterDosen', dosenList.map(n => ({ value: n, label: `${n} (${dosenCount[n]})` })), `👤 Semua Dosen (${dosenList.length})`);
 
+      updateDependentFiltersForDosen();
+    }
+
+    function updateDependentFiltersForDosen() {
+      const selectedDosen = document.getElementById('filterDosen')?.value || '';
+      const baseData = selectedDosen
+        ? attendanceData.filter(d => normDosen(d.pengajar) === selectedDosen)
+        : attendanceData;
+
+      const uniqueMatkul = [...new Set(baseData.map(d => d.mata_kuliah).filter(Boolean))].sort();
+      fillSelect('filterMatkul', uniqueMatkul.map(m => ({ value: m, label: m })), `Semua Mata Kuliah (${uniqueMatkul.length})`);
+
       const tahunCount = {};
-      attendanceData.forEach(d => {
+      baseData.forEach(d => {
         const y = getYearKey(d.tanggal);
         if (y) tahunCount[y] = (tahunCount[y] || 0) + 1;
       });
@@ -1570,10 +1601,12 @@
     }
 
     function updateBulanFilterOptions() {
+      const selectedDosen = document.getElementById('filterDosen')?.value || '';
       const selectedTahun = document.getElementById('filterTahun')?.value || '';
       const currentBulan = document.getElementById('filterBulan')?.value || '';
       const bulanCount = {};
       attendanceData.forEach(d => {
+        if (selectedDosen && normDosen(d.pengajar) !== selectedDosen) return;
         const y = getYearKey(d.tanggal);
         if (selectedTahun && y !== selectedTahun) return;
         const k = getMonthKey(d.tanggal);
@@ -2675,7 +2708,7 @@
     }
 
     // Builder data Mondos DT (Monitoring Kehadiran Dosen Tetap & Kelebihan SKS)
-    function getMondosData(targetDosen = 'all', targetPeriode = 'all', targetProdi = 'all', targetTahun = 'all') {
+    function getMondosData(targetDosen = 'all', targetPeriode = 'all', targetProdi = 'all', targetTahun = 'all', targetJenisKelas = 'all', targetMatkul = 'all') {
       let filtered = attendanceData;
 
       if (targetTahun && targetTahun !== 'all') {
@@ -2692,6 +2725,14 @@
 
       if (targetProdi && targetProdi !== 'all') {
         filtered = filtered.filter(item => item.prodi === targetProdi);
+      }
+
+      if (targetJenisKelas && targetJenisKelas !== 'all') {
+        filtered = filtered.filter(item => item.jenis_kelas === targetJenisKelas);
+      }
+
+      if (targetMatkul && targetMatkul !== 'all') {
+        filtered = filtered.filter(item => item.mata_kuliah === targetMatkul);
       }
 
       const dosenMap = {};
@@ -2986,21 +3027,39 @@
     }
 
     // Ekspor Resmi Mondos DT ke Format Spreadsheet Excel (.xlsx)
-    function exportMondosExcel() {
-      const selectedDosen = document.getElementById('sksFilterDosen')?.value || 'all';
-      const selectedTahun = document.getElementById('sksFilterTahun')?.value || 'all';
-      const selectedPeriode = document.getElementById('sksFilterPeriode')?.value || 'all';
-      const selectedProdi = document.getElementById('sksFilterProdi')?.value || 'all';
+    function exportMondosExcel(source = 'auto') {
+      const modalEl = document.getElementById('kelebihanSKSModal');
+      const isModalOpen = modalEl && !modalEl.classList.contains('hidden');
+      const useDashboard = (source === 'dashboard') || (!isModalOpen && source !== 'modal');
 
-      const mondos = getMondosData(selectedDosen, selectedPeriode, selectedProdi, selectedTahun);
+      const selectedDosen = useDashboard
+        ? (document.getElementById('filterDosen')?.value || 'all')
+        : (document.getElementById('sksFilterDosen')?.value || 'all');
+      const selectedTahun = useDashboard
+        ? (document.getElementById('filterTahun')?.value || 'all')
+        : (document.getElementById('sksFilterTahun')?.value || 'all');
+      const selectedPeriode = useDashboard
+        ? (document.getElementById('filterBulan')?.value || 'all')
+        : (document.getElementById('sksFilterPeriode')?.value || 'all');
+      const selectedProdi = useDashboard
+        ? (document.getElementById('filterProdi')?.value || 'all')
+        : (document.getElementById('sksFilterProdi')?.value || 'all');
+      const selectedJenisKelas = useDashboard
+        ? (document.getElementById('filterJenisKelas')?.value || 'all')
+        : 'all';
+      const selectedMatkul = useDashboard
+        ? (document.getElementById('filterMatkul')?.value || 'all')
+        : 'all';
+
+      const mondos = getMondosData(selectedDosen, selectedPeriode, selectedProdi, selectedTahun, selectedJenisKelas, selectedMatkul);
       if (!mondos.dosens || mondos.dosens.length === 0) {
-        showToast('Tidak ada data Mondos DT untuk diekspor.', 'error');
+        showToast('Tidak ada data kehadiran Mondos DT pada filter dosen/periode yang dipilih.', 'error');
         return;
       }
 
-      // Ambil nama penandatangan dari input form (bisa diedit user per Prodi)
-      const customKaprodiName = document.getElementById('sksInputKaprodiName')?.value.trim() || mondos.kaprodiName;
-      const customMakerName = document.getElementById('sksInputMakerName')?.value.trim() || mondos.sekretarisName;
+      // Ambil nama penandatangan dari input form (atau sesuai prodi aktif jika diunduh langsung dari dashboard)
+      const customKaprodiName = (!useDashboard && document.getElementById('sksInputKaprodiName')?.value.trim()) || mondos.kaprodiName;
+      const customMakerName = (!useDashboard && document.getElementById('sksInputMakerName')?.value.trim()) || mondos.sekretarisName;
       const customCityDate = document.getElementById('sksInputCityDate')?.value.trim() || `Jakarta, ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`;
 
       const maxCols = mondos.maxCols;
@@ -3677,7 +3736,7 @@
 
     // Ekspor Excel (.xlsx) untuk Data Presensi Dashboard Utama
     function exportDashboardExcel() {
-      const rawData = getFilteredData({ includeSearch: false });
+      const rawData = getFilteredData({ includeSearch: true });
       if (!rawData || rawData.length === 0) {
         showToast('Tidak ada data presensi yang sesuai filter untuk diekspor.', 'error');
         return;
@@ -3860,6 +3919,7 @@
       XLSX.writeFile(wb, fileName);
       addActivityLog({
         type: 'export',
+        fileName: fileName,
         title: 'Ekspor Rekap Presensi Dashboard (.xlsx)',
         details: `Unduh berkas spreadsheet ${fileName} (${data.length} sesi presensi terfilter).`,
         impact: `${data.length} Sesi Diekspor`,
@@ -3870,7 +3930,10 @@
 
     // Search and filter listeners
     document.getElementById('searchInput').addEventListener('input', renderDashboard);
-    document.getElementById('filterDosen').addEventListener('change', renderDashboard);
+    document.getElementById('filterDosen').addEventListener('change', () => {
+      updateDependentFiltersForDosen();
+      renderDashboard();
+    });
     document.getElementById('filterTahun').addEventListener('change', () => {
       updateBulanFilterOptions();
       renderDashboard();
