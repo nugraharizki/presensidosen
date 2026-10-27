@@ -186,8 +186,8 @@
                   <label class="flex items-center space-x-2 p-2 rounded-lg border border-slate-200 hover:border-sky-300 bg-slate-50 cursor-pointer">
                     <input type="radio" name="stagingImportMode" value="merge" checked class="text-sky-600 focus:ring-sky-500">
                     <div>
-                      <strong class="block text-[11px] text-slate-800 leading-tight">Gabungkan (Merge)</strong>
-                      <span class="text-[9.5px] text-slate-500">Data dosen lain tetap aman</span>
+                      <strong class="block text-[11px] text-slate-800 leading-tight">Gabungkan & Overwrite (Merge)</strong>
+                      <span class="text-[9.5px] text-slate-500">Data sama otomatis ditimpa (overwrite), sesi baru ditambah</span>
                     </div>
                   </label>
                   <label class="flex items-center space-x-2 p-2 rounded-lg border border-slate-200 hover:border-sky-300 bg-slate-50 cursor-pointer">
@@ -1392,6 +1392,23 @@
 
     function normDosen(name) {
       return String(name || '').replace(/\s+/g, ' ').trim();
+    }
+
+    // Kunci unik untuk mencocokkan data yang sama (Dosen + Tanggal + Kode MK + Jadwal)
+    // Digunakan untuk mendeteksi data yang sama agar langsung di-OVERWRITE saat impor/unggah.
+    function getSessionRecordKey(item) {
+      if (!item) return '';
+      const dKey = normDosen(item.pengajar || '').toLowerCase();
+      let tKey = String(item.tanggal || '').trim();
+      const dObj = parseDateObject(tKey);
+      if (dObj) {
+        tKey = `${dObj.getFullYear()}-${String(dObj.getMonth() + 1).padStart(2, '0')}-${String(dObj.getDate()).padStart(2, '0')}`;
+      } else {
+        tKey = tKey.toLowerCase().replace(/[^a-z0-9]/g, '');
+      }
+      const kKey = String(item.kode_mk || '').replace(/[\s\-\/\.]+/g, '').toUpperCase();
+      const jKey = String(item.jadwal || '').replace(/[\s\-:\.]+/g, '');
+      return `${dKey}|${tKey}|${kKey}|${jKey}`;
     }
 
     function fillSelect(id, items, allLabel) {
@@ -3033,14 +3050,13 @@
       if (mode === 'replace') {
         attendanceData = pendingImportData.map((d, idx) => ({ ...d, id: idx + 1, no: idx + 1 }));
       } else {
-        // Merge & Append: Gunakan key berbasis nama dosen + tanggal + kode mk + jadwal
-        // agar sesi antar dosen yang berbeda tidak saling menimpa / menghapus
+        // Merge & Overwrite: Cocokkan kunci unik sesi (Dosen + Tanggal + Kode MK + Jadwal)
+        // Data yang sama otomatis di-OVERWRITE, sesi baru di-APPEND
         let added = 0;
         let updated = 0;
         pendingImportData.forEach(newItem => {
-          const dosenKey = normDosen(newItem.pengajar);
-          const key = `${dosenKey}_${newItem.tanggal.trim()}_${newItem.kode_mk.trim()}_${newItem.jadwal.trim()}`;
-          const existingIdx = attendanceData.findIndex(d => `${normDosen(d.pengajar)}_${d.tanggal.trim()}_${d.kode_mk.trim()}_${d.jadwal.trim()}` === key);
+          const key = getSessionRecordKey(newItem);
+          const existingIdx = attendanceData.findIndex(d => getSessionRecordKey(d) === key);
           if (existingIdx >= 0) {
             attendanceData[existingIdx] = {
               ...attendanceData[existingIdx],
@@ -3070,9 +3086,12 @@
       const infoBox = document.getElementById('fileUploadInfo');
       infoBox.classList.remove('hidden');
       const prodiInfo = prodiMode === 'auto' ? 'Deteksi Otomatis' : prodiMode;
-      document.getElementById('uploadedFileName').innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4 mr-1.5 text-emerald-600"></i> ${pendingFileName} &bull; Berhasil Diproses (${mode === 'merge' ? 'Digabungkan' : 'Dimuat Penuh'}) &bull; <span class="text-sky-700 font-semibold">${prodiInfo}</span>`;
+      document.getElementById('uploadedFileName').innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4 mr-1.5 text-emerald-600"></i> ${pendingFileName} &bull; Berhasil Diproses (${mode === 'merge' ? 'Digabungkan & Overwrite' : 'Dimuat Penuh'}) &bull; <span class="text-sky-700 font-semibold">${prodiInfo}</span>`;
       document.getElementById('uploadedRowCount').textContent = `Total data tersimpan: ${attendanceData.length} baris`;
-      showToast(`Data berkas ${pendingFileName} berhasil diterapkan (${prodiInfo}).`);
+      const toastMsg = mode === 'replace'
+        ? `Seluruh data berhasil diganti dengan berkas ${pendingFileName} (${attendanceData.length} baris).`
+        : `Data berkas ${pendingFileName} berhasil diterapkan: ${updated} baris diperbarui (overwrite), ${added} baris baru ditambahkan.`;
+      showToast(toastMsg);
 
       // Reset file input
       document.getElementById('fileInput').value = '';
@@ -3121,11 +3140,19 @@
         attendanceData = megaRecords;
       } else {
         let added = 0;
+        let updated = 0;
         megaRecords.forEach(newItem => {
-          const dosenKey = normDosen(newItem.pengajar);
-          const key = `${dosenKey}_${newItem.tanggal.trim()}_${newItem.kode_mk.trim()}_${newItem.jadwal.trim()}`;
-          const existingIdx = attendanceData.findIndex(d => `${normDosen(d.pengajar)}_${d.tanggal.trim()}_${d.kode_mk.trim()}_${d.jadwal.trim()}` === key);
-          if (existingIdx === -1) {
+          const key = getSessionRecordKey(newItem);
+          const existingIdx = attendanceData.findIndex(d => getSessionRecordKey(d) === key);
+          if (existingIdx >= 0) {
+            attendanceData[existingIdx] = {
+              ...attendanceData[existingIdx],
+              ...newItem,
+              id: attendanceData[existingIdx].id,
+              no: attendanceData[existingIdx].no
+            };
+            updated++;
+          } else {
             newItem.id = attendanceData.length + 1;
             newItem.no = attendanceData.length + 1;
             attendanceData.push(newItem);
@@ -3136,7 +3163,7 @@
       saveData();
       populateMatkulFilter();
       renderDashboard();
-      showToast('Data Bu Mega (128 sesi) berhasil digabungkan kembali.');
+      showToast('Data Bu Mega berhasil digabungkan (data yang sama di-overwrite).');
     }
 
     // Reset button
