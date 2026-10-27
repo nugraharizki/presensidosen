@@ -109,6 +109,10 @@
           <i data-lucide="calculator" class="w-4 h-4 mr-1.5 text-emerald-600"></i>
           Kelebihan SKS
         </button>
+        <button id="btnOpenBulkExport" onclick="openBulkExportModal()" class="inline-flex items-center px-3.5 py-2 text-xs font-bold rounded-lg text-indigo-800 bg-indigo-50 border border-indigo-300 hover:bg-indigo-100 hover:border-indigo-400 transition shadow-sm" title="Pilih / Checklist beberapa dosen sekaligus untuk Bulk Download Excel (.xlsx)">
+          <i data-lucide="list-checks" class="w-4 h-4 mr-1.5 text-indigo-600"></i>
+          Bulk Export (Checklist)
+        </button>
         <button id="btnExportMondos" onclick="exportMondosExcel('dashboard')" class="inline-flex items-center px-4 py-2 text-xs font-bold rounded-lg text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 shadow-md shadow-emerald-200 transition active:scale-95" title="Unduh Rekapitulasi Mondos DT (.xlsx) sesuai Dosen & Filter yang dipilih">
           <i data-lucide="file-spreadsheet" class="w-4 h-4 mr-1.5"></i>
           <span id="btnExportMondosText">Unduh Mondos DT (.xlsx)</span>
@@ -417,6 +421,20 @@
             <option value="">📅 Semua Bulan</option>
           </select>
 
+          <!-- Filter Rentang Tanggal Kustom (Custom Date Range) -->
+          <div class="inline-flex flex-wrap items-center gap-1.5 bg-white border border-sky-300 rounded-lg px-2.5 py-1 shadow-sm" title="Filter Rentang Tanggal Kustom (Contoh: 02-05-2026 s/d 10-10-2026)">
+            <span class="text-[11px] font-bold text-sky-700 flex items-center shrink-0">
+              <i data-lucide="calendar-range" class="w-3.5 h-3.5 mr-1 text-sky-600"></i>Rentang Tgl:
+            </span>
+            <input type="date" id="filterDateStart" class="py-1 px-1.5 text-xs bg-slate-50 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-sky-500 text-slate-700 font-mono" title="Dari Tanggal (Mulai)">
+            <span class="text-[10px] font-bold text-slate-400">s/d</span>
+            <input type="date" id="filterDateEnd" class="py-1 px-1.5 text-xs bg-slate-50 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-sky-500 text-slate-700 font-mono" title="Sampai Tanggal (Akhir)">
+            <span id="activeDateRangeBadge" class="hidden px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-200 font-mono"></span>
+            <button type="button" id="btnResetDateRange" onclick="clearCustomDateRange()" class="hidden p-1 text-rose-600 hover:bg-rose-50 rounded transition" title="Reset Rentang Tanggal Kustom">
+              <i data-lucide="x" class="w-3 h-3"></i>
+            </button>
+          </div>
+
           <!-- Filter Program Studi -->
           <select id="filterProdi" class="py-2 px-3 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-700 font-semibold">
             <option value="">Semua Program Studi</option>
@@ -452,7 +470,7 @@
             <span id="btnSortDateText">Urutan: <strong>Awal &rarr; Terkini</strong></span>
           </button>
 
-          <!-- Tombol Download Excel Sesuai Filter Dosen/Dropdown -->
+          <!-- Tombol Download Excel Sesuai Filter Dosen/Dropdown & Bulk Export Checklist -->
           <button type="button" id="btnFilterExportMondos" onclick="exportMondosExcel('dashboard')" class="inline-flex items-center px-3 py-2 text-xs font-bold rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 transition shadow-sm shrink-0" title="Download Mondos DT (.xlsx) khusus Dosen & Filter yang sedang dipilih di dropdown">
             <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 mr-1.5"></i>
             <span id="btnFilterExportMondosText">Unduh Mondos Sesuai Filter (.xlsx)</span>
@@ -460,6 +478,10 @@
           <button type="button" id="btnFilterExportTable" onclick="exportDashboardExcel()" class="inline-flex items-center px-3 py-2 text-xs font-semibold rounded-lg text-emerald-800 bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 transition shadow-sm shrink-0" title="Download Rincian Tabel Presensi (.xlsx) khusus Dosen & Filter yang sedang dipilih di dropdown">
             <i data-lucide="download" class="w-3.5 h-3.5 mr-1.5 text-emerald-600"></i>
             <span>Unduh Tabel Filter (.xlsx)</span>
+          </button>
+          <button type="button" onclick="openBulkExportModal()" class="inline-flex items-center px-3 py-2 text-xs font-bold rounded-lg text-indigo-800 bg-indigo-50 border border-indigo-300 hover:bg-indigo-100 transition shadow-sm shrink-0" title="Pilih / Checklist beberapa dosen sekaligus untuk Bulk Download Excel (.xlsx)">
+            <i data-lucide="list-checks" class="w-3.5 h-3.5 mr-1.5 text-indigo-600"></i>
+            <span>Bulk Export (Checklist Dosen)</span>
           </button>
         </div>
 
@@ -761,50 +783,69 @@
         </button>
       </div>
 
-      <!-- Controls: Filter Dosen, Prodi, Tahun & Periode -->
-      <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200 shrink-0">
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center">
-            <i data-lucide="user" class="w-3.5 h-3.5 mr-1 text-emerald-600"></i>
-            Dosen Pengampu:
-          </label>
-          <select id="sksFilterDosen" onchange="renderKelebihanSKS()" class="w-full py-2 px-3 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold text-slate-800">
-            <!-- Populated via JS -->
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center">
-            <i data-lucide="book-open" class="w-3.5 h-3.5 mr-1 text-emerald-600"></i>
-            Program Studi:
-          </label>
-          <select id="sksFilterProdi" onchange="renderKelebihanSKS()" class="w-full py-2 px-3 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold text-slate-800">
-            <option value="all">🎓 Semua Program Studi</option>
-            <option value="Teknik Informatika">Teknik Informatika</option>
-            <option value="Teknik Lingkungan">Teknik Lingkungan</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center">
-            <i data-lucide="calendar-days" class="w-3.5 h-3.5 mr-1 text-emerald-600"></i>
-            Tahun:
-          </label>
-          <select id="sksFilterTahun" onchange="handleSksTahunChange()" class="w-full py-2 px-3 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold text-slate-800">
-            <option value="all">🗓️ Semua Tahun</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center">
-            <i data-lucide="calendar" class="w-3.5 h-3.5 mr-1 text-emerald-600"></i>
-            Periode Perhitungan:
-          </label>
-          <select id="sksFilterPeriode" onchange="renderKelebihanSKS()" class="w-full py-2 px-3 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold text-slate-800">
-            <option value="all">📅 Satu Semester Penuh (Akumulatif Seluruh Rombel)</option>
-            <!-- Months populated via JS -->
-          </select>
-          <div id="sksPeriodeHintBox" class="mt-1.5 flex items-center justify-between text-[10.5px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-            <span class="font-medium flex items-center"><i data-lucide="clock" class="w-3 h-3 mr-1 text-emerald-600 inline"></i>Rentang:</span>
-            <strong id="sksPeriodeHintText" class="font-bold text-emerald-900 font-mono text-[10.5px]">1 - 30 September 2026</strong>
+      <!-- Controls: Filter Dosen, Prodi, Tahun, Periode & Rentang Tanggal Kustom -->
+      <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 shrink-0 space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center">
+              <i data-lucide="user" class="w-3.5 h-3.5 mr-1 text-emerald-600"></i>
+              Dosen Pengampu:
+            </label>
+            <select id="sksFilterDosen" onchange="renderKelebihanSKS()" class="w-full py-2 px-3 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold text-slate-800">
+              <!-- Populated via JS -->
+            </select>
           </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center">
+              <i data-lucide="book-open" class="w-3.5 h-3.5 mr-1 text-emerald-600"></i>
+              Program Studi:
+            </label>
+            <select id="sksFilterProdi" onchange="renderKelebihanSKS()" class="w-full py-2 px-3 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold text-slate-800">
+              <option value="all">🎓 Semua Program Studi</option>
+              <option value="Teknik Informatika">Teknik Informatika</option>
+              <option value="Teknik Lingkungan">Teknik Lingkungan</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center">
+              <i data-lucide="calendar-days" class="w-3.5 h-3.5 mr-1 text-emerald-600"></i>
+              Tahun:
+            </label>
+            <select id="sksFilterTahun" onchange="handleSksTahunChange()" class="w-full py-2 px-3 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold text-slate-800">
+              <option value="all">🗓️ Semua Tahun</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center">
+              <i data-lucide="calendar" class="w-3.5 h-3.5 mr-1 text-emerald-600"></i>
+              Periode Perhitungan:
+            </label>
+            <select id="sksFilterPeriode" onchange="renderKelebihanSKS()" class="w-full py-2 px-3 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold text-slate-800">
+              <option value="all">📅 Satu Semester Penuh (Akumulatif Seluruh Rombel)</option>
+              <!-- Months populated via JS -->
+            </select>
+            <div id="sksPeriodeHintBox" class="mt-1.5 flex items-center justify-between text-[10.5px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              <span class="font-medium flex items-center"><i data-lucide="clock" class="w-3 h-3 mr-1 text-emerald-600 inline"></i>Rentang:</span>
+              <strong id="sksPeriodeHintText" class="font-bold text-emerald-900 font-mono text-[10.5px]">1 - 30 September 2026</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Baris Custom Date Range di Modal Mondos DT -->
+        <div class="pt-2.5 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-2">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs font-bold text-slate-700 flex items-center">
+              <i data-lucide="calendar-range" class="w-3.5 h-3.5 mr-1.5 text-sky-600"></i>
+              Custom Date Range (Opsional):
+            </span>
+            <input type="date" id="sksDateStart" onchange="renderKelebihanSKS()" class="py-1.5 px-2.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 font-mono text-slate-800">
+            <span class="text-xs font-bold text-slate-400">s/d</span>
+            <input type="date" id="sksDateEnd" onchange="renderKelebihanSKS()" class="py-1.5 px-2.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 font-mono text-slate-800">
+            <button type="button" onclick="clearSksDateRange()" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-slate-200/70 hover:bg-slate-300/70 text-slate-700 transition">
+              Reset Tanggal
+            </button>
+          </div>
+          <span class="text-[11px] text-slate-500">Contoh: <strong>02-05-2026</strong> sampai <strong>10-10-2026</strong></span>
         </div>
       </div>
 
@@ -901,9 +942,151 @@
         <button type="button" onclick="closeKelebihanSKSModal()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
           Tutup
         </button>
-        <button type="button" onclick="exportMondosExcel('modal')" class="inline-flex items-center px-5 py-2.5 text-xs font-bold rounded-xl text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 shadow-md shadow-emerald-200 transition active:scale-95" title="Unduh berkas Excel sesuai format tabel di atas">
-          <i data-lucide="file-spreadsheet" class="w-4 h-4 mr-2"></i>
-          Unduh Rekap Mondos DT (.xlsx)
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="closeKelebihanSKSModal(); openBulkExportModal();" class="inline-flex items-center px-4 py-2.5 text-xs font-bold rounded-xl text-indigo-800 bg-indigo-50 border border-indigo-300 hover:bg-indigo-100 transition">
+            <i data-lucide="list-checks" class="w-4 h-4 mr-1.5 text-indigo-600"></i>
+            Bulk Export (Checklist Dosen)
+          </button>
+          <button type="button" onclick="exportMondosExcel('modal')" class="inline-flex items-center px-5 py-2.5 text-xs font-bold rounded-xl text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 shadow-md shadow-emerald-200 transition active:scale-95" title="Unduh berkas Excel sesuai format tabel di atas">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4 mr-2"></i>
+            Unduh Rekap Mondos DT (.xlsx)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL BULK DOWNLOAD / EXPORT DENGAN CHECKLIST DOSEN      -->
+  <!-- ======================================================== -->
+  <div id="bulkExportModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-4xl w-full p-5 sm:p-6 shadow-2xl space-y-4 my-6 max-h-[92vh] flex flex-col">
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 shrink-0">
+        <div class="flex items-center space-x-3">
+          <div class="p-2.5 bg-indigo-100 text-indigo-700 rounded-xl">
+            <i data-lucide="list-checks" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-sm sm:text-base">Bulk Download / Export Excel dengan Checklist Dosen</h3>
+            <p class="text-xs text-slate-500">Pilih dosen yang diinginkan &bull; Mendukung Custom Date Range &bull; Hanya Pertemuan Real (Terlaksana)</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeBulkExportModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Filter Rentang Tanggal, Tahun, Bulan & Prodi untuk Bulk Export -->
+      <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-3 shrink-0">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1 flex items-center">
+              <i data-lucide="book-open" class="w-3.5 h-3.5 mr-1 text-indigo-600"></i>
+              Filter Program Studi:
+            </label>
+            <select id="bulkFilterProdi" onchange="renderBulkDosenChecklist()" class="w-full py-1.5 px-2.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800">
+              <option value="all">🎓 Semua Program Studi</option>
+              <option value="Teknik Informatika">Teknik Informatika</option>
+              <option value="Teknik Lingkungan">Teknik Lingkungan</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1 flex items-center">
+              <i data-lucide="calendar-days" class="w-3.5 h-3.5 mr-1 text-indigo-600"></i>
+              Filter Tahun:
+            </label>
+            <select id="bulkFilterTahun" onchange="handleBulkTahunChange()" class="w-full py-1.5 px-2.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800">
+              <option value="all">🗓️ Semua Tahun</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1 flex items-center">
+              <i data-lucide="calendar" class="w-3.5 h-3.5 mr-1 text-indigo-600"></i>
+              Filter Bulan:
+            </label>
+            <select id="bulkFilterBulan" onchange="renderBulkDosenChecklist()" class="w-full py-1.5 px-2.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800">
+              <option value="all">📅 Semua Bulan</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Custom Date Range di Bulk Export -->
+        <div class="pt-2.5 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-2">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs font-bold text-slate-700 flex items-center">
+              <i data-lucide="calendar-range" class="w-3.5 h-3.5 mr-1.5 text-sky-600"></i>
+              Custom Date Range:
+            </span>
+            <input type="date" id="bulkDateStart" onchange="renderBulkDosenChecklist()" class="py-1.5 px-2.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 font-mono text-slate-800">
+            <span class="text-xs font-bold text-slate-400">s/d</span>
+            <input type="date" id="bulkDateEnd" onchange="renderBulkDosenChecklist()" class="py-1.5 px-2.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 font-mono text-slate-800">
+            <button type="button" onclick="clearBulkDateRange()" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-slate-200/70 hover:bg-slate-300/70 text-slate-700 transition">
+              Reset Tanggal
+            </button>
+          </div>
+          <span id="bulkDateRangeInfo" class="text-[11px] font-mono text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">Semua Tanggal</span>
+        </div>
+      </div>
+
+      <!-- Checklist Dosen Header & Search -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-extrabold text-slate-800">Checklist Dosen yang Diinginkan:</span>
+          <span id="bulkSelectedCountBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800 border border-indigo-200">0 Dosen Dipilih</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="relative min-w-[180px]">
+            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2"></i>
+            <input type="text" id="bulkSearchDosen" oninput="renderBulkDosenChecklist()" placeholder="Cari nama dosen..." class="w-full pl-8 pr-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <button type="button" onclick="toggleAllBulkDosen(true)" class="px-2.5 py-1.5 text-xs font-bold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition">
+            Pilih Semua
+          </button>
+          <button type="button" onclick="toggleAllBulkDosen(false)" class="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200 transition">
+            Hapus Pilihan
+          </button>
+        </div>
+      </div>
+
+      <!-- Daftar Checklist Dosen (Scrollable) -->
+      <div id="bulkDosenListContainer" class="flex-1 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-slate-50/50 grid grid-cols-1 md:grid-cols-2 gap-2.5 min-h-[180px] max-h-[260px]">
+        <!-- Populated via JS -->
+      </div>
+
+      <!-- Opsi Format Laporan & Mode Pengemasan File Excel -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-3.5 bg-indigo-50/50 rounded-xl border border-indigo-200 shrink-0">
+        <div>
+          <label class="block text-xs font-bold text-slate-800 mb-1.5 flex items-center">
+            <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 mr-1.5 text-indigo-600"></i>
+            1. Pilih Format Laporan Excel (.xlsx):
+          </label>
+          <select id="bulkReportFormat" class="w-full py-2 px-3 text-xs bg-white border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-800">
+            <option value="mondos">📊 Rekap Mondos DT & Kelebihan SKS (.xlsx)</option>
+            <option value="table">📋 Tabel Rincian Presensi & Jadwal (.xlsx)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-800 mb-1.5 flex items-center">
+            <i data-lucide="folders" class="w-3.5 h-3.5 mr-1.5 text-indigo-600"></i>
+            2. Pilih Mode Berkas Unduhan:
+          </label>
+          <select id="bulkFileMode" class="w-full py-2 px-3 text-xs bg-white border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-800">
+            <option value="combined">📑 Gabung dalam 1 Tabel Kolektif (1 File Excel)</option>
+            <option value="multisheet">🗂️ 1 File Excel (Sheet Terpisah per Dosen)</option>
+            <option value="separate">📥 Unduh File Excel Terpisah per Dosen</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="flex items-center justify-between pt-2.5 border-t border-slate-200 shrink-0">
+        <button type="button" onclick="closeBulkExportModal()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
+          Batal
+        </button>
+        <button type="button" id="btnExecuteBulkExport" onclick="executeBulkExport()" class="inline-flex items-center px-5 py-2.5 text-xs font-bold rounded-xl text-white bg-gradient-to-r from-indigo-600 to-emerald-600 hover:from-indigo-700 hover:to-emerald-700 shadow-md shadow-indigo-200 transition active:scale-95">
+          <i data-lucide="download" class="w-4 h-4 mr-2"></i>
+          Unduh Sesuai Checklist (.xlsx)
         </button>
       </div>
     </div>
@@ -1438,6 +1621,82 @@
       return null;
     }
 
+    // Format tanggal menjadi dd-mm-yyyy (contoh: 02-05-2026)
+    function formatDateDDMMYYYY(s) {
+      const d = parseDateObject(s);
+      if (!d || isNaN(d.getTime())) return String(s || '');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      return `${dd}-${mm}-${yyyy}`;
+    }
+
+    // Cek apakah tanggal sesi berada di dalam Custom Date Range (inklusif dari startStr sampai endStr)
+    function isWithinDateRange(tanggalStr, startStr, endStr) {
+      if (!startStr && !endStr) return true;
+      const itemDate = parseDateObject(tanggalStr);
+      if (!itemDate || isNaN(itemDate.getTime())) return false;
+      const itemTime = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate(), 12, 0, 0).getTime();
+
+      if (startStr) {
+        const sDate = parseDateObject(startStr);
+        if (sDate && !isNaN(sDate.getTime())) {
+          const sTime = new Date(sDate.getFullYear(), sDate.getMonth(), sDate.getDate(), 0, 0, 0).getTime();
+          if (itemTime < sTime) return false;
+        }
+      }
+      if (endStr) {
+        const eDate = parseDateObject(endStr);
+        if (eDate && !isNaN(eDate.getTime())) {
+          const eTime = new Date(eDate.getFullYear(), eDate.getMonth(), eDate.getDate(), 23, 59, 59).getTime();
+          if (itemTime > eTime) return false;
+        }
+      }
+      return true;
+    }
+
+    function formatDateRangeLabel(startStr, endStr) {
+      if (startStr && endStr) return `${formatDateDDMMYYYY(startStr)} s/d ${formatDateDDMMYYYY(endStr)}`;
+      if (startStr) return `Mulai ${formatDateDDMMYYYY(startStr)}`;
+      if (endStr) return `Sampai ${formatDateDDMMYYYY(endStr)}`;
+      return '';
+    }
+
+    function updateCustomDateRangeUI() {
+      const startVal = document.getElementById('filterDateStart')?.value || '';
+      const endVal = document.getElementById('filterDateEnd')?.value || '';
+      const badge = document.getElementById('activeDateRangeBadge');
+      const btnReset = document.getElementById('btnResetDateRange');
+      if (startVal || endVal) {
+        if (badge) {
+          badge.textContent = formatDateRangeLabel(startVal, endVal);
+          badge.classList.remove('hidden');
+        }
+        if (btnReset) btnReset.classList.remove('hidden');
+      } else {
+        if (badge) badge.classList.add('hidden');
+        if (btnReset) btnReset.classList.add('hidden');
+      }
+    }
+
+    function clearCustomDateRange() {
+      const sEl = document.getElementById('filterDateStart');
+      const eEl = document.getElementById('filterDateEnd');
+      if (sEl) sEl.value = '';
+      if (eEl) eEl.value = '';
+      updateCustomDateRangeUI();
+      renderDashboard();
+      showToast('Filter rentang tanggal kustom di-reset.');
+    }
+
+    function clearSksDateRange() {
+      const sEl = document.getElementById('sksDateStart');
+      const eEl = document.getElementById('sksDateEnd');
+      if (sEl) sEl.value = '';
+      if (eEl) eEl.value = '';
+      renderKelebihanSKS();
+    }
+
     // ===== Pengurutan Data Berdasarkan Tanggal (Awal ke Terkini & Sebaliknya) =====
     function getDateTimestamp(item) {
       if (!item || !item.tanggal) return 0;
@@ -1555,6 +1814,8 @@
       const dosenVal = document.getElementById('filterDosen').value;
       const tahunVal = document.getElementById('filterTahun')?.value || '';
       const bulanVal = document.getElementById('filterBulan').value;
+      const dateStartVal = document.getElementById('filterDateStart')?.value || '';
+      const dateEndVal = document.getElementById('filterDateEnd')?.value || '';
       const prodiVal = document.getElementById('filterProdi').value;
       const jenisKelasVal = document.getElementById('filterJenisKelas').value;
       const matkulVal = document.getElementById('filterMatkul').value;
@@ -1568,6 +1829,7 @@
         const matchDosen = !dosenVal || normDosen(item.pengajar) === dosenVal;
         const matchTahun = !tahunVal || getYearKey(item.tanggal) === tahunVal;
         const matchBulan = !bulanVal || getMonthKey(item.tanggal) === bulanVal;
+        const matchDateRange = isWithinDateRange(item.tanggal, dateStartVal, dateEndVal);
         const matchProdi = !prodiVal || item.prodi === prodiVal;
         const matchJenisKelas = !jenisKelasVal || item.jenis_kelas === jenisKelasVal;
         const matchMatkul = !matkulVal || item.mata_kuliah === matkulVal;
@@ -1576,7 +1838,7 @@
         else if (statusVal === 'A') matchStatus = (status === 'ALPHA');
         else if (statusVal === 'LATE') matchStatus = (status === 'LATE');
         else if (statusVal === 'PENDING') matchStatus = (status === 'PENDING');
-        return matchSearch && matchDosen && matchTahun && matchBulan && matchProdi && matchJenisKelas && matchMatkul && matchStatus;
+        return matchSearch && matchDosen && matchTahun && matchBulan && matchDateRange && matchProdi && matchJenisKelas && matchMatkul && matchStatus;
       });
     }
 
@@ -1811,7 +2073,10 @@
       const activeDosenVal = document.getElementById('filterDosen')?.value || '';
       const activeTahunVal = document.getElementById('filterTahun')?.value || 'all';
       const activeBulanVal = document.getElementById('filterBulan')?.value || 'all';
-      const sksCalc = calculateLecturerSKS(activeDosenVal, activeBulanVal, activeTahunVal);
+      const activeDateStart = document.getElementById('filterDateStart')?.value || '';
+      const activeDateEnd = document.getElementById('filterDateEnd')?.value || '';
+      updateCustomDateRangeUI();
+      const sksCalc = calculateLecturerSKS(activeDosenVal, activeBulanVal, activeTahunVal, activeDateStart, activeDateEnd);
       const headerTotalSKSEl = document.getElementById('headerTotalSKS');
       const headerKelebihanSKSEl = document.getElementById('headerKelebihanSKS');
       if (headerTotalSKSEl) headerTotalSKSEl.textContent = sksCalc.totalSks;
@@ -2439,7 +2704,7 @@
     // ========================================================
     // PERHITUNGAN & REKAPITULASI KELEBIHAN SKS UNTUK KEUANGAN
     // ========================================================
-    function calculateLecturerSKS(targetDosen, targetPeriode = 'all', targetTahun = 'all') {
+    function calculateLecturerSKS(targetDosen, targetPeriode = 'all', targetTahun = 'all', dateStart = '', dateEnd = '') {
       let filtered = attendanceData;
       if (targetTahun && targetTahun !== 'all') {
         filtered = filtered.filter(item => getYearKey(item.tanggal) === targetTahun);
@@ -2449,6 +2714,9 @@
       }
       if (targetPeriode && targetPeriode !== 'all') {
         filtered = filtered.filter(item => getMonthKey(item.tanggal) === targetPeriode);
+      }
+      if (dateStart || dateEnd) {
+        filtered = filtered.filter(item => isWithinDateRange(item.tanggal, dateStart, dateEnd));
       }
 
       const rombelMap = {};
@@ -2578,12 +2846,18 @@
 
       updateSksPeriodeOptions();
 
-      // Sinkronkan filter prodi modal dengan filter prodi aktif pada dashboard
+      // Sinkronkan filter prodi & custom date range modal dengan filter aktif pada dashboard
       const activeProdi = document.getElementById('filterProdi')?.value;
       const selProdi = document.getElementById('sksFilterProdi');
       if (selProdi && activeProdi && ['Teknik Informatika', 'Teknik Lingkungan'].includes(activeProdi)) {
         selProdi.value = activeProdi;
       }
+      const dashDateStart = document.getElementById('filterDateStart')?.value || '';
+      const dashDateEnd = document.getElementById('filterDateEnd')?.value || '';
+      const sksStartEl = document.getElementById('sksDateStart');
+      const sksEndEl = document.getElementById('sksDateEnd');
+      if (sksStartEl) sksStartEl.value = dashDateStart;
+      if (sksEndEl) sksEndEl.value = dashDateEnd;
 
       document.getElementById('kelebihanSKSModal').classList.remove('hidden');
       updateSignatureInputs(activeProdi || 'all');
@@ -2747,19 +3021,26 @@
     }
 
     // Builder data Mondos DT (Monitoring Kehadiran Dosen Tetap & Kelebihan SKS)
-    function getMondosData(targetDosen = 'all', targetPeriode = 'all', targetProdi = 'all', targetTahun = 'all', targetJenisKelas = 'all', targetMatkul = 'all') {
+    function getMondosData(targetDosen = 'all', targetPeriode = 'all', targetProdi = 'all', targetTahun = 'all', targetJenisKelas = 'all', targetMatkul = 'all', dateStart = '', dateEnd = '') {
       let filtered = attendanceData;
 
       if (targetTahun && targetTahun !== 'all') {
         filtered = filtered.filter(item => getYearKey(item.tanggal) === targetTahun);
       }
 
-      if (targetDosen && targetDosen !== 'all') {
+      if (Array.isArray(targetDosen)) {
+        const dosenSet = new Set(targetDosen.map(d => normDosen(d)));
+        filtered = filtered.filter(item => dosenSet.has(normDosen(item.pengajar)));
+      } else if (targetDosen && targetDosen !== 'all') {
         filtered = filtered.filter(item => normDosen(item.pengajar) === targetDosen);
       }
 
       if (targetPeriode && targetPeriode !== 'all') {
         filtered = filtered.filter(item => getMonthKey(item.tanggal) === targetPeriode);
+      }
+
+      if (dateStart || dateEnd) {
+        filtered = filtered.filter(item => isWithinDateRange(item.tanggal, dateStart, dateEnd));
       }
 
       if (targetProdi && targetProdi !== 'all') {
@@ -2864,7 +3145,9 @@
 
       // Format keterangan Periode tanggal otomatis
       let periodeText = '';
-      if (allDates.length > 0) {
+      if (dateStart || dateEnd) {
+        periodeText = `(Periode Rentang Tanggal: ${formatDateRangeLabel(dateStart, dateEnd)})`;
+      } else if (allDates.length > 0) {
         allDates.sort((a, b) => a - b);
         const minD = allDates[0];
         const maxD = allDates[allDates.length - 1];
@@ -3020,9 +3303,13 @@
       const selectedTahun = document.getElementById('sksFilterTahun')?.value || 'all';
       const selectedPeriode = document.getElementById('sksFilterPeriode')?.value || 'all';
       const selectedProdi = document.getElementById('sksFilterProdi')?.value || 'all';
+      const selectedDateStart = document.getElementById('sksDateStart')?.value || '';
+      const selectedDateEnd = document.getElementById('sksDateEnd')?.value || '';
 
       let hintText = '';
-      if (selectedPeriode === 'all') {
+      if (selectedDateStart || selectedDateEnd) {
+        hintText = formatDateRangeLabel(selectedDateStart, selectedDateEnd);
+      } else if (selectedPeriode === 'all') {
         hintText = selectedTahun !== 'all'
           ? `Tahun ${selectedTahun} (Akumulatif Seluruh Sesi)`
           : 'Satu Semester Penuh (Akumulatif Semester Ganjil 2026/2027)';
@@ -3035,7 +3322,7 @@
       // Sinkronkan input pejabat penandatangan dengan Prodi yang dipilih
       updateSignatureInputs(selectedProdi);
 
-      const mondosData = getMondosData(selectedDosen, selectedPeriode, selectedProdi, selectedTahun);
+      const mondosData = getMondosData(selectedDosen, selectedPeriode, selectedProdi, selectedTahun, 'all', 'all', selectedDateStart, selectedDateEnd);
 
       // Update KPI Cards
       const elTotalDiampu = document.getElementById('sksModalTotalDiampu');
@@ -3068,42 +3355,8 @@
       lucide.createIcons();
     }
 
-    // Ekspor Resmi Mondos DT ke Format Spreadsheet Excel (.xlsx)
-    function exportMondosExcel(source = 'auto') {
-      const modalEl = document.getElementById('kelebihanSKSModal');
-      const isModalOpen = modalEl && !modalEl.classList.contains('hidden');
-      const useDashboard = (source === 'dashboard') || (!isModalOpen && source !== 'modal');
-
-      const selectedDosen = useDashboard
-        ? (document.getElementById('filterDosen')?.value || 'all')
-        : (document.getElementById('sksFilterDosen')?.value || 'all');
-      const selectedTahun = useDashboard
-        ? (document.getElementById('filterTahun')?.value || 'all')
-        : (document.getElementById('sksFilterTahun')?.value || 'all');
-      const selectedPeriode = useDashboard
-        ? (document.getElementById('filterBulan')?.value || 'all')
-        : (document.getElementById('sksFilterPeriode')?.value || 'all');
-      const selectedProdi = useDashboard
-        ? (document.getElementById('filterProdi')?.value || 'all')
-        : (document.getElementById('sksFilterProdi')?.value || 'all');
-      const selectedJenisKelas = useDashboard
-        ? (document.getElementById('filterJenisKelas')?.value || 'all')
-        : 'all';
-      const selectedMatkul = useDashboard
-        ? (document.getElementById('filterMatkul')?.value || 'all')
-        : 'all';
-
-      const mondos = getMondosData(selectedDosen, selectedPeriode, selectedProdi, selectedTahun, selectedJenisKelas, selectedMatkul);
-      if (!mondos.dosens || mondos.dosens.length === 0) {
-        showToast('Tidak ada data kehadiran Mondos DT pada filter dosen/periode yang dipilih.', 'error');
-        return;
-      }
-
-      // Ambil nama penandatangan dari input form (atau sesuai prodi aktif jika diunduh langsung dari dashboard)
-      const customKaprodiName = (!useDashboard && document.getElementById('sksInputKaprodiName')?.value.trim()) || mondos.kaprodiName;
-      const customMakerName = (!useDashboard && document.getElementById('sksInputMakerName')?.value.trim()) || mondos.sekretarisName;
-      const customCityDate = document.getElementById('sksInputCityDate')?.value.trim() || `Jakarta, ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`;
-
+    // Builder Worksheet Mondos DT (dipakai Ekspor Tunggal & Bulk Export Checklist)
+    function buildMondosWorksheet(mondos, customKaprodiName, customMakerName, customCityDate) {
       const maxCols = mondos.maxCols;
       const totalCols = 6 + maxCols + 2;
 
@@ -3441,6 +3694,51 @@
         });
       });
 
+      return ws;
+    }
+
+    // Ekspor Resmi Mondos DT ke Format Spreadsheet Excel (.xlsx)
+    function exportMondosExcel(source = 'auto') {
+      const modalEl = document.getElementById('kelebihanSKSModal');
+      const isModalOpen = modalEl && !modalEl.classList.contains('hidden');
+      const useDashboard = (source === 'dashboard') || (!isModalOpen && source !== 'modal');
+
+      const selectedDosen = useDashboard
+        ? (document.getElementById('filterDosen')?.value || 'all')
+        : (document.getElementById('sksFilterDosen')?.value || 'all');
+      const selectedTahun = useDashboard
+        ? (document.getElementById('filterTahun')?.value || 'all')
+        : (document.getElementById('sksFilterTahun')?.value || 'all');
+      const selectedPeriode = useDashboard
+        ? (document.getElementById('filterBulan')?.value || 'all')
+        : (document.getElementById('sksFilterPeriode')?.value || 'all');
+      const selectedProdi = useDashboard
+        ? (document.getElementById('filterProdi')?.value || 'all')
+        : (document.getElementById('sksFilterProdi')?.value || 'all');
+      const selectedJenisKelas = useDashboard
+        ? (document.getElementById('filterJenisKelas')?.value || 'all')
+        : 'all';
+      const selectedMatkul = useDashboard
+        ? (document.getElementById('filterMatkul')?.value || 'all')
+        : 'all';
+      const selectedDateStart = useDashboard
+        ? (document.getElementById('filterDateStart')?.value || '')
+        : (document.getElementById('sksDateStart')?.value || '');
+      const selectedDateEnd = useDashboard
+        ? (document.getElementById('filterDateEnd')?.value || '')
+        : (document.getElementById('sksDateEnd')?.value || '');
+
+      const mondos = getMondosData(selectedDosen, selectedPeriode, selectedProdi, selectedTahun, selectedJenisKelas, selectedMatkul, selectedDateStart, selectedDateEnd);
+      if (!mondos.dosens || mondos.dosens.length === 0) {
+        showToast('Tidak ada data kehadiran Mondos DT pada filter dosen/periode/tanggal yang dipilih.', 'error');
+        return;
+      }
+
+      const customKaprodiName = (!useDashboard && document.getElementById('sksInputKaprodiName')?.value.trim()) || mondos.kaprodiName;
+      const customMakerName = (!useDashboard && document.getElementById('sksInputMakerName')?.value.trim()) || mondos.sekretarisName;
+      const customCityDate = document.getElementById('sksInputCityDate')?.value.trim() || `Jakarta, ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+
+      const ws = buildMondosWorksheet(mondos, customKaprodiName, customMakerName, customCityDate);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Mondos DT");
 
@@ -3452,8 +3750,9 @@
       XLSX.writeFile(wb, fileName);
       addActivityLog({
         type: 'export',
+        fileName: fileName,
         title: 'Ekspor Rekap Mondos DT (.xlsx)',
-        details: `Unduh berkas ${fileName} (${mondos.dosens.length} dosen tertera).`,
+        details: `Unduh berkas ${fileName} (${mondos.dosens.length} dosen tertera${(selectedDateStart || selectedDateEnd) ? `, Rentang: ${formatDateRangeLabel(selectedDateStart, selectedDateEnd)}` : ''}).`,
         impact: `${mondos.dosens.length} Dosen Rekap`,
         impactType: 'emerald'
       });
@@ -3757,10 +4056,13 @@
         document.getElementById('filterDosen').value = '';
         document.getElementById('filterTahun').value = '';
         document.getElementById('filterBulan').value = '';
+        if (document.getElementById('filterDateStart')) document.getElementById('filterDateStart').value = '';
+        if (document.getElementById('filterDateEnd')) document.getElementById('filterDateEnd').value = '';
         document.getElementById('filterProdi').value = '';
         document.getElementById('filterJenisKelas').value = '';
         document.getElementById('filterMatkul').value = '';
         document.getElementById('filterStatus').value = '';
+        updateCustomDateRangeUI();
         updateBulanFilterOptions();
       }
     });
@@ -3776,47 +4078,8 @@
       document.body.removeChild(link);
     });
 
-    // Ekspor Excel (.xlsx) untuk Data Presensi Dashboard Utama
-    function exportDashboardExcel() {
-      const rawData = getFilteredData({ includeSearch: true });
-      if (!rawData || rawData.length === 0) {
-        showToast('Tidak ada data presensi yang sesuai filter untuk diekspor.', 'error');
-        return;
-      }
-
-      const selStatus = document.getElementById('filterStatus')?.value || '';
-      // Kecualikan pertemuan yang masih akan datang (PENDING / "Presensi belum ada") & kelas tidak terlaksana (ALPHA)
-      // kecuali pengguna secara spesifik memfilter status tersebut pada dropdown Status
-      const realData = (selStatus === 'PENDING' || selStatus === 'A')
-        ? rawData
-        : rawData.filter(item => {
-            const st = getItemStatus(item);
-            return st === 'HADIR_ONTIME' || st === 'LATE';
-          });
-
-      if (realData.length === 0) {
-        showToast('Tidak ada pertemuan yang sudah terlaksana (kelas real) pada filter ini untuk diekspor.', 'error');
-        return;
-      }
-
-      const excludedCount = rawData.length - realData.length;
-      const data = typeof sortDataByDate === 'function' ? sortDataByDate(realData, dateSortOrder) : realData;
-
-      const selDosen = document.getElementById('filterDosen')?.value;
-      const selTahun = document.getElementById('filterTahun')?.value;
-      const selProdi = document.getElementById('filterProdi')?.value;
-      const selBulan = document.getElementById('filterBulan')?.value;
-      const selJenis = document.getElementById('filterJenisKelas')?.value;
-
-      const subTitles = [];
-      if (selDosen) subTitles.push(`Dosen: ${selDosen}`);
-      if (selTahun) subTitles.push(`Tahun: ${selTahun}`);
-      if (selProdi) subTitles.push(`Prodi: ${selProdi}`);
-      if (selBulan) subTitles.push(`Bulan: ${monthLabel(selBulan)}`);
-      if (selJenis) subTitles.push(`Kelas: ${selJenis}`);
-      subTitles.push('Hanya Kelas Real / Pertemuan Terlaksana');
-      const filterDesc = `(${subTitles.join(' • ')})`;
-
+    // Builder Worksheet Tabel Rincian Presensi (dipakai Ekspor Dashboard & Bulk Export Checklist)
+    function buildDashboardWorksheet(data, filterDesc, excludedCount = 0) {
       const todayStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
       const aoa = [
@@ -3969,6 +4232,54 @@
         }
       }
 
+      return ws;
+    }
+
+    // Ekspor Excel (.xlsx) untuk Data Presensi Dashboard Utama
+    function exportDashboardExcel() {
+      const rawData = getFilteredData({ includeSearch: true });
+      if (!rawData || rawData.length === 0) {
+        showToast('Tidak ada data presensi yang sesuai filter untuk diekspor.', 'error');
+        return;
+      }
+
+      const selStatus = document.getElementById('filterStatus')?.value || '';
+      // Kecualikan pertemuan yang masih akan datang (PENDING / "Presensi belum ada") & kelas tidak terlaksana (ALPHA)
+      // kecuali pengguna secara spesifik memfilter status tersebut pada dropdown Status
+      const realData = (selStatus === 'PENDING' || selStatus === 'A')
+        ? rawData
+        : rawData.filter(item => {
+            const st = getItemStatus(item);
+            return st === 'HADIR_ONTIME' || st === 'LATE';
+          });
+
+      if (realData.length === 0) {
+        showToast('Tidak ada pertemuan yang sudah terlaksana (kelas real) pada filter ini untuk diekspor.', 'error');
+        return;
+      }
+
+      const excludedCount = rawData.length - realData.length;
+      const data = typeof sortDataByDate === 'function' ? sortDataByDate(realData, dateSortOrder) : realData;
+
+      const selDosen = document.getElementById('filterDosen')?.value;
+      const selTahun = document.getElementById('filterTahun')?.value;
+      const selProdi = document.getElementById('filterProdi')?.value;
+      const selBulan = document.getElementById('filterBulan')?.value;
+      const selDateStart = document.getElementById('filterDateStart')?.value || '';
+      const selDateEnd = document.getElementById('filterDateEnd')?.value || '';
+      const selJenis = document.getElementById('filterJenisKelas')?.value;
+
+      const subTitles = [];
+      if (selDosen) subTitles.push(`Dosen: ${selDosen}`);
+      if (selTahun) subTitles.push(`Tahun: ${selTahun}`);
+      if (selProdi) subTitles.push(`Prodi: ${selProdi}`);
+      if (selBulan) subTitles.push(`Bulan: ${monthLabel(selBulan)}`);
+      if (selDateStart || selDateEnd) subTitles.push(`Rentang Tanggal: ${formatDateRangeLabel(selDateStart, selDateEnd)}`);
+      if (selJenis) subTitles.push(`Kelas: ${selJenis}`);
+      subTitles.push('Hanya Kelas Real / Pertemuan Terlaksana');
+      const filterDesc = `(${subTitles.join(' • ')})`;
+
+      const ws = buildDashboardWorksheet(data, filterDesc, excludedCount);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Rekap Presensi");
 
@@ -3988,6 +4299,469 @@
       showToast(`Rekap Presensi (${fileName}) berhasil diunduh: ${data.length} sesi real${excludedCount > 0 ? ` (${excludedCount} sesi mendatang/kosong dikecualikan)` : ''}.`);
     }
 
+    // ========================================================
+    // BULK DOWNLOAD / EXPORT EXCEL DENGAN CHECKLIST DOSEN
+    // ========================================================
+    let bulkSelectedDosens = new Set();
+
+    function openBulkExportModal() {
+      // Sinkronkan filter Tahun, Bulan, Prodi & Custom Date Range dari dashboard
+      const tahunCount = {};
+      attendanceData.forEach(d => {
+        const y = getYearKey(d.tanggal);
+        if (y) tahunCount[y] = (tahunCount[y] || 0) + 1;
+      });
+      const tahunList = Object.keys(tahunCount).sort();
+      const selTahun = document.getElementById('bulkFilterTahun');
+      if (selTahun) {
+        selTahun.innerHTML = '<option value="all">🗓️ Semua Tahun</option>';
+        tahunList.forEach(y => {
+          const opt = document.createElement('option');
+          opt.value = y;
+          opt.textContent = `🗓️ Tahun ${y} (${tahunCount[y]} sesi)`;
+          selTahun.appendChild(opt);
+        });
+        const activeTahun = document.getElementById('filterTahun')?.value;
+        selTahun.value = (activeTahun && tahunList.includes(activeTahun)) ? activeTahun : 'all';
+      }
+
+      updateBulkBulanOptions();
+
+      const activeProdi = document.getElementById('filterProdi')?.value;
+      const selProdi = document.getElementById('bulkFilterProdi');
+      if (selProdi) {
+        selProdi.value = (activeProdi && ['Teknik Informatika', 'Teknik Lingkungan'].includes(activeProdi)) ? activeProdi : 'all';
+      }
+
+      const dashStart = document.getElementById('filterDateStart')?.value || '';
+      const dashEnd = document.getElementById('filterDateEnd')?.value || '';
+      if (document.getElementById('bulkDateStart')) document.getElementById('bulkDateStart').value = dashStart;
+      if (document.getElementById('bulkDateEnd')) document.getElementById('bulkDateEnd').value = dashEnd;
+      if (document.getElementById('bulkSearchDosen')) document.getElementById('bulkSearchDosen').value = '';
+
+      // Default checklist: jika ada dosen terpilih di filter dashboard, centang dosen tsb; jika tidak, centang semua dosen
+      const allDosens = [...new Set(attendanceData.map(d => normDosen(d.pengajar)).filter(Boolean))].sort();
+      const activeDosen = document.getElementById('filterDosen')?.value || '';
+      bulkSelectedDosens.clear();
+      if (activeDosen && allDosens.includes(activeDosen)) {
+        bulkSelectedDosens.add(activeDosen);
+      } else {
+        allDosens.forEach(d => bulkSelectedDosens.add(d));
+      }
+
+      document.getElementById('bulkExportModal').classList.remove('hidden');
+      renderBulkDosenChecklist();
+      lucide.createIcons();
+    }
+
+    function closeBulkExportModal() {
+      document.getElementById('bulkExportModal').classList.add('hidden');
+    }
+
+    function updateBulkBulanOptions() {
+      const selectedTahun = document.getElementById('bulkFilterTahun')?.value || 'all';
+      const selBulan = document.getElementById('bulkFilterBulan');
+      if (!selBulan) return;
+      const currentVal = selBulan.value;
+      const bulanCount = {};
+      attendanceData.forEach(d => {
+        const y = getYearKey(d.tanggal);
+        if (selectedTahun !== 'all' && y !== selectedTahun) return;
+        const k = getMonthKey(d.tanggal);
+        if (k) bulanCount[k] = (bulanCount[k] || 0) + 1;
+      });
+      const bulanList = Object.keys(bulanCount).sort();
+      selBulan.innerHTML = '<option value="all">📅 Semua Bulan</option>';
+      bulanList.forEach(k => {
+        const opt = document.createElement('option');
+        opt.value = k;
+        opt.textContent = `📅 ${monthLabel(k)} (${bulanCount[k]} sesi)`;
+        selBulan.appendChild(opt);
+      });
+      const activeBulan = document.getElementById('filterBulan')?.value;
+      if (currentVal && bulanList.includes(currentVal)) {
+        selBulan.value = currentVal;
+      } else if (activeBulan && bulanList.includes(activeBulan)) {
+        selBulan.value = activeBulan;
+      } else {
+        selBulan.value = 'all';
+      }
+    }
+
+    function handleBulkTahunChange() {
+      updateBulkBulanOptions();
+      renderBulkDosenChecklist();
+    }
+
+    function clearBulkDateRange() {
+      if (document.getElementById('bulkDateStart')) document.getElementById('bulkDateStart').value = '';
+      if (document.getElementById('bulkDateEnd')) document.getElementById('bulkDateEnd').value = '';
+      renderBulkDosenChecklist();
+    }
+
+    function getBulkVisibleDosens() {
+      const prodiVal = document.getElementById('bulkFilterProdi')?.value || 'all';
+      const tahunVal = document.getElementById('bulkFilterTahun')?.value || 'all';
+      const bulanVal = document.getElementById('bulkFilterBulan')?.value || 'all';
+      const dateStart = document.getElementById('bulkDateStart')?.value || '';
+      const dateEnd = document.getElementById('bulkDateEnd')?.value || '';
+      const searchVal = (document.getElementById('bulkSearchDosen')?.value || '').toLowerCase().trim();
+
+      const statsMap = {};
+      attendanceData.forEach(item => {
+        const dName = normDosen(item.pengajar);
+        if (!dName) return;
+        if (!statsMap[dName]) {
+          statsMap[dName] = {
+            dosen: dName,
+            prodis: new Set(),
+            realSessions: 0,
+            totalRows: 0,
+            rombelsReal: new Map()
+          };
+        }
+        statsMap[dName].prodis.add(item.prodi || 'Teknik Informatika');
+
+        // Filter periode/tanggal/prodi
+        if (prodiVal !== 'all' && item.prodi !== prodiVal) return;
+        if (tahunVal !== 'all' && getYearKey(item.tanggal) !== tahunVal) return;
+        if (bulanVal !== 'all' && getMonthKey(item.tanggal) !== bulanVal) return;
+        if (!isWithinDateRange(item.tanggal, dateStart, dateEnd)) return;
+
+        statsMap[dName].totalRows++;
+        const st = getItemStatus(item);
+        if (st === 'HADIR_ONTIME' || st === 'LATE') {
+          statsMap[dName].realSessions++;
+          const rKey = `${item.mata_kuliah}___${item.kode_mk}`;
+          if (!statsMap[dName].rombelsReal.has(rKey)) {
+            statsMap[dName].rombelsReal.set(rKey, parseInt(item.sks, 10) || 3);
+          }
+        }
+      });
+
+      return Object.values(statsMap)
+        .filter(d => {
+          if (prodiVal !== 'all' && !d.prodis.has(prodiVal)) return false;
+          if (searchVal && !d.dosen.toLowerCase().includes(searchVal)) return false;
+          return true;
+        })
+        .sort((a, b) => a.dosen.localeCompare(b.dosen));
+    }
+
+    function renderBulkDosenChecklist() {
+      const container = document.getElementById('bulkDosenListContainer');
+      const countBadge = document.getElementById('bulkSelectedCountBadge');
+      const rangeInfo = document.getElementById('bulkDateRangeInfo');
+      if (!container) return;
+
+      const dateStart = document.getElementById('bulkDateStart')?.value || '';
+      const dateEnd = document.getElementById('bulkDateEnd')?.value || '';
+      if (rangeInfo) {
+        rangeInfo.textContent = (dateStart || dateEnd)
+          ? `Rentang: ${formatDateRangeLabel(dateStart, dateEnd)}`
+          : 'Semua Tanggal (Sesuai Tahun/Bulan)';
+      }
+
+      const visibleDosens = getBulkVisibleDosens();
+      if (countBadge) {
+        countBadge.textContent = `${bulkSelectedDosens.size} Dosen Dipilih`;
+      }
+
+      if (visibleDosens.length === 0) {
+        container.innerHTML = `<div class="col-span-full text-center py-8 text-xs text-slate-400">Tidak ada nama dosen yang cocok dengan pencarian/filter.</div>`;
+        return;
+      }
+
+      container.innerHTML = '';
+      visibleDosens.forEach(dObj => {
+        const isChecked = bulkSelectedDosens.has(dObj.dosen);
+        let totalSksReal = 0;
+        dObj.rombelsReal.forEach(sks => { totalSksReal += sks; });
+        const prodiArr = [...dObj.prodis];
+
+        const label = document.createElement('label');
+        label.className = `flex items-start space-x-3 p-3 rounded-xl border transition cursor-pointer select-none ${
+          isChecked
+            ? 'bg-indigo-50/80 border-indigo-400 shadow-2xs'
+            : 'bg-white border-slate-200 hover:border-indigo-200'
+        }`;
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = isChecked;
+        checkbox.className = 'mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer shrink-0';
+        checkbox.addEventListener('change', (e) => {
+          if (e.target.checked) bulkSelectedDosens.add(dObj.dosen);
+          else bulkSelectedDosens.delete(dObj.dosen);
+          renderBulkDosenChecklist();
+        });
+
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'flex-1 min-w-0';
+        infoDiv.innerHTML = `
+          <div class="font-bold text-xs text-slate-900 truncate" title="${dObj.dosen}">${dObj.dosen}</div>
+          <div class="flex flex-wrap items-center gap-1.5 mt-1">
+            <span class="px-1.5 py-0.2 rounded text-[10px] font-bold ${dObj.realSessions > 0 ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-slate-100 text-slate-500 border border-slate-200'}">
+              ${dObj.realSessions} Sesi Real
+            </span>
+            <span class="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-sky-50 text-sky-700 border border-sky-200">
+              ${dObj.rombelsReal.size} Kelas (${totalSksReal} SKS)
+            </span>
+            <span class="text-[10px] text-slate-400 truncate">${prodiArr.join(', ')}</span>
+          </div>
+        `;
+
+        label.appendChild(checkbox);
+        label.appendChild(infoDiv);
+        container.appendChild(label);
+      });
+    }
+
+    function toggleAllBulkDosen(selectAll) {
+      const visibleDosens = getBulkVisibleDosens();
+      if (selectAll) {
+        visibleDosens.forEach(d => bulkSelectedDosens.add(d.dosen));
+      } else {
+        visibleDosens.forEach(d => bulkSelectedDosens.delete(d.dosen));
+      }
+      renderBulkDosenChecklist();
+    }
+
+    function sanitizeSheetName(name, idx) {
+      const clean = String(name || `Dosen_${idx + 1}`)
+        .split(',')[0]
+        .replace(/[\\/?*[\]:]/g, ' ')
+        .trim()
+        .slice(0, 26);
+      return clean || `Dosen_${idx + 1}`;
+    }
+
+    function executeBulkExport() {
+      const selectedArray = [...bulkSelectedDosens];
+      if (selectedArray.length === 0) {
+        showToast('Silakan ceklis minimal 1 dosen terlebih dahulu untuk diunduh.', 'danger');
+        return;
+      }
+
+      const prodiVal = document.getElementById('bulkFilterProdi')?.value || 'all';
+      const tahunVal = document.getElementById('bulkFilterTahun')?.value || 'all';
+      const bulanVal = document.getElementById('bulkFilterBulan')?.value || 'all';
+      const dateStart = document.getElementById('bulkDateStart')?.value || '';
+      const dateEnd = document.getElementById('bulkDateEnd')?.value || '';
+      const reportFormat = document.getElementById('bulkReportFormat')?.value || 'mondos';
+      const fileMode = document.getElementById('bulkFileMode')?.value || 'combined';
+
+      const todayISO = new Date().toISOString().slice(0, 10);
+      const todayCityDate = document.getElementById('sksInputCityDate')?.value.trim() ||
+        `Jakarta, ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+
+      if (reportFormat === 'mondos') {
+        if (fileMode === 'combined') {
+          const mondos = getMondosData(selectedArray, bulanVal, prodiVal, tahunVal, 'all', 'all', dateStart, dateEnd);
+          if (!mondos.dosens || mondos.dosens.length === 0) {
+            showToast('Tidak ada pertemuan real (terlaksana) pada dosen & rentang tanggal yang diceklis.', 'danger');
+            return;
+          }
+          const ws = buildMondosWorksheet(mondos, mondos.kaprodiName, mondos.sekretarisName, todayCityDate);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "Mondos DT Kolektif");
+          const fileName = `Bulk_Mondos_DT_${mondos.dosens.length}_Dosen_${todayISO}.xlsx`;
+          XLSX.writeFile(wb, fileName);
+
+          addActivityLog({
+            type: 'export',
+            fileName: fileName,
+            title: `Bulk Export Mondos DT (${mondos.dosens.length} Dosen)`,
+            details: `Unduh kolektif ${fileName} untuk ${mondos.dosens.length} dosen terpilih${(dateStart || dateEnd) ? ` (Rentang: ${formatDateRangeLabel(dateStart, dateEnd)})` : ''}.`,
+            impact: `${mondos.dosens.length} Dosen Diekspor`,
+            impactType: 'emerald'
+          });
+          showToast(`Bulk Export Mondos DT (${fileName}) berhasil diunduh!`);
+        } else if (fileMode === 'multisheet') {
+          const wb = XLSX.utils.book_new();
+          const usedSheetNames = new Set();
+          let exportedCount = 0;
+
+          selectedArray.forEach((dName, idx) => {
+            const mondosSingle = getMondosData(dName, bulanVal, prodiVal, tahunVal, 'all', 'all', dateStart, dateEnd);
+            if (!mondosSingle.dosens || mondosSingle.dosens.length === 0) return;
+            const ws = buildMondosWorksheet(mondosSingle, mondosSingle.kaprodiName, mondosSingle.sekretarisName, todayCityDate);
+            let sName = sanitizeSheetName(dName, idx);
+            if (usedSheetNames.has(sName)) sName = `${sName.slice(0, 22)}_${idx + 1}`;
+            usedSheetNames.add(sName);
+            XLSX.utils.book_append_sheet(wb, ws, sName);
+            exportedCount++;
+          });
+
+          if (exportedCount === 0) {
+            showToast('Tidak ada pertemuan real (terlaksana) pada dosen & rentang tanggal yang diceklis.', 'danger');
+            return;
+          }
+          const fileName = `Bulk_MultiSheet_Mondos_DT_${exportedCount}_Dosen_${todayISO}.xlsx`;
+          XLSX.writeFile(wb, fileName);
+
+          addActivityLog({
+            type: 'export',
+            fileName: fileName,
+            title: `Bulk Multi-Sheet Mondos DT (${exportedCount} Dosen)`,
+            details: `Unduh berkas ${fileName} berisi ${exportedCount} sheet dosen terpisah${(dateStart || dateEnd) ? ` (Rentang: ${formatDateRangeLabel(dateStart, dateEnd)})` : ''}.`,
+            impact: `${exportedCount} Sheet Dosen`,
+            impactType: 'emerald'
+          });
+          showToast(`Bulk Multi-Sheet Mondos DT (${exportedCount} dosen) berhasil diunduh!`);
+        } else {
+          // separate files per lecturer
+          let exportedCount = 0;
+          selectedArray.forEach((dName, idx) => {
+            const mondosSingle = getMondosData(dName, bulanVal, prodiVal, tahunVal, 'all', 'all', dateStart, dateEnd);
+            if (!mondosSingle.dosens || mondosSingle.dosens.length === 0) return;
+            const ws = buildMondosWorksheet(mondosSingle, mondosSingle.kaprodiName, mondosSingle.sekretarisName, todayCityDate);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Mondos DT");
+            const cleanDosen = dName.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 22);
+            const fileName = `Mondos_DT_${cleanDosen}_${todayISO}.xlsx`;
+            setTimeout(() => {
+              XLSX.writeFile(wb, fileName);
+            }, idx * 250);
+            exportedCount++;
+          });
+
+          if (exportedCount === 0) {
+            showToast('Tidak ada pertemuan real (terlaksana) pada dosen & rentang tanggal yang diceklis.', 'danger');
+            return;
+          }
+          addActivityLog({
+            type: 'export',
+            fileName: `${exportedCount}_Berkas_Mondos_DT.xlsx`,
+            title: `Bulk Download Terpisah Mondos DT (${exportedCount} File)`,
+            details: `Unduh ${exportedCount} file Excel Mondos DT terpisah sesuai checklist dosen${(dateStart || dateEnd) ? ` (Rentang: ${formatDateRangeLabel(dateStart, dateEnd)})` : ''}.`,
+            impact: `${exportedCount} File Diunduh`,
+            impactType: 'emerald'
+          });
+          showToast(`Mengunduh ${exportedCount} file Excel Mondos DT sesuai checklist!`);
+        }
+      } else {
+        // Format Tabel Rincian Presensi & Jadwal (.xlsx)
+        const getRealRowsForDosens = (dosenFilterSet) => {
+          const rawMatching = attendanceData.filter(item => {
+            const dName = normDosen(item.pengajar);
+            if (!dosenFilterSet.has(dName)) return false;
+            if (prodiVal !== 'all' && item.prodi !== prodiVal) return false;
+            if (tahunVal !== 'all' && getYearKey(item.tanggal) !== tahunVal) return false;
+            if (bulanVal !== 'all' && getMonthKey(item.tanggal) !== bulanVal) return false;
+            if (!isWithinDateRange(item.tanggal, dateStart, dateEnd)) return false;
+            return true;
+          });
+          const realMatching = rawMatching.filter(item => {
+            const st = getItemStatus(item);
+            return st === 'HADIR_ONTIME' || st === 'LATE';
+          });
+          return {
+            realRows: sortDataByDate(realMatching, dateSortOrder),
+            excludedCount: rawMatching.length - realMatching.length
+          };
+        };
+
+        const buildSubDesc = (dosenLabel) => {
+          const parts = [dosenLabel];
+          if (prodiVal !== 'all') parts.push(`Prodi: ${prodiVal}`);
+          if (tahunVal !== 'all') parts.push(`Tahun: ${tahunVal}`);
+          if (bulanVal !== 'all') parts.push(`Bulan: ${monthLabel(bulanVal)}`);
+          if (dateStart || dateEnd) parts.push(`Rentang: ${formatDateRangeLabel(dateStart, dateEnd)}`);
+          parts.push('Hanya Kelas Real / Pertemuan Terlaksana');
+          return `(${parts.join(' • ')})`;
+        };
+
+        if (fileMode === 'combined') {
+          const { realRows, excludedCount } = getRealRowsForDosens(new Set(selectedArray));
+          if (realRows.length === 0) {
+            showToast('Tidak ada pertemuan real (terlaksana) pada dosen & rentang tanggal yang diceklis.', 'danger');
+            return;
+          }
+          const ws = buildDashboardWorksheet(realRows, buildSubDesc(`${selectedArray.length} Dosen Terpilih`), excludedCount);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "Rekap Presensi");
+          const fileName = `Bulk_Rekap_Presensi_${selectedArray.length}_Dosen_${todayISO}.xlsx`;
+          XLSX.writeFile(wb, fileName);
+
+          addActivityLog({
+            type: 'export',
+            fileName: fileName,
+            title: `Bulk Export Tabel Presensi (${selectedArray.length} Dosen)`,
+            details: `Unduh berkas ${fileName} (${realRows.length} sesi real dari ${selectedArray.length} dosen).`,
+            impact: `${realRows.length} Sesi Real`,
+            impactType: 'emerald'
+          });
+          showToast(`Bulk Rekap Presensi (${fileName}) berhasil diunduh!`);
+        } else if (fileMode === 'multisheet') {
+          const wb = XLSX.utils.book_new();
+          const usedSheetNames = new Set();
+          let exportedCount = 0;
+          let totalRealSessions = 0;
+
+          selectedArray.forEach((dName, idx) => {
+            const { realRows, excludedCount } = getRealRowsForDosens(new Set([dName]));
+            if (realRows.length === 0) return;
+            const ws = buildDashboardWorksheet(realRows, buildSubDesc(`Dosen: ${dName}`), excludedCount);
+            let sName = sanitizeSheetName(dName, idx);
+            if (usedSheetNames.has(sName)) sName = `${sName.slice(0, 22)}_${idx + 1}`;
+            usedSheetNames.add(sName);
+            XLSX.utils.book_append_sheet(wb, ws, sName);
+            exportedCount++;
+            totalRealSessions += realRows.length;
+          });
+
+          if (exportedCount === 0) {
+            showToast('Tidak ada pertemuan real (terlaksana) pada dosen & rentang tanggal yang diceklis.', 'danger');
+            return;
+          }
+          const fileName = `Bulk_MultiSheet_Presensi_${exportedCount}_Dosen_${todayISO}.xlsx`;
+          XLSX.writeFile(wb, fileName);
+
+          addActivityLog({
+            type: 'export',
+            fileName: fileName,
+            title: `Bulk Multi-Sheet Tabel Presensi (${exportedCount} Dosen)`,
+            details: `Unduh berkas ${fileName} (${exportedCount} sheet dosen, total ${totalRealSessions} sesi real).`,
+            impact: `${exportedCount} Sheet Dosen`,
+            impactType: 'emerald'
+          });
+          showToast(`Bulk Multi-Sheet Presensi (${exportedCount} dosen) berhasil diunduh!`);
+        } else {
+          let exportedCount = 0;
+          selectedArray.forEach((dName, idx) => {
+            const { realRows, excludedCount } = getRealRowsForDosens(new Set([dName]));
+            if (realRows.length === 0) return;
+            const ws = buildDashboardWorksheet(realRows, buildSubDesc(`Dosen: ${dName}`), excludedCount);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Rekap Presensi");
+            const cleanDosen = dName.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 22);
+            const fileName = `Rekap_Presensi_${cleanDosen}_${todayISO}.xlsx`;
+            setTimeout(() => {
+              XLSX.writeFile(wb, fileName);
+            }, idx * 250);
+            exportedCount++;
+          });
+
+          if (exportedCount === 0) {
+            showToast('Tidak ada pertemuan real (terlaksana) pada dosen & rentang tanggal yang diceklis.', 'danger');
+            return;
+          }
+          addActivityLog({
+            type: 'export',
+            fileName: `${exportedCount}_Berkas_Presensi.xlsx`,
+            title: `Bulk Download Terpisah Tabel Presensi (${exportedCount} File)`,
+            details: `Unduh ${exportedCount} file Excel Tabel Presensi terpisah sesuai checklist dosen.`,
+            impact: `${exportedCount} File Diunduh`,
+            impactType: 'emerald'
+          });
+          showToast(`Mengunduh ${exportedCount} file Excel Tabel Presensi sesuai checklist!`);
+        }
+      }
+
+      closeBulkExportModal();
+    }
+
     // Search and filter listeners
     document.getElementById('searchInput').addEventListener('input', renderDashboard);
     document.getElementById('filterDosen').addEventListener('change', () => {
@@ -3999,6 +4773,8 @@
       renderDashboard();
     });
     document.getElementById('filterBulan').addEventListener('change', renderDashboard);
+    document.getElementById('filterDateStart')?.addEventListener('change', renderDashboard);
+    document.getElementById('filterDateEnd')?.addEventListener('change', renderDashboard);
     document.getElementById('filterProdi').addEventListener('change', renderDashboard);
     document.getElementById('filterJenisKelas').addEventListener('change', renderDashboard);
     document.getElementById('filterMatkul').addEventListener('change', renderDashboard);
