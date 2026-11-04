@@ -129,17 +129,29 @@
       <input type="file" id="fileInput" accept=".csv, .xlsx, .xls, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="hidden">
 
       <!-- STAGE 1: DEFAULT (SEBELUM FILE DIPILIH) -->
-      <div id="uploadStageDefault" class="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div id="uploadStageDefault" class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
         <div class="flex items-start space-x-4 cursor-pointer" onclick="document.getElementById('fileInput').click()">
           <div class="p-3 bg-sky-100 text-sky-700 rounded-xl shrink-0">
             <i data-lucide="file-spreadsheet" class="w-6 h-6"></i>
           </div>
           <div>
             <h3 class="text-sm font-bold text-slate-900">Perbarui Data Kehadiran via Spreadsheet</h3>
-            <p class="text-xs text-slate-500 mt-0.5">Mendukung format Microsoft Excel (<strong>.xlsx, .xls</strong>) dan CSV (<strong>.csv</strong>). Drag & drop berkas atau klik tombol di samping.</p>
+            <p class="text-xs text-slate-500 mt-0.5">Mendukung format Microsoft Excel (<strong>.xlsx, .xls</strong>) dan CSV (<strong>.csv</strong>). Pilih <strong>Program Studi</strong> lalu unggah berkas presensi.</p>
           </div>
         </div>
-        <div class="flex items-center space-x-3 w-full sm:w-auto shrink-0">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto shrink-0">
+          <!-- Pilihan Cepat Prodi sebelum/saat Upload -->
+          <div class="flex items-center bg-white border border-sky-300 rounded-lg px-2.5 py-1.5 shadow-2xs">
+            <label for="preUploadProdiSelect" class="text-[11px] font-bold text-slate-700 mr-2 flex items-center whitespace-nowrap">
+              <i data-lucide="graduation-cap" class="w-3.5 h-3.5 mr-1 text-sky-600"></i>Pilih Prodi:
+            </label>
+            <select id="preUploadProdiSelect" onchange="syncPreUploadProdi(this.value)" class="text-xs font-bold text-sky-900 bg-sky-50/70 border border-sky-200 rounded-md py-1 px-2 focus:outline-none focus:ring-2 focus:ring-sky-500 cursor-pointer">
+              <option value="Teknik Informatika">💻 Teknik Informatika</option>
+              <option value="Teknik Lingkungan">🌿 Teknik Lingkungan</option>
+              <option value="Teknik Sipil">🏗️ Teknik Sipil</option>
+              <option value="auto">🤖 Deteksi Otomatis (TI / TL / TS)</option>
+            </select>
+          </div>
           <button type="button" onclick="document.getElementById('fileInput').click()" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 text-xs font-bold rounded-lg text-white bg-sky-600 hover:bg-sky-700 shadow-sm transition active:scale-95">
             <i data-lucide="file-up" class="w-4 h-4 mr-1.5"></i> Pilih File Excel / CSV
           </button>
@@ -161,25 +173,38 @@
                 <span class="text-xs font-bold text-slate-900" id="stagingFileName">presensi.xlsx</span>
                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-200 text-sky-800" id="stagingRowCount">0 Baris Terbaca</span>
               </div>
-              <p class="text-[11px] text-slate-600 mt-0.5">Berkas terbaca. Tentukan <strong>Program Studi (Prodi)</strong> dan <strong>Mode Data</strong> sebelum diproses:</p>
+              <p class="text-[11px] text-slate-600 mt-0.5">Berkas terbaca. Pilih <strong>Program Studi (Prodi)</strong> agar data dikelompokkan dengan tepat, lalu klik <strong>Proceed</strong>:</p>
             </div>
           </div>
 
           <!-- OPSI PENGATURAN IMPOR (PRODI & MODE) -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-sky-200/80">
             <!-- Kolom 1: Penentuan Program Studi (Prodi) -->
-            <div class="bg-white p-3 rounded-xl border border-sky-200 space-y-1.5 shadow-sm">
+            <div class="bg-white p-3 rounded-xl border border-sky-200 space-y-2 shadow-sm">
               <label class="block text-xs font-bold text-slate-800 flex items-center">
                 <i data-lucide="graduation-cap" class="w-4 h-4 mr-1.5 text-sky-600"></i>
-                Program Studi (Prodi) untuk File Ini:
+                Pilih Program Studi (Prodi) untuk File Ini:
               </label>
+              <!-- Tombol Pilihan Cepat 3 Prodi -->
+              <div class="grid grid-cols-3 gap-1.5">
+                <button type="button" onclick="selectStagingProdi('Teknik Informatika')" id="btnStageProdiTI" class="px-2 py-1.5 rounded-lg text-[11px] font-bold border transition text-center">
+                  💻 Teknik Informatika
+                </button>
+                <button type="button" onclick="selectStagingProdi('Teknik Lingkungan')" id="btnStageProdiTL" class="px-2 py-1.5 rounded-lg text-[11px] font-bold border transition text-center">
+                  🌿 Teknik Lingkungan
+                </button>
+                <button type="button" onclick="selectStagingProdi('Teknik Sipil')" id="btnStageProdiTS" class="px-2 py-1.5 rounded-lg text-[11px] font-bold border transition text-center">
+                  🏗️ Teknik Sipil
+                </button>
+              </div>
               <select id="stagingProdiMode" onchange="updateStagingProdiPreview()" class="w-full py-2 px-2.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 font-semibold text-slate-800">
-                <option value="auto">🤖 Deteksi Otomatis (TL = Tek. Lingkungan, TI/PU = Tek. Informatika)</option>
-                <option value="Teknik Informatika">💻 Tetapkan Seluruh Data ke: Teknik Informatika</option>
-                <option value="Teknik Lingkungan">🌿 Tetapkan Seluruh Data ke: Teknik Lingkungan</option>
+                <option value="Teknik Informatika">💻 Tetapkan ke Program Studi: Teknik Informatika</option>
+                <option value="Teknik Lingkungan">🌿 Tetapkan ke Program Studi: Teknik Lingkungan</option>
+                <option value="Teknik Sipil">🏗️ Tetapkan ke Program Studi: Teknik Sipil</option>
+                <option value="auto">🤖 Deteksi Otomatis dari Kode MK (TI / TL / TS)</option>
               </select>
               <div class="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
-                <span>Pratinjau Distribusi:</span>
+                <span>Pengelompokan Prodi:</span>
                 <span id="stagingProdiPreviewBadge" class="font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">-</span>
               </div>
             </div>
@@ -264,12 +289,15 @@
             <!-- Tags Prodi & Jenis Kelas -->
             <div class="mt-3 pt-2.5 border-t border-white/10 flex flex-wrap gap-2 text-xs">
               <span class="text-slate-400 text-[11px] self-center">Program Studi:</span>
-              <span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30">
-                Teknik Informatika (<span id="countProdiTI">0</span> Sesi)
-              </span>
-              <span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">
-                Teknik Lingkungan (<span id="countProdiTL">0</span> Sesi)
-              </span>
+              <button type="button" onclick="quickFilterByProdi('Teknik Informatika')" class="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30 hover:bg-sky-500/30 transition cursor-pointer" title="Klik untuk kelompokkan Teknik Informatika">
+                💻 Teknik Informatika (<span id="countProdiTI">0</span> Sesi)
+              </button>
+              <button type="button" onclick="quickFilterByProdi('Teknik Lingkungan')" class="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30 hover:bg-teal-500/30 transition cursor-pointer" title="Klik untuk kelompokkan Teknik Lingkungan">
+                🌿 Teknik Lingkungan (<span id="countProdiTL">0</span> Sesi)
+              </button>
+              <button type="button" onclick="quickFilterByProdi('Teknik Sipil')" class="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 transition cursor-pointer" title="Klik untuk kelompokkan Teknik Sipil">
+                🏗️ Teknik Sipil (<span id="countProdiTS">0</span> Sesi)
+              </button>
               
               <span class="text-slate-400 text-[11px] self-center ml-2 border-l border-white/20 pl-2">Jenis Kelas:</span>
               <span class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30">
@@ -378,10 +406,25 @@
 
     <!-- REKAP PER MATA KULIAH SECTION -->
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
         <div>
           <h3 class="text-base font-bold text-slate-900">Rekapitulasi Perkuliahan per Mata Kuliah & Program Studi</h3>
-          <p class="text-xs text-slate-500">Kemajuan jumlah pertemuan mengajar (Target Standar: 16 Pertemuan per Rombel Kelas)</p>
+          <p class="text-xs text-slate-500">Kemajuan jumlah pertemuan mengajar &bull; Klik tab di samping untuk mengelompokkan berdasarkan Program Studi</p>
+        </div>
+        <!-- Tab Pengelompokan Cepat per Program Studi -->
+        <div class="inline-flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs">
+          <button type="button" onclick="quickFilterByProdi('')" id="tabGroupProdiAll" class="px-3 py-1.5 rounded-lg font-bold bg-slate-900 text-white shadow-2xs transition">
+            🎓 Semua Prodi (<span id="tabCountProdiAll">0</span>)
+          </button>
+          <button type="button" onclick="quickFilterByProdi('Teknik Informatika')" id="tabGroupProdiTI" class="px-3 py-1.5 rounded-lg font-semibold text-slate-600 hover:text-slate-900 transition">
+            💻 Teknik Informatika (<span id="tabCountProdiTI">0</span>)
+          </button>
+          <button type="button" onclick="quickFilterByProdi('Teknik Lingkungan')" id="tabGroupProdiTL" class="px-3 py-1.5 rounded-lg font-semibold text-slate-600 hover:text-slate-900 transition">
+            🌿 Teknik Lingkungan (<span id="tabCountProdiTL">0</span>)
+          </button>
+          <button type="button" onclick="quickFilterByProdi('Teknik Sipil')" id="tabGroupProdiTS" class="px-3 py-1.5 rounded-lg font-semibold text-slate-600 hover:text-slate-900 transition">
+            🏗️ Teknik Sipil (<span id="tabCountProdiTS">0</span>)
+          </button>
         </div>
       </div>
 
@@ -437,9 +480,10 @@
 
           <!-- Filter Program Studi -->
           <select id="filterProdi" class="py-2 px-3 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-700 font-semibold">
-            <option value="">Semua Program Studi</option>
-            <option value="Teknik Informatika">Teknik Informatika (TI / PU 7201)</option>
-            <option value="Teknik Lingkungan">Teknik Lingkungan (Kode TL)</option>
+            <option value="">🎓 Semua Program Studi</option>
+            <option value="Teknik Informatika">💻 Teknik Informatika (TI / PU 7201)</option>
+            <option value="Teknik Lingkungan">🌿 Teknik Lingkungan (Kode TL)</option>
+            <option value="Teknik Sipil">🏗️ Teknik Sipil (Kode TS)</option>
           </select>
 
           <!-- Filter Jenis Kelas (Aturan Baru) -->
@@ -628,8 +672,9 @@
         <div>
           <label class="block text-slate-700 font-medium mb-1">Program Studi</label>
           <select id="editProdi" class="w-full p-2 bg-white rounded-lg border border-slate-300 font-semibold text-slate-800">
-            <option value="Teknik Informatika">Teknik Informatika (TI / PU 7201)</option>
-            <option value="Teknik Lingkungan">Teknik Lingkungan (TL)</option>
+            <option value="Teknik Informatika">💻 Teknik Informatika (TI / PU 7201)</option>
+            <option value="Teknik Lingkungan">🌿 Teknik Lingkungan (TL)</option>
+            <option value="Teknik Sipil">🏗️ Teknik Sipil (TS)</option>
           </select>
         </div>
         <div>
@@ -802,8 +847,9 @@
             </label>
             <select id="sksFilterProdi" onchange="renderKelebihanSKS()" class="w-full py-2 px-3 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold text-slate-800">
               <option value="all">🎓 Semua Program Studi</option>
-              <option value="Teknik Informatika">Teknik Informatika</option>
-              <option value="Teknik Lingkungan">Teknik Lingkungan</option>
+              <option value="Teknik Informatika">💻 Teknik Informatika</option>
+              <option value="Teknik Lingkungan">🌿 Teknik Lingkungan</option>
+              <option value="Teknik Sipil">🏗️ Teknik Sipil</option>
             </select>
           </div>
           <div>
@@ -987,8 +1033,9 @@
             </label>
             <select id="bulkFilterProdi" onchange="renderBulkDosenChecklist()" class="w-full py-1.5 px-2.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800">
               <option value="all">🎓 Semua Program Studi</option>
-              <option value="Teknik Informatika">Teknik Informatika</option>
-              <option value="Teknik Lingkungan">Teknik Lingkungan</option>
+              <option value="Teknik Informatika">💻 Teknik Informatika</option>
+              <option value="Teknik Lingkungan">🌿 Teknik Lingkungan</option>
+              <option value="Teknik Sipil">🏗️ Teknik Sipil</option>
             </select>
           </div>
           <div>
@@ -1238,7 +1285,12 @@
     let dateSortOrder = 'asc'; // 'asc' = tanggal paling awal ke terkini, 'desc' = tanggal terkini ke paling awal
 
     // Deteksi Program Studi
-    function detectProdi(kodeMk, ruangan) {
+    function detectProdi(kodeMk, ruangan, explicitProdi = '') {
+      const exp = (explicitProdi || '').toUpperCase().trim();
+      if (exp.includes('SIPIL') || exp === 'TS') return 'Teknik Sipil';
+      if (exp.includes('LINGKUNGAN') || exp === 'TL') return 'Teknik Lingkungan';
+      if (exp.includes('INFORMATIKA') || exp === 'TI') return 'Teknik Informatika';
+
       const kmk = (kodeMk || '').toUpperCase();
       const rgn = (ruangan || '').toUpperCase();
 
@@ -1247,8 +1299,20 @@
         return 'Teknik Informatika';
       }
 
+      // Aturan: Jika kode mengandung TS atau ruangan Teknik Sipil -> Teknik Sipil
+      if (
+        rgn.includes('TEKNIK SIPIL') ||
+        rgn.includes('SIPIL') ||
+        kmk.startsWith('TS') ||
+        /\bTS\b/i.test(kmk) ||
+        /\bTS\s*\d/i.test(kmk) ||
+        /\bTS\d/i.test(rgn)
+      ) {
+        return 'Teknik Sipil';
+      }
+
       // Aturan: Jika kode depannya TL -> Teknik Lingkungan
-      if (kmk.includes('TL') || kmk.startsWith('TL') || /\bTL\b/i.test(kmk)) {
+      if (rgn.includes('TEKNIK LINGKUNGAN') || kmk.includes('TL') || kmk.startsWith('TL') || /\bTL\b/i.test(kmk)) {
         return 'Teknik Lingkungan';
       }
 
@@ -1382,7 +1446,8 @@
 
       const kodeMk = getVal('Kode MK dan Kelas', 'kode_mk', 'Kode MK', 'makul', 'matakuliah', 'rombel', 'kelas');
       const ruangan = getVal('Ruangan', 'ruang', 'room') || '-';
-      const prodi = detectProdi(kodeMk, ruangan);
+      const explicitProdi = getVal('Program Studi', 'prodi', 'jurusan', 'program_studi');
+      const prodi = detectProdi(kodeMk, ruangan, explicitProdi);
       const jenisKelas = detectJenisKelas(kodeMk);
       const pengajar = getVal('Pengajar', 'dosen', 'nama dosen', 'dosen pengampu', 'dosen pengajar', 'nama pengajar', 'nama', 'lecturer', 'pengampu', 'instruktur') || 'MEGA WAHYU RHAMADANI, S.T., M.M.SI';
 
@@ -1748,7 +1813,7 @@
 
     function extractSemester(kodeMk) {
       const s = String(kodeMk || '');
-      const m = s.match(/(?:TI|TL|PU|SI|IF)\s*([1-8])\d{3}/i) || s.match(/(?:-|\/)\s*([1-8])\d{3}/i);
+      const m = s.match(/(?:TI|TL|TS|PU|SI|IF)\s*([1-8])\d{3}/i) || s.match(/(?:-|\/)\s*([1-8])\d{3}/i);
       if (m) {
         const semNum = parseInt(m[1], 10);
         const romans = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
@@ -1757,6 +1822,44 @@
       const romMatch = s.match(/\b(I|II|III|IV|V|VI|VII|VIII)\b/i);
       if (romMatch) return romMatch[1].toUpperCase();
       return '-';
+    }
+
+    function shortProdiCode(prodi) {
+      if (prodi === 'Teknik Lingkungan') return 'TL';
+      if (prodi === 'Teknik Sipil') return 'TS';
+      return 'TI';
+    }
+
+    function quickFilterByProdi(prodiVal) {
+      const selProdi = document.getElementById('filterProdi');
+      if (!selProdi) return;
+      // Jika mengklik prodi yang sedang aktif di banner profil, toggle kembali ke Semua Prodi
+      if (prodiVal && selProdi.value === prodiVal && event && event.currentTarget && !event.currentTarget.id?.startsWith('tabGroupProdi')) {
+        selProdi.value = '';
+      } else {
+        selProdi.value = prodiVal || '';
+      }
+      populateMatkulFilter();
+      renderDashboard();
+      const label = selProdi.value || 'Semua Program Studi';
+      showToast(`Menampilkan pengelompokan: ${label}`);
+    }
+
+    function updateProdiGroupingTabs() {
+      const activeProdi = document.getElementById('filterProdi')?.value || '';
+      const tabConfigs = [
+        { id: 'tabGroupProdiAll', val: '', activeCls: 'px-3 py-1.5 rounded-lg font-bold bg-slate-900 text-white shadow-2xs transition' },
+        { id: 'tabGroupProdiTI', val: 'Teknik Informatika', activeCls: 'px-3 py-1.5 rounded-lg font-bold bg-sky-600 text-white shadow-2xs transition' },
+        { id: 'tabGroupProdiTL', val: 'Teknik Lingkungan', activeCls: 'px-3 py-1.5 rounded-lg font-bold bg-teal-600 text-white shadow-2xs transition' },
+        { id: 'tabGroupProdiTS', val: 'Teknik Sipil', activeCls: 'px-3 py-1.5 rounded-lg font-bold bg-amber-600 text-white shadow-2xs transition' }
+      ];
+      const inactiveCls = 'px-3 py-1.5 rounded-lg font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 transition';
+      tabConfigs.forEach(cfg => {
+        const el = document.getElementById(cfg.id);
+        if (el) {
+          el.className = (activeProdi === cfg.val) ? cfg.activeCls : inactiveCls;
+        }
+      });
     }
 
     function formatKelasShort(jenisKelas, kodeMk) {
@@ -1872,19 +1975,41 @@
 
     // Populate Mata Kuliah, Dosen, Tahun & Bulan Filter Dropdowns
     function populateMatkulFilter() {
+      const selectedProdi = document.getElementById('filterProdi')?.value || '';
       const dosenCount = {};
-      attendanceData.forEach(d => { const n = normDosen(d.pengajar); if (n) dosenCount[n] = (dosenCount[n] || 0) + 1; });
+      const dosenProdis = {};
+      attendanceData.forEach(d => {
+        if (selectedProdi && d.prodi !== selectedProdi) return;
+        const n = normDosen(d.pengajar);
+        if (!n) return;
+        dosenCount[n] = (dosenCount[n] || 0) + 1;
+        if (!dosenProdis[n]) dosenProdis[n] = new Set();
+        dosenProdis[n].add(shortProdiCode(d.prodi));
+      });
       const dosenList = Object.keys(dosenCount).sort();
-      fillSelect('filterDosen', dosenList.map(n => ({ value: n, label: `${n} (${dosenCount[n]})` })), `👤 Semua Dosen (${dosenList.length})`);
+      const allLabel = selectedProdi
+        ? `👤 Semua Dosen ${shortProdiCode(selectedProdi)} (${dosenList.length})`
+        : `👤 Semua Dosen (${dosenList.length})`;
+      fillSelect(
+        'filterDosen',
+        dosenList.map(n => ({
+          value: n,
+          label: `${n} [${[...dosenProdis[n]].join('/')}] (${dosenCount[n]})`
+        })),
+        allLabel
+      );
 
       updateDependentFiltersForDosen();
     }
 
     function updateDependentFiltersForDosen() {
       const selectedDosen = document.getElementById('filterDosen')?.value || '';
-      const baseData = selectedDosen
-        ? attendanceData.filter(d => normDosen(d.pengajar) === selectedDosen)
-        : attendanceData;
+      const selectedProdi = document.getElementById('filterProdi')?.value || '';
+      const baseData = attendanceData.filter(d => {
+        if (selectedDosen && normDosen(d.pengajar) !== selectedDosen) return false;
+        if (selectedProdi && d.prodi !== selectedProdi) return false;
+        return true;
+      });
 
       const uniqueMatkul = [...new Set(baseData.map(d => d.mata_kuliah).filter(Boolean))].sort();
       fillSelect('filterMatkul', uniqueMatkul.map(m => ({ value: m, label: m })), `Semua Mata Kuliah (${uniqueMatkul.length})`);
@@ -1902,11 +2027,13 @@
 
     function updateBulanFilterOptions() {
       const selectedDosen = document.getElementById('filterDosen')?.value || '';
+      const selectedProdi = document.getElementById('filterProdi')?.value || '';
       const selectedTahun = document.getElementById('filterTahun')?.value || '';
       const currentBulan = document.getElementById('filterBulan')?.value || '';
       const bulanCount = {};
       attendanceData.forEach(d => {
         if (selectedDosen && normDosen(d.pengajar) !== selectedDosen) return;
+        if (selectedProdi && d.prodi !== selectedProdi) return;
         const y = getYearKey(d.tanggal);
         if (selectedTahun && y !== selectedTahun) return;
         const k = getMonthKey(d.tanggal);
@@ -1921,6 +2048,26 @@
       }
     }
 
+    function getProdiBadgeCardHtml(prodi) {
+      if (prodi === 'Teknik Lingkungan') {
+        return `<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-teal-100 text-teal-800 border border-teal-200">🌿 Teknik Lingkungan</span>`;
+      }
+      if (prodi === 'Teknik Sipil') {
+        return `<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">🏗️ Teknik Sipil</span>`;
+      }
+      return `<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-sky-100 text-sky-800 border border-sky-200">💻 Teknik Informatika</span>`;
+    }
+
+    function getProdiBadgeTableHtml(prodi) {
+      if (prodi === 'Teknik Lingkungan') {
+        return `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200 whitespace-nowrap">🌿 Teknik Lingkungan</span>`;
+      }
+      if (prodi === 'Teknik Sipil') {
+        return `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300 whitespace-nowrap">🏗️ Teknik Sipil</span>`;
+      }
+      return `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200 whitespace-nowrap">💻 Teknik Informatika</span>`;
+    }
+
     // Render summary cards per Course
     function renderCourseSummaries(sourceData = attendanceData) {
       const container = document.getElementById('courseSummaryCards');
@@ -1932,7 +2079,7 @@
 
       const grouped = {};
       sourceData.forEach(item => {
-        const mkKey = item.mata_kuliah + ' - ' + item.kode_mk;
+        const mkKey = item.mata_kuliah + ' - ' + item.kode_mk + ' - ' + item.prodi;
         if (!grouped[mkKey]) {
           grouped[mkKey] = {
             name: item.mata_kuliah,
@@ -1964,10 +2111,7 @@
 
       Object.values(grouped).forEach(course => {
         const pct = course.executed > 0 ? Math.round((course.hadir / course.executed) * 100) : 100;
-        
-        let prodiBadge = course.prodi === 'Teknik Lingkungan'
-          ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-teal-100 text-teal-800 border border-teal-200">Teknik Lingkungan</span>`
-          : `<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-sky-100 text-sky-800 border border-sky-200">Teknik Informatika</span>`;
+        const prodiBadge = getProdiBadgeCardHtml(course.prodi);
 
         let jenisBadge = '';
         if (course.jenis_kelas === 'Mahasiswa Khusus PDAM Depok') {
@@ -2011,6 +2155,7 @@
       // Filtered records (Dosen, Bulan, Prodi, Jenis Kelas, Mata Kuliah, Status, Pencarian)
       const filtered = getFilteredData();
       updateDosenHeader();
+      updateProdiGroupingTabs();
 
       // Update Counts
       document.getElementById('showingCount').textContent = filtered.length;
@@ -2019,8 +2164,30 @@
       // Update Prodi & Jenis Kelas Counts in Profile Banner (mengikuti filter aktif)
       const tiCount = filtered.filter(d => d.prodi === 'Teknik Informatika').length;
       const tlCount = filtered.filter(d => d.prodi === 'Teknik Lingkungan').length;
+      const tsCount = filtered.filter(d => d.prodi === 'Teknik Sipil').length;
       document.getElementById('countProdiTI').textContent = tiCount;
       document.getElementById('countProdiTL').textContent = tlCount;
+      if (document.getElementById('countProdiTS')) {
+        document.getElementById('countProdiTS').textContent = tsCount;
+      }
+
+      // Update jumlah total per Prodi pada Tab Pengelompokan (berdasarkan filter dosen/tahun/bulan/tanggal aktif tanpa mengunci ke 1 prodi)
+      const activeDosenForTab = document.getElementById('filterDosen')?.value || '';
+      const activeTahunForTab = document.getElementById('filterTahun')?.value || '';
+      const activeBulanForTab = document.getElementById('filterBulan')?.value || '';
+      const activeStartForTab = document.getElementById('filterDateStart')?.value || '';
+      const activeEndForTab = document.getElementById('filterDateEnd')?.value || '';
+      const baseForProdiTabs = attendanceData.filter(item => {
+        if (activeDosenForTab && normDosen(item.pengajar) !== activeDosenForTab) return false;
+        if (activeTahunForTab && getYearKey(item.tanggal) !== activeTahunForTab) return false;
+        if (activeBulanForTab && getMonthKey(item.tanggal) !== activeBulanForTab) return false;
+        if (!isWithinDateRange(item.tanggal, activeStartForTab, activeEndForTab)) return false;
+        return true;
+      });
+      if (document.getElementById('tabCountProdiAll')) document.getElementById('tabCountProdiAll').textContent = baseForProdiTabs.length;
+      if (document.getElementById('tabCountProdiTI')) document.getElementById('tabCountProdiTI').textContent = baseForProdiTabs.filter(d => d.prodi === 'Teknik Informatika').length;
+      if (document.getElementById('tabCountProdiTL')) document.getElementById('tabCountProdiTL').textContent = baseForProdiTabs.filter(d => d.prodi === 'Teknik Lingkungan').length;
+      if (document.getElementById('tabCountProdiTS')) document.getElementById('tabCountProdiTS').textContent = baseForProdiTabs.filter(d => d.prodi === 'Teknik Sipil').length;
 
       const pagiCount = filtered.filter(d => d.jenis_kelas === 'Kelas Pagi Reguler').length;
       const soreCount = filtered.filter(d => d.jenis_kelas === 'Kelas Sore Karyawan').length;
@@ -2114,9 +2281,7 @@
           }
 
           // Prodi Badge
-          let prodiBadgeTable = item.prodi === 'Teknik Lingkungan'
-            ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200 whitespace-nowrap">Teknik Lingkungan</span>`
-            : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200 whitespace-nowrap">Teknik Informatika</span>`;
+          let prodiBadgeTable = getProdiBadgeTableHtml(item.prodi);
 
           // Jenis Kelas Badge
           let jenisBadgeTable = '';
@@ -2849,8 +3014,10 @@
       // Sinkronkan filter prodi & custom date range modal dengan filter aktif pada dashboard
       const activeProdi = document.getElementById('filterProdi')?.value;
       const selProdi = document.getElementById('sksFilterProdi');
-      if (selProdi && activeProdi && ['Teknik Informatika', 'Teknik Lingkungan'].includes(activeProdi)) {
+      if (selProdi && activeProdi && ['Teknik Informatika', 'Teknik Lingkungan', 'Teknik Sipil'].includes(activeProdi)) {
         selProdi.value = activeProdi;
+      } else if (selProdi) {
+        selProdi.value = 'all';
       }
       const dashDateStart = document.getElementById('filterDateStart')?.value || '';
       const dashDateEnd = document.getElementById('filterDateEnd')?.value || '';
@@ -2918,6 +3085,12 @@
       'Teknik Informatika': {
         kaprodi: 'Sugiyatno, S.Kom, M.Kom',
         kaprodiTitle: 'Ketua Program Studi Teknik Informatika',
+        maker: OFFICIAL_SOURCE_TEXT,
+        makerTitle: OFFICIAL_SOURCE_TEXT
+      },
+      'Teknik Sipil': {
+        kaprodi: 'Ketua Program Studi Teknik Sipil',
+        kaprodiTitle: 'Ketua Program Studi Teknik Sipil',
         maker: OFFICIAL_SOURCE_TEXT,
         makerTitle: OFFICIAL_SOURCE_TEXT
       },
@@ -3164,16 +3337,18 @@
 
       // Tentukan Program Studi aktif untuk kop surat dan pengesahan tanda tangan
       let activeProdi = targetProdi;
+      const uniqueProdis = [...new Set(resultDosens.map(d => d.prodi).filter(Boolean))];
       if (!activeProdi || activeProdi === 'all') {
-        const uniqueProdis = [...new Set(resultDosens.map(d => d.prodi).filter(Boolean))];
         if (uniqueProdis.length === 1) activeProdi = uniqueProdis[0];
       }
 
       let prodiTitle = 'PROGRAM STUDI S1';
       if (activeProdi && activeProdi !== 'all') {
         prodiTitle = `PROGRAM STUDI S1 - ${activeProdi.toUpperCase()}`;
+      } else if (uniqueProdis.length > 0) {
+        prodiTitle = `PROGRAM STUDI S1 - ${uniqueProdis.map(p => p.toUpperCase()).join(' & ')}`;
       } else {
-        prodiTitle = `PROGRAM STUDI S1 - TEKNIK INFORMATIKA & TEKNIK LINGKUNGAN`;
+        prodiTitle = `PROGRAM STUDI S1 - TEKNIK INFORMATIKA, TEKNIK LINGKUNGAN & TEKNIK SIPIL`;
       }
 
       const sigs = getSignaturesForProdi(activeProdi);
@@ -3790,6 +3965,22 @@
     let pendingImportData = null;
     let pendingFileName = '';
 
+    function syncPreUploadProdi(val) {
+      const prodiSel = document.getElementById('stagingProdiMode');
+      if (prodiSel && val) {
+        prodiSel.value = val;
+      }
+      updateStagingProdiPreview();
+    }
+
+    function selectStagingProdi(prodiVal) {
+      const prodiSel = document.getElementById('stagingProdiMode');
+      const preSel = document.getElementById('preUploadProdiSelect');
+      if (prodiSel) prodiSel.value = prodiVal;
+      if (preSel) preSel.value = prodiVal;
+      updateStagingProdiPreview();
+    }
+
     function handleSelectedFile(file) {
       if (!file) return;
       const reader = new FileReader();
@@ -3817,9 +4008,10 @@
             document.getElementById('stagingFileName').textContent = file.name;
             document.getElementById('stagingRowCount').textContent = `${pendingImportData.length} Baris Data Terbaca`;
             
-            // Reset prodi option & update preview
+            // Gunakan pilihan Prodi yang sudah dipilih pada dropdown awal (atau default Teknik Informatika)
+            const preSelected = document.getElementById('preUploadProdiSelect')?.value || 'Teknik Informatika';
             const prodiSel = document.getElementById('stagingProdiMode');
-            if (prodiSel) prodiSel.value = 'auto';
+            if (prodiSel) prodiSel.value = preSelected;
             updateStagingProdiPreview();
 
             lucide.createIcons();
@@ -3837,8 +4029,23 @@
     }
 
     function updateStagingProdiPreview() {
+      const mode = document.getElementById('stagingProdiMode')?.value || 'Teknik Informatika';
+      const preSel = document.getElementById('preUploadProdiSelect');
+      if (preSel && preSel.value !== mode) preSel.value = mode;
+
+      // Update active state pada 3 tombol pilihan cepat Prodi di Staging
+      const btnConfigs = [
+        { id: 'btnStageProdiTI', val: 'Teknik Informatika', active: 'px-2 py-1.5 rounded-lg text-[11px] font-bold border-2 border-sky-600 bg-sky-600 text-white shadow-2xs transition text-center' },
+        { id: 'btnStageProdiTL', val: 'Teknik Lingkungan', active: 'px-2 py-1.5 rounded-lg text-[11px] font-bold border-2 border-teal-600 bg-teal-600 text-white shadow-2xs transition text-center' },
+        { id: 'btnStageProdiTS', val: 'Teknik Sipil', active: 'px-2 py-1.5 rounded-lg text-[11px] font-bold border-2 border-amber-600 bg-amber-600 text-white shadow-2xs transition text-center' }
+      ];
+      const inactiveBtn = 'px-2 py-1.5 rounded-lg text-[11px] font-semibold border border-slate-200 bg-slate-50 text-slate-700 hover:border-sky-300 hover:bg-sky-50/50 transition text-center';
+      btnConfigs.forEach(b => {
+        const el = document.getElementById(b.id);
+        if (el) el.className = (mode === b.val) ? b.active : inactiveBtn;
+      });
+
       if (!pendingImportData || pendingImportData.length === 0) return;
-      const mode = document.getElementById('stagingProdiMode')?.value || 'auto';
       const badge = document.getElementById('stagingProdiPreviewBadge');
       if (!badge) return;
 
@@ -3848,14 +4055,18 @@
       } else if (mode === 'Teknik Lingkungan') {
         badge.textContent = `Semua (${pendingImportData.length} sesi) → 🌿 Teknik Lingkungan`;
         badge.className = 'font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200';
+      } else if (mode === 'Teknik Sipil') {
+        badge.textContent = `Semua (${pendingImportData.length} sesi) → 🏗️ Teknik Sipil`;
+        badge.className = 'font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-300';
       } else {
-        let tiCount = 0, tlCount = 0;
+        let tiCount = 0, tlCount = 0, tsCount = 0;
         pendingImportData.forEach(item => {
-          const p = detectProdi(item.kode_mk, item.ruangan);
+          const p = detectProdi(item.kode_mk, item.ruangan, item.prodi);
           if (p === 'Teknik Lingkungan') tlCount++;
+          else if (p === 'Teknik Sipil') tsCount++;
           else tiCount++;
         });
-        badge.textContent = `Otomatis: ${tiCount} TI, ${tlCount} TL`;
+        badge.textContent = `Otomatis: ${tiCount} TI • ${tlCount} TL • ${tsCount} TS`;
         badge.className = 'font-bold text-violet-700 bg-violet-50 px-2 py-0.5 rounded border border-violet-200';
       }
     }
@@ -4330,7 +4541,7 @@
       const activeProdi = document.getElementById('filterProdi')?.value;
       const selProdi = document.getElementById('bulkFilterProdi');
       if (selProdi) {
-        selProdi.value = (activeProdi && ['Teknik Informatika', 'Teknik Lingkungan'].includes(activeProdi)) ? activeProdi : 'all';
+        selProdi.value = (activeProdi && ['Teknik Informatika', 'Teknik Lingkungan', 'Teknik Sipil'].includes(activeProdi)) ? activeProdi : 'all';
       }
 
       const dashStart = document.getElementById('filterDateStart')?.value || '';
@@ -4775,7 +4986,10 @@
     document.getElementById('filterBulan').addEventListener('change', renderDashboard);
     document.getElementById('filterDateStart')?.addEventListener('change', renderDashboard);
     document.getElementById('filterDateEnd')?.addEventListener('change', renderDashboard);
-    document.getElementById('filterProdi').addEventListener('change', renderDashboard);
+    document.getElementById('filterProdi').addEventListener('change', () => {
+      populateMatkulFilter();
+      renderDashboard();
+    });
     document.getElementById('filterJenisKelas').addEventListener('change', renderDashboard);
     document.getElementById('filterMatkul').addEventListener('change', renderDashboard);
     document.getElementById('filterStatus').addEventListener('change', renderDashboard);
